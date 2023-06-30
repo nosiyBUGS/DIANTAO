@@ -1,0 +1,27 @@
+package art.qiuye.diantao;
+
+/**
+ * @author hy
+ * @create 2023/4/23 0023
+ */
+public class Constants {
+
+    //type
+    public static final String WALK = "walk";
+    public static final String WORK = "work";
+    public static final String CMD = "command";
+    public static final String OTHER = "other";
+
+
+    public static final String OVERFLOW = "overflow";
+
+    public static final Integer common_x = 950;
+
+    public static final String RET = "#RET";
+    public static final String NRET = "!RET";
+
+    public static final String BSY="$$$";
+    public static final String CMT="###";
+
+    public static final String IDT_CMD = "[cmd]";
+}

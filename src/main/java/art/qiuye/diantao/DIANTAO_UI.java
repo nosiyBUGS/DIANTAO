@@ -1,0 +1,946 @@
+package art.qiuye.diantao;
+
+import cn.hutool.core.img.ImgUtil;
+import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.lang.Pair;
+import cn.hutool.core.net.NetUtil;
+import cn.hutool.core.util.ArrayUtil;
+import cn.hutool.core.util.RandomUtil;
+import cn.hutool.core.util.RuntimeUtil;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.extra.mail.MailAccount;
+import cn.hutool.extra.mail.MailUtil;
+import cn.hutool.http.ContentType;
+import cn.hutool.http.HttpRequest;
+import cn.hutool.http.HttpUtil;
+import cn.hutool.log.Log;
+import cn.hutool.log.LogFactory;
+import cn.hutool.log.StaticLog;
+import cn.hutool.setting.Setting;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.parser.Feature;
+import lombok.SneakyThrows;
+
+import javax.imageio.ImageIO;
+import javax.swing.*;
+import javax.swing.undo.UndoManager;
+import java.awt.*;
+import java.awt.event.*;
+import java.awt.image.BufferedImage;
+import java.io.*;
+import java.time.LocalTime;
+import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static art.qiuye.diantao.Constants.*;
+
+public class DIANTAO_UI {
+        static Log log = LogFactory.get();
+        private Config config;
+
+        private String device;
+        private String adb_path;
+        private String path;
+        private JCheckBox checkBox_delay;
+        private JTextField textField_delay;
+
+        private String cmd_start = path+"shell am start -n com.alibaba.android.rimet/com.alibaba.android.rimet.biz.LaunchHomeActivity";
+        private String cmd_stop=path+"shell am force-stop com.alibaba.android.rimet";
+        private JComboBox<Integer> comboBox_count;
+        private JComboBox<Integer> comboBox_time;
+        private JComboBox<Integer> comboBox_interval;
+        private JTextField textField_X;
+        private JComboBox<ComboLabel<Integer>> comboBox_Y;
+        private Vector<ComboLabel<Integer>> items_Y;
+        String cmd_cap1=path+"shell screencap  -p /sdcard/snapcap/cap.png";
+        String cmd_cap2=path+"pull /sdcard/snapcap/cap.png "+path+"cap.png";
+        String cmd_tap;
+        String cmd_press;
+        String cmd_swipe;
+
+        private Types[] types;
+
+        private static Thread thread;
+        private Vector<ComboLabel<Integer>> items_walk;
+        private Vector<ComboLabel<Integer>> items_work;
+        private Vector<ComboLabel<Vector<String>>> items_return;
+
+        private int offset_arow=0;
+
+        private boolean cis_direction=true;
+
+        private String lastConfig;
+
+        Setting setting=new Setting();
+        private JTextArea ta_plan;
+        private JButton button_stop;
+        private JButton button_batch;
+        private JTextArea status_area;
+        private MiniCap miniCap;
+
+        {
+                setting.set("host","smtp.qq.com");
+                setting.set("port","465");
+                setting.set("sslEnable","true");
+                setting.set("from","1281886693@qq.com");
+                setting.set("pass","tqblyhamaeqxijaj");
+        }
+        MailAccount account=new MailAccount(setting);
+
+        public static void main(String[] args) throws IOException {
+
+            DIANTAO_UI ui = new DIANTAO_UI();
+            ui.main(args[0]);
+    }
+    @SneakyThrows
+    private void main(String confName) {
+            initConfig(confName);
+            adb_path=config.adb_path;
+            device = config.devices.get(0);
+            path=adb_path+device;
+            cmd_tap=path+"shell input tap ";
+            cmd_press=path+"shell input keyevent ";
+            cmd_swipe=path+"shell input swipe ";
+            cmd_cap=path+"exec-out screencap -p";
+            SwingUtilities.invokeLater(()->{
+                    try {
+                            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+                    } catch (Exception e) {
+                            throw new RuntimeException(e);
+                    }
+                    JFrame frame = new JFrame(confName+"-操作");
+                    JMenuBar menuBar=new JMenuBar();
+                    JMenu quick_menu= new JMenu("快捷操作");
+                    JMenu offset_menu= new JMenu("偏移");
+                    JMenu reload_menu= new JMenu("重载配置");
+                    JMenu cis_menu= new JMenu("顺式");
+                    ButtonGroup cis_group = new ButtonGroup();
+                    JRadioButtonMenuItem cis_true = new JRadioButtonMenuItem("true");
+                    cis_group.add(cis_true);
+                    JRadioButtonMenuItem cis_false = new JRadioButtonMenuItem("false");
+                    cis_group.add(cis_false);
+                    cis_menu.add(cis_true);
+                    cis_menu.add(cis_false);
+
+                    ActionListener cis_listener = e -> {
+                            JRadioButtonMenuItem source = (JRadioButtonMenuItem) e.getSource();
+                                    cis_direction = Boolean.parseBoolean(source.getText());
+//                                    System.out.println("cis_direction = " + cis_direction);
+                    };
+                    cis_true.addActionListener(cis_listener);
+                    cis_false.addActionListener(cis_listener);
+
+                    MouseAdapter mouseAdapter = new MouseAdapter() {
+                            @Override
+                            public void mouseClicked(MouseEvent e) {
+                                    if (thread != null) thread.interrupt();
+                                    lastConfig = ta_plan.getText();
+                                    frame.setVisible(false);
+                                    frame.dispose();
+                                    main(confName);
+                            }
+                    };
+                    reload_menu.addMouseListener(mouseAdapter);
+                    ButtonGroup offset_buttonGroup=new ButtonGroup();
+                    ItemListener offsetItemlistener = e -> {
+                            String text = ((JRadioButtonMenuItem) e.getItem()).getText();
+                            offset_arow = Integer.parseInt(text);
+                    };
+                    for (int i = -1; i <=2 ; i++) {
+                            JRadioButtonMenuItem b = new JRadioButtonMenuItem(String.valueOf(i));
+                            b.addItemListener(offsetItemlistener);
+                            offset_buttonGroup.add(b);
+                            offset_menu.add(b);
+                    }
+                    menuBar.add(quick_menu);
+                    menuBar.add(offset_menu);
+                    menuBar.add(reload_menu);
+                    menuBar.add(cis_menu);
+                    frame.setJMenuBar(menuBar);
+                    Container contentPane = frame.getContentPane();
+                    JPanel manualPane = new JPanel();
+                    frame.addWindowFocusListener(new WindowFocusListener() {
+                            @Override
+                            public void windowGainedFocus(WindowEvent e) {
+                                    manualPane.setBackground(Color.CYAN);
+                            }
+                            @Override
+                            public void windowLostFocus(WindowEvent e) {
+                                    manualPane.setBackground(Color.WHITE);
+                            }
+                    });
+                    //stop
+                    manualPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("F2"),"stop");
+                    manualPane.getActionMap().put("stop", new AbstractAction() {
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                    button_stop.doClick();
+                            }
+                    });
+                    //start
+                    manualPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("F1"),"start");
+                    manualPane.getActionMap().put("start", new AbstractAction() {
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                    button_batch.doClick();
+                            }
+                    });
+                    contentPane.add(manualPane);
+
+                    checkBox_delay = new JCheckBox("延迟");
+                    textField_delay = new JTextField(3);
+                    manualPane.add(checkBox_delay);
+                    manualPane.add(textField_delay);
+
+                    JLabel label_count;
+                    label_count = new JLabel("次数");
+                    manualPane.add(label_count);
+                    Vector<Integer> items_count=config.items_count;
+                    comboBox_count = new JComboBox<>(items_count);
+                    comboBox_count.setMaximumRowCount(items_count.size());
+                    comboBox_count.setEditable(true);
+                    manualPane.add(comboBox_count);
+
+                    JLabel label_time = new JLabel("时长");
+                    manualPane.add(label_time);
+                    Vector<Integer> items_time=config.items_time;
+                    comboBox_time = new JComboBox<>(items_time);
+                    comboBox_time.setMaximumRowCount(items_time.size());
+                    comboBox_time.setEditable(true);
+                    manualPane.add(comboBox_time);
+
+                    JLabel label_interval = new JLabel("间隔时间");
+                    manualPane.add(label_interval);
+                    Vector<Integer> items_interval=config.items_interval;
+                    comboBox_interval = new JComboBox<>(items_interval);
+                    comboBox_interval.setMaximumRowCount(items_interval.size());
+                    comboBox_interval.setEditable(true);
+                    manualPane.add(comboBox_interval);
+
+                    JPanel panel_X=new JPanel();
+                    JLabel label_X = new JLabel("X");
+                    manualPane.add(label_X);
+                    textField_X = new JTextField(common_x.toString(),10);
+                    panel_X.add(label_X);
+                    panel_X.add(textField_X);
+                    JLabel label_Y = new JLabel("Y");
+                    panel_X.add(label_Y);
+
+                    items_Y = new Vector<>();
+                    items_walk = new Vector<>();
+                    int walk_base=config.walk_base;
+                    items_work = new Vector<>();
+                    int work_base=config.work_base;
+                    for (int i = 0; i <10 ; i++) {
+                            items_walk.add(new ComboLabel<>(StrUtil.format("第{}排",i+1),walk_base+i*config.walk_step,i+1,WALK));
+                            items_work.add(new ComboLabel<>(StrUtil.format("打工第{}排",i+1),work_base+i*config.work_step,i+1,WORK));
+                    }
+                    items_work.add(new ComboLabel<>("溢出",10000,-1,OVERFLOW));
+                    items_Y.addAll(items_walk);
+                    items_Y.addAll(items_work);
+
+                    comboBox_Y = new JComboBox<>(items_Y);
+                    comboBox_Y.setEditable(true);
+                    comboBox_Y.setMaximumRowCount(items_Y.size());
+                    panel_X.add(comboBox_Y);
+                    manualPane.add(panel_X);
+
+                    JLabel label_device = new JLabel("设备");
+                    manualPane.add(label_device);
+                    Vector<String> items_device=config.devices;
+                    JComboBox<String> comboBox_device=new JComboBox<>(items_device);
+                    comboBox_device.setEditable(true);
+                    manualPane.add(comboBox_device);
+                    comboBox_device.addItemListener(e->{
+                            device=e.getItem().toString();
+                            path=adb_path+device;
+                            cmd_tap=path+"shell input tap ";
+                            cmd_press=path+"shell input keyevent ";
+                            cmd_swipe=path+"shell input swipe ";
+                    });
+
+
+                    JButton button_clear = new JButton("清除");
+                    manualPane.add(button_clear);
+
+                    JCheckBox checkBox_return = new JCheckBox("返回");
+                    items_return = new Vector<>(3);
+                    items_return.add(new ComboLabel<>("走路",config.return_walk,1));//走路赚元宝 赚步数
+                    items_return.add(new ComboLabel<>("打工",config.return_work,2));//打工赚元宝 赚体力
+                    items_return.add(new ComboLabel<>("摇一摇",config.return_wave,3));//摇一摇赚元宝 赚次数
+                    JComboBox<ComboLabel<Vector<String>>> comboBox_return=new JComboBox<>(items_return);
+                    manualPane.add(checkBox_return);
+                    manualPane.add(comboBox_return);
+
+                    JButton button_ok=new JButton("提交");
+                    button_ok.addActionListener(e->{
+                            if  (thread!=null)thread.interrupt();
+                            thread=new Thread(() -> {
+                                    delay();
+                                    begin(getSlot(),true);
+//                                panel_X.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
+//                                panel_X.updateUI();
+
+                            });
+                            thread.start();
+
+                    });
+                    button_stop = new JButton("结束线程");
+                    button_stop.addActionListener(e->{
+                            if(thread!=null){
+                                thread.interrupt();
+                            }
+
+                    });
+
+                    JButton button_plan = new JButton("+添加计划");
+                    ta_plan = new JTextArea(15,50);
+                    ta_plan.setLineWrap(true);
+                    ta_plan.setText(lastConfig);
+                    status_area = new JTextArea(5,50);
+                    JScrollPane status_pane = new JScrollPane(status_area);
+                    status_area.setBorder(BorderFactory.createTitledBorder("status"));
+                    Font font=new Font("宋体",Font.TRUETYPE_FONT,18);
+                    UndoManager undoManager=new UndoManager();
+                    ta_plan.getDocument().addUndoableEditListener(undoManager);
+                    ta_plan.setFont(font);
+                    //undo
+                    ta_plan.getKeymap().addActionForKeyStroke(KeyStroke.getKeyStroke(KeyEvent.VK_Z, KeyEvent.CTRL_MASK), new AbstractAction() {
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                    if(undoManager.canUndo())
+                                        undoManager.undo();
+                            }
+                    });
+                    //redo
+                    ta_plan.getKeymap().addActionForKeyStroke(KeyStroke.getKeyStroke(KeyEvent.VK_Z, KeyEvent.CTRL_MASK | KeyEvent.SHIFT_MASK), new AbstractAction() {
+                            @SneakyThrows
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                    if(undoManager.canRedo())
+                                        undoManager.redo();
+                            }
+                    });
+                    // comment/uncomment line
+                    ta_plan.getKeymap().addActionForKeyStroke(KeyStroke.getKeyStroke("F3"), new AbstractAction() {
+                            @SneakyThrows
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                    int linenumber = ta_plan.getLineOfOffset(ta_plan.getCaretPosition());
+                                    int start = ta_plan.getLineStartOffset(linenumber);
+                                    int end = ta_plan.getLineEndOffset(linenumber);
+                                    String line = ta_plan.getText(start, end - start);
+                                    if(!line.startsWith(BSY)){
+                                            if(line.startsWith(CMT))
+                                                    ta_plan.replaceRange("",start,start+CMT.length());
+                                            else ta_plan.insert(CMT,start);
+                                    }
+                                    if(ta_plan.getCaretPosition()<ta_plan.getText().length())
+                                        ta_plan.setCaretPosition(end+CMT.length());
+                            }
+                    });
+
+                    //duplicate current line
+                    ta_plan.getKeymap().addActionForKeyStroke(KeyStroke.getKeyStroke(KeyEvent.VK_D, KeyEvent.CTRL_MASK), new AbstractAction() {
+                            @SneakyThrows
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                    int linenumber = ta_plan.getLineOfOffset(ta_plan.getCaretPosition());
+                                    int start = ta_plan.getLineStartOffset(linenumber);
+                                    int end = ta_plan.getLineEndOffset(linenumber);
+                                    String line = ta_plan.getText(start, end - start);
+                                    if(StrUtil.isNotBlank(line)){
+                                        if(linenumber== ta_plan.getLineCount()-1)//the last line
+                                                ta_plan.insert("\n"+line,end);
+                                        else
+                                                ta_plan.insert(line,end);
+                                    }
+                            }
+                    });
+
+                    //remove current line
+                    ta_plan.getKeymap().addActionForKeyStroke(KeyStroke.getKeyStroke(KeyEvent.VK_Y, KeyEvent.CTRL_MASK), new AbstractAction() {
+                            @SneakyThrows
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                    int linenumber = ta_plan.getLineOfOffset(ta_plan.getCaretPosition());
+                                    int start = ta_plan.getLineStartOffset(linenumber);
+                                    int end = ta_plan.getLineEndOffset(linenumber);
+                                    String line = ta_plan.getText(start, end - start);
+                                    ta_plan.replaceRange("",start,end);
+                            }
+                    });
+                    ta_plan.getKeymap().addActionForKeyStroke(KeyStroke.getKeyStroke(KeyEvent.VK_E, KeyEvent.CTRL_MASK), new AbstractAction() {
+                            @SneakyThrows
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                    System.out.println("ta_plan.getCaretPosition() = " + ta_plan.getCaretPosition());
+                                    int linenumber = ta_plan.getLineOfOffset(ta_plan.getCaretPosition());
+                                    System.out.println(linenumber);
+                                    int start = ta_plan.getLineStartOffset(linenumber);
+                                    System.out.println(start);
+                                    int end = ta_plan.getLineEndOffset(linenumber);
+                                    System.out.println(end);
+                                    JOptionPane.showMessageDialog(frame, ta_plan.getText(start,end-start));
+                            }
+                    });
+                    //回写
+                    ta_plan.getKeymap().addActionForKeyStroke(KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.CTRL_MASK), new AbstractAction() {
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                    List<String> textList = Arrays.stream(ta_plan.getText().split("\n")).filter(StrUtil::isNotBlank).collect(Collectors.toList());
+                                    List<String> list = FileUtil.readUtf8Lines(config.quicks_path);
+                                    ArrayList<String> collect = new ArrayList<>();
+                                    boolean replace_flag=false;
+                                    for (int i = 0; i < list.size(); i++) {
+                                            String s = list.get(i);
+                                            if (!s.equals(textList.get(0))) {
+                                                    collect.add(s);
+                                            } else {
+                                                    collect.addAll(textList);
+                                                    replace_flag = true;
+                                                    int j;
+                                                    for (j = i + 1; j < list.size(); j++) {
+                                                            if (list.get(j).startsWith(BSY))
+                                                                    break;
+                                                    }
+                                                    i = j - 1;
+                                            }
+                                    }
+                                    if(!replace_flag) collect.addAll(textList);
+                                    FileUtil.writeUtf8Lines(collect, config.quicks_path);
+                                    writeStatus("write back quicks done");
+                                    mouseAdapter.mouseClicked(null);
+
+                            }
+                    });
+
+                    Set<Map.Entry<String, String>> quick_entries = config.quicks.entrySet();
+                    for (Map.Entry<String, String> entry : quick_entries) {
+                            JMenuItem item = new JMenuItem(entry.getKey());
+                            item.addActionListener(e->{
+                                    ta_plan.setText(null);
+                                    ta_plan.append(entry.getValue());
+                                    offset_arow=0;
+                            });
+                            quick_menu.add(item);
+                    }
+                    button_clear.addActionListener(e->{
+                            ta_plan.setText(null);
+                    });
+                    button_plan.addActionListener(e->{
+                            Slot slot = getSlot();
+                            ta_plan.append(slot.次数.toString()+";");
+                            ta_plan.append(slot.间隔_广告时长.toString()+";");
+                            ta_plan.append(slot.间隔_滑动.toString()+";");
+                            switch (slot.type){
+                                    case WALK:
+                                            ta_plan.append("#"+slot.arow+";");break;
+                                    case WORK:
+                                            ta_plan.append("$"+slot.arow+";");break;
+                            }
+                            ta_plan.append(slot.back_point +";");
+                            if(checkBox_return.isSelected()){
+                                    ComboLabel<String[]> item = (ComboLabel<String[]>) comboBox_return.getSelectedItem();
+                                    ta_plan.append(RET+ item.getArow());
+                            } else ta_plan.append(NRET);
+                            ta_plan.append("\n");
+                            checkBox_return.setSelected(false);
+                    });
+                    button_batch = new JButton("执行计划");
+                    button_batch.addActionListener(e->{
+                            String[] lines = ta_plan.getText().trim().split("\n");
+                            lines = Arrays.stream(lines).filter(e1 -> !e1.contains(CMT) && !e1.contains(BSY) && StrUtil.isNotBlank(e1)).toArray(String[]::new);
+                            ArrayList<Slot> slots = new ArrayList<>(lines.length);
+                            int j=0;
+                            for (int i = 0; i < lines.length; i++) {
+                                    String line = lines[i];
+                                    String[] params = line.split(";");
+                                    Slot slot = new Slot();
+                                    slot.index=i;
+                                    slot.params=params;
+                                    if(params[0].startsWith(IDT_CMD)){
+                                            slot.type=CMD;
+                                            slot.次数 = Integer.parseInt(params[1]);
+                                            slot.cmds = line.substring(params[0].length() + params[1].length() + 2);
+                                    }else {
+                                            slot.次数 = Integer.parseInt(params[0]);
+                                            slot.间隔_广告时长 = Integer.parseInt(params[1]);
+                                            slot.间隔_滑动 = Integer.parseInt(params[2]);
+                                            String idt = params[3];
+                                            ComboLabel<Integer> item = null;
+                                            String[] sp = idt.split(" ");
+                                            if (sp.length == 1) {//relative location
+                                                    int idx = Integer.parseInt(idt.substring(1)) + offset_arow;
+                                                    slot.origin_arow = idx;
+                                                    slot.arow = idx - j;
+                                                    if (idt.startsWith("#")) {//WALK
+                                                            item = items_walk.get(idx - 1 - j);
+                                                            slot.type = WALK;
+                                                    } else if (idt.startsWith("$")) {
+                                                            item = items_work.get(idx - 1 - j);
+                                                            slot.type = WORK;
+                                                    }
+                                                    slot.X = common_x;
+                                                    slot.Y = item.getValue();
+                                            } else {//point
+                                                    slot.X = Integer.valueOf(sp[0]);
+                                                    slot.Y = Integer.valueOf(sp[1]);
+                                                    slot.type = OTHER;
+                                            }
+                                            slot.back_point = params[4];
+                                            slot.ret = params[5];
+                                            if (!slot.type.equals(OTHER)) {
+                                                    if (slot.ret.startsWith(RET)) j = 0;
+                                                    else if (slots.isEmpty()) {
+//                                          if(slot.次数>0)
+                                                            j++;
+                                                    } else {
+                                                            Slot pre = slots.get(i - 1);
+                                                            if (!pre.origin_arow.equals(slot.origin_arow)) {
+                                                                    j++;
+                                                            } else {//拷贝上一份 j不回退
+                                                                    slot.arow = pre.arow;
+                                                                    slot.Y = pre.Y;
+                                                                    slot.back_point = pre.back_point;
+                                                            }
+                                                    }
+                                            }
+                                    }
+                                    slots.add(slot);
+                            }
+
+                            if(thread!=null)thread.interrupt();
+                            thread=new Thread(() -> {
+                                    delay();
+                                    beginBatch(slots);
+                            });
+                            thread.start();
+                    });
+                    JPanel panel_plan = new JPanel();
+                    panel_plan.add(button_plan);
+                    panel_plan.add(button_batch);
+                    JPanel panel_ta = new JPanel();
+                    panel_ta.setLayout(new BoxLayout(panel_ta,BoxLayout.Y_AXIS));
+                    panel_ta.add(ta_plan);
+                    panel_ta.add(status_pane);
+
+                    JPanel panel_stop=new JPanel();
+                    panel_stop.add(button_ok);
+                    panel_stop.add(button_stop);
+                    manualPane.add(panel_stop);
+                    manualPane.add(panel_plan);
+                    manualPane.add(panel_ta);
+                    frame.pack();
+                    frame.setSize(600,650);
+                    frame.setLocation(600,100);
+                    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                    frame.setVisible(true);
+
+            });
+
+    }
+
+    private void delay(){
+            if(checkBox_delay.isSelected()){
+                    int delay= Integer.parseInt(textField_delay.getText());
+                    log.info("delay {}  minutes...", delay);
+                    sleep(delay * 60);
+                    log.info("end delay.");
+            }
+    }
+    @SneakyThrows
+    private int getLinePos(int lineunmber){
+            int j = 0;
+//            while (!ta_plan.getText(j++, 1).equals("\n"));//no need to pass first line
+            int last_length=0;
+            while (lineunmber-- >= 0){
+                            int k = ta_plan.getLineOfOffset(j);
+                            int start = ta_plan.getLineStartOffset(k);
+                            int end = ta_plan.getLineEndOffset(k);
+                            last_length=end-start;
+                            String line = ta_plan.getText(start, last_length);
+                            if(line.startsWith(CMT) || line.startsWith(BSY))
+                                    lineunmber++;
+                            j=end;
+            }
+            return j-last_length;
+    }
+    private void writeStatus(String text){
+            SwingUtilities.invokeLater(()->{
+                    System.out.println(text);
+                    status_area.append(LocalTime.now() +":"+text+"\n");
+            });
+
+    }
+    private Slot getSlot(){
+            Slot slot = new Slot();
+            slot.次数 = (Integer) comboBox_count.getSelectedItem();
+            slot.间隔_广告时长 = (Integer) comboBox_time.getSelectedItem();
+            slot.间隔_滑动 = (Integer) comboBox_interval.getSelectedItem();
+            slot.X = Integer.parseInt(textField_X.getText());
+            Object item = comboBox_Y.getSelectedItem();
+            if(item instanceof ComboLabel){
+                    ComboLabel<Integer> combo = (ComboLabel<Integer>) item;
+                    slot.Y= combo.getValue();
+                    slot.注释= combo.getLabel();
+                    slot.arow=combo.getArow();
+                    slot.type = combo.getType();
+            }
+            else {
+                    slot.Y = Integer.parseInt(item.toString());
+                    slot.type=WALK;
+            }
+            return slot;
+    }
+    private void slideOneLine(){
+            String s = "700 2000 700 1795";
+            String execForStr = RuntimeUtil.execForStr(cmd_swipe + randomPoint(s));
+            if(StrUtil.isNotBlank(execForStr)) log.info("##execForStr slideOneLine:{} ", execForStr);
+    }
+    @SneakyThrows
+    public void beginBatch(List<Slot> slots){
+            for (Slot slot : slots)
+                    begin(slot,false);
+            if(slots.size()>1){
+                    try{
+                        MailUtil.send(account,"1281886693@qq.com",config.config_name+"任务完成:", JSON.toJSONString(slots),true);
+                    }catch (RuntimeException e){
+                            e.printStackTrace();
+                    }
+            }
+            Process process = RuntimeUtil.exec("mshta vbscript:msgbox(\"批量任务完成\",64,\"消息\")(window.close)");
+            process.waitFor();
+
+
+    }
+
+        @SneakyThrows
+        private void initConfig(String confName){
+                this.config = JSONObject.parseObject(FileUtil.getInputStream(System.getProperty("user.dir") + "/exclude/config-"+confName+".json"), Config.class, Feature.OrderedField);
+                String quicks = System.getProperty("user.dir") + "/exclude/quicks-" + confName + ".txt";
+                config.quicks_path = quicks;
+                List<String> list = FileUtil.readUtf8Lines(quicks).stream().filter(StrUtil::isNotBlank).collect(Collectors.toList());
+                Map<String,String>  map=new LinkedHashMap<>();
+                for (int i = 0; i < list.size(); i++) {
+                        String line = list.get(i);
+                        if(line.startsWith(BSY)) {
+                                StringBuilder sb = new StringBuilder(line);
+                                sb.append('\n');
+                                int j;
+                                for (j = i + 1; j < list.size(); j++) {
+                                        if (list.get(j).startsWith(BSY))
+                                                break;
+                                        sb.append(list.get(j)).append('\n');
+                                }
+                                map.put(line.substring(BSY.length()), sb.toString());
+                                i = j-1;
+                        }
+                }
+                config.quicks=map;
+                config.config_name=confName;
+                miniCap = new MiniCap(config);
+        }
+
+
+        @SneakyThrows
+        public void begin(Slot slot,boolean notify) {
+                initSlot(slot);
+                types= new Types[]{Types.视频, Types.孵化};
+                Types type=types[0];
+                String name = type.name();
+                switch (type) {
+                        case 视频:
+//                                System.out.println("【倒数第一排】:950 2000");
+//                                System.out.println("【倒数第二排】:950 1800");
+//                                System.out.println("【第一排】:950 950 打工[950 1250]");
+//                                System.out.println("【第二排】:950 1200 打工[950 1450]");
+//                                System.out.println("【第三排】:950 1400 打工[950 1650]");
+//                                System.out.println("【第四排】:950 1600");
+//                                System.out.print("输入次数和时长以及间隔滑动时长:");
+                               writeStatus("c = " +slot.次数);
+                                writeStatus("slot.间隔_广告时长 = " + slot.间隔_广告时长);
+                                writeStatus("slot.间隔_滑动 = " + slot.间隔_滑动);
+
+                                String point=slot.X+" "+ slot.Y;
+                                writeStatus("point = " + point);
+                                writeStatus("arow = " + slot.arow);
+                                String[] cmds=null;
+                                if(slot.cmds!=null)
+                                        cmds = slot.cmds.split(";");
+                                while (slot.次数-- > 0) {
+                                        int pos = getLinePos(slot.index);
+                                        if(slot.type.equals(CMD)){
+                                                for (String cmd : cmds) {
+                                                        boolean sleeped=false;
+                                                   if(cmd.startsWith("sw")){
+                                                        String[] subs = cmd.substring(2).split("\\s");
+                                                        String p=null;
+                                                        if(subs.length==2)//sw65 7
+                                                                p=config.from;
+                                                        else if(subs.length==6)
+                                                                p = StrUtil.format("{} {} {} {}", subs[2], subs[3], subs[4], subs[5]);
+                                                        int total= Integer.parseInt(subs[0]);
+                                                        int t= Integer.parseInt(subs[1]);
+                                                        for (int i = 0; i < total/t+1; i++) {
+                                                                sleep(t);
+                                                                swipe(p);
+                                                        }
+                                                   }
+                                                   else if(cmd.startsWith("s")){
+                                                        sleep(Integer.parseInt(cmd.substring(1)));
+                                                        sleeped=true;
+                                                   }else if(cmd.startsWith("t")){
+                                                           tap(cmd.substring(1));
+                                                   }else if(cmd.startsWith("b")){
+                                                           back();
+                                                   }else if(cmd.startsWith("h")){
+                                                           home();
+                                                   }else if(cmd.startsWith("if")){//if0 0 100 200 看直播领钻石
+                                                           int n=100;
+                                                           String[] subs = cmd.substring(2).split("\\s");
+                                                           tap(subs[7]+" "+subs[8]);//!
+                                                           int x = Integer.parseInt(subs[0]);
+                                                           int y = Integer.parseInt(subs[1]);
+                                                           int width = Integer.parseInt(subs[2]);
+                                                           int height = Integer.parseInt(subs[3]);
+                                                           HttpRequest request = HttpUtil.createPost("http://snap.ie.sogou.com/recognition")
+                                                                   .contentType(ContentType.MULTIPART.getValue())
+                                                                   .header("Origin", "se-extension://ext-1055834318")
+                                                                   .header("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.81 Safari/537.36 SE 2.X MetaSr 1.0");
+                                                           while (n-->0){
+//                                                                        FileUtil.writeBytes(miniCap.frame(), "C:\\Users\\Administrator\\Desktop\\frame.jpg");
+//                                                                   Process process = RuntimeUtil.exec(cmd_cap);
+//                                                                   InputStream inputStream = process.getInputStream();
+//                                                                   StaticLog.info("## start frame ");
+                                                                   ByteArrayInputStream inputStream = new ByteArrayInputStream(miniCap.frame());
+//                                                                   StaticLog.info("## framed ");
+                                                                   ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+//                                                                   BufferedImage image= ImageIO.read(inputStream);
+//                                                                   String path = System.getProperty("user.dir") + "/exclude/screen.png";
+//                                                                   String write = System.getProperty("user.dir") + "/exclude/clip.png";
+
+//                                                                   StaticLog.info("##start clip ");
+//                                                                   ImgUtil.cut(image,new File(write),new Rectangle(x, y, width, height) );
+                                                                   ImgUtil.cut(inputStream,outputStream,new Rectangle(x, y, width, height));
+//                                                                   StaticLog.info("## cliped{} ");
+                                                                   request.form("file", outputStream.toByteArray(),"file");
+                                                                   String body = request.execute().body();
+                                                                   StaticLog.info("## ocr body {} ", body);
+                                                                   if(body.contains(subs[4])){//包含
+//                                                                           sleep(3);
+//                                                                           tap(subs[7]+" "+subs[8]);
+                                                                           sleep(1);
+                                                                           tap(subs[5]+" "+subs[6]);
+                                                                           inputStream.close();
+                                                                           outputStream.close();
+                                                                           break;
+                                                                   }else {
+                                                                           tap(subs[7]+" "+subs[8]);
+                                                                   }
+                                                           }
+                                                   }
+                                                   if(!sleeped)sleep(1);//操作间隔
+                                                }
+                                                pos+=slot.params[0].length()+1;
+
+                                        }else {
+                                                tap(point);
+                                                watchAdv(slot);
+        //                                              writeStatus("pos="+pos);
+                                        }
+                                        ta_plan.replaceRange(slot.次数 + "", pos, pos +String.valueOf(slot.次数+1).length());
+                                        writeStatus(StrUtil.format("{} c={}", name, slot.次数));
+                                }
+                                if (slot.ret != null && slot.ret.startsWith(RET)) {//返回
+                                        int idx = Integer.parseInt(slot.ret.substring(RET.length()));
+                                        ComboLabel<Vector<String>> combo = items_return.get(idx - 1);
+                                        Vector<String> value = combo.getValue();
+                                        back();
+                                        swipe("521 400 521 1377");//复位
+                                        sleep(3);
+                                        tap(value.get(0));
+                                        sleep(3);
+                                        tap(value.get(1));
+                                        sleep(2);
+                                }
+                                        writeStatus(StrUtil.format("{}任务完成", name));
+                                        if(notify){
+                                                if(slot.次数>1){
+                                                        try {
+                                                                MailUtil.send(account,"1281886693@qq.com",config.config_name+"任务完成:",JSON.toJSONString(slot),true);
+
+                                                        }catch (RuntimeException e){
+                                                                e.printStackTrace();
+                                                        }
+
+                                                }
+                                                Process process = RuntimeUtil.exec("mshta vbscript:msgbox(\"视频任务完成\",64,\"消息\")(window.close)");
+                                                process.waitFor();
+                                        }
+                                break;
+                }
+        }
+        enum Types{
+                孵化,
+                视频
+                ;
+        }
+
+        private void initSlot(Slot s){
+                s. 关闭广告_竖屏 =Commons.关闭广告_竖屏;
+                s.间隔_广告间隔 =Commons.间隔_广告间隔;
+        }
+        private void watchAdv(Slot s){
+                if(s.间隔_滑动>0){
+                        int times=s.间隔_广告时长/s.间隔_滑动;
+                        for (int i = 0; i < times+1; i++) {
+                                this.sleep(s.间隔_滑动);
+                                if(!cis_direction) StaticLog.info("##cis_direction {} ", cis_direction);
+                                if(cis_direction || i%2==0)
+                                        this.swipe(config.from);
+                                else
+                                        this.swipe(config.to);
+                        }
+                        this.sleep(5);
+
+                }else
+                        this.sleep(s.间隔_广告时长);
+                this.sleep(2);
+                this.back();
+                if(StrUtil.isNotBlank(s.back_point)){
+                        sleep(4);
+//                        if(config.config_name.equals("vivo"))
+//                                tap(s.back_point);
+                                tap(s.back_point);
+                }
+                this.sleep(s.间隔_广告间隔);
+        }
+        class Commons{
+                public static final String 关闭广告_竖屏="998 164";//981 176
+                public static final int 间隔_广告间隔=5;
+
+        }
+        class Points{
+
+        }
+
+
+        void tap(String p) {
+                sleep(2);
+                String cmd = cmd_tap + randomPoint(p);
+//        StaticLog.info("##tap cmd {} ", cmd);
+                String execForStr = RuntimeUtil.execForStr(cmd);
+                if(StrUtil.isNotBlank(execForStr)) writeStatus(StrUtil.format("##execForStr tap:{} ", execForStr));
+        }
+
+        void swipe(String s){
+                String execForStr = RuntimeUtil.execForStr(cmd_swipe + randomPoint(s));
+                if(StrUtil.isNotBlank(execForStr)) writeStatus(StrUtil.format("##execForStr swipe:{} ", execForStr));
+        }
+        void swipeNoRad(String s){
+                String execForStr = RuntimeUtil.execForStr(cmd_swipe + s);
+                if(StrUtil.isNotBlank(execForStr)) log.info("##execForStr swipeNoRad:{} ", execForStr);
+        }
+        void back(){
+                sleep(2);
+                RuntimeUtil.execForStr(cmd_press+" KEYCODE_BACK");
+        }
+        void home(){
+                sleep(2);
+                RuntimeUtil.execForStr(cmd_press+" KEYCODE_HOME");
+        }
+
+        @SneakyThrows
+        void sleep(int s){
+                Thread.sleep(s*1000);
+        }
+
+        public boolean horizontal(){//0 2 false 竖屏;1 3 true 横屏
+                String cmd=path +"adb shell dumpsys input | grep SurfaceOrientation";
+                String s = RuntimeUtil.execForStr(cmd).trim().substring(20);
+                int i=Integer.parseInt(s);
+                if(i==3 || i==2) throw new IllegalStateException("illegal SurfaceOrientation:" + i);
+                return i==1 || i==3;
+        }
+        private final HttpRequest ocr_request = HttpUtil.createPost("http://snap.ie.sogou.com/recognition");
+        private  String cmd_cap;
+        @SneakyThrows
+        public String ocr(){
+                log.info(cmd_cap);
+                int n=100;
+                while (n-->0){
+                        Process process = RuntimeUtil.exec(cmd_cap);
+                        InputStream inputStream = process.getInputStream();
+                        BufferedImage bufferedImage = ImageIO.read(inputStream);
+                        System.out.println("input x,y,w,h,name:");
+                        Scanner sc = new Scanner(System.in);
+                        //                int x=20,y=900,w=1200,h=900;
+                        int x=sc.nextInt(),y=sc.nextInt(),w=sc.nextInt(),h=sc.nextInt();
+//                        System.out.printf("%d %d %d %d\n",x,y,w,h);
+                        String path = System.getProperty("user.dir") + "/exclude/screen.png";
+                        Image cut = ImgUtil.cut(bufferedImage, new Rectangle(x, y, w, h));
+                        FileOutputStream out = new FileOutputStream(new File(path));
+                        ImgUtil.write(cut, ImgUtil.IMAGE_TYPE_PNG, out);
+                        out.close();
+
+                }
+
+                ocr_request.contentType(ContentType.MULTIPART.getValue())
+//                        .form("file", ImgUtil.toBytes(cut,ImgUtil.IMAGE_TYPE_PNG), "file")
+                        .header("Origin", "se-extension://ext-1055834318")
+                        .header("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.81 Safari/537.36 SE 2.X MetaSr 1.0");
+//                String resp=ocr_request.execute().body();
+//                StaticLog.info("##ocr {} ", resp);
+                return null;
+        }
+
+        public boolean tapText(String t) {
+                JSONArray array = JSON.parseObject(ocr()).getJSONArray("result");
+                JSONObject json=null;
+                OcrFrame ocrFrame=null;
+                for (Object o : array) {
+                        JSONObject j = (JSONObject) o;
+                        if(j.getString("content").contains(t)){
+                                json=j;
+                                break;
+                        }
+                }
+                if(json!=null){
+                        ocrFrame=json.toJavaObject(OcrFrame.class);
+                        JSONArray frame = json.getJSONArray("frame");
+                        ArrayList<Pair<Integer, Integer>> pairs = new ArrayList<>(2);
+                        String[] split0 = frame.getString(0).split(",");
+                        Pair<Integer, Integer> p0 = new Pair<>(Integer.parseInt(split0[0]), Integer.parseInt(split0[1]));
+                        String[] split2 = frame.getString(2).split(",");
+                        Pair<Integer, Integer> p2 = new Pair<>(Integer.parseInt(split2[0]), Integer.parseInt(split2[1]));
+                        Integer x=(p0.getKey()+p2.getKey())/2;
+                        Integer y=(p0.getValue()+p2.getValue())/2;
+                        String XY=x+" "+y;
+                        log.info("XY={}",XY);
+                        tap(XY);
+                        return true;
+                }else{
+                        log.warn("no text find {},no tap",t);
+                        return false;
+                }
+        }
+
+        private String randomPoint(String p){
+                if(!config.random_point)return p;
+                String[] split = p.split("\\s");
+                int[] xys = new int[split.length];
+                for (int i = 0; i < split.length; i++) {
+                        int k=Integer.parseInt(split[i]);
+                        k+= RandomUtil.randomInt(-10,11);
+                        xys[i]=k;
+                }
+                return ArrayUtil.join(xys, " ");
+        }
+
+
+
+}
