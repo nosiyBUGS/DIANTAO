@@ -677,12 +677,15 @@ public class DIANTAO_UI {
                                                 for (String cmd : cmds) {
                                                         boolean sleeped=false;
                                                    if(cmd.startsWith("sw")){
+                                                        if(cmd.equals("sw")){swipe(config.from);continue;}//sw
+
                                                         String[] subs = cmd.substring(2).split("\\s");
                                                         String p=null;
                                                         if(subs.length==2)//sw65 7
                                                                 p=config.from;
                                                         else if(subs.length==6)
                                                                 p = StrUtil.format("{} {} {} {}", subs[2], subs[3], subs[4], subs[5]);
+
                                                         int total= Integer.parseInt(subs[0]);
                                                         int t= Integer.parseInt(subs[1]);
                                                         for (int i = 0; i < total/t+1; i++) {

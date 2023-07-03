@@ -62,10 +62,11 @@ public class MiniCap {
 
         String exist = StrUtil.format(adb_path + " {} shell ps -u shell", device);
         s=RuntimeUtil.execForStr(exist);
-//        StaticLog.info("##exist {} \n {}", exist,s);
+        StaticLog.info("##exist {} \n {}", exist,s);
         if(!s.contains("minicap")){
             ThreadUtil.execute(()->{
                 String ld = StrUtil.format(adb_path + "{} shell LD_LIBRARY_PATH={} {}/minicap -P 1080x1920@1080x1920/0", device, push_dir, push_dir);
+                StaticLog.info("##ld {}",ld);
                 String s1=RuntimeUtil.execForStr(ld);
                 StaticLog.info("##ld {} \n {} \n {}", ld,s1,"minicap process exited");
                 initial=false;
@@ -95,7 +96,7 @@ public class MiniCap {
 //        System.out.println("server listen 9002");
         byte[] frame=null;
         for (int read=0; frame==null ;read=stream.read(chunk)) {
-          log.info("chunk(length={})", chunk.limit());
+//          log.info("chunk(length={})", chunk.limit());
 //            StaticLog.info("##read,stream {} {}", read,stream);
 //            if(read<=0) StaticLog.info("##read,stream {} {}", read,stream);
             if(read<=0)continue;
