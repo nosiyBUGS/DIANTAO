@@ -499,7 +499,9 @@ public class DIANTAO_UI {
 //                                          if(slot.次数>0)
                                                             j++;
                                                     } else {
-                                                            Slot pre = slots.get(i - 1);
+                                                            int k=i-1;
+                                                            Slot pre = slots.get(k);
+                                                            while (pre.origin_arow==null) pre = slots.get(--k);
                                                             if (!pre.origin_arow.equals(slot.origin_arow)) {
                                                                     j++;
                                                             } else {//拷贝上一份 j不回退
