@@ -21,7 +21,7 @@ import java.nio.channels.SocketChannel;
  * @create 2023/6/29 0029
  */
 public class MiniCap {
-    private static Log log = LogFactory.get();
+    private static Log StaticLog = LogFactory.get();
 
 
     private static final String push_dir="/data/local/tmp";
@@ -193,7 +193,7 @@ public class MiniCap {
 
                         // Sanity check for JPG header, only here for debugging purposes.
                         if (frameBody[0] != (byte) 0xFF || frameBody[1] != (byte) 0xD8) {
-                            log.error(
+                            StaticLog.error(
                                     "Frame body does not start with JPG header", frameBody);
                             System.exit(1);
                         }

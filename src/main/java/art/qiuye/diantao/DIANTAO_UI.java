@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
 import static art.qiuye.diantao.Constants.*;
 
 public class DIANTAO_UI {
-        static Log log = LogFactory.get();
+        static Log StaticLog = LogFactory.get();
         private Config config;
 
         private String device;
@@ -90,7 +90,7 @@ public class DIANTAO_UI {
         }
         MailAccount account=new MailAccount(setting);
 
-        public static void main(String[] args) throws IOException {
+        public static void main(String[] args) {
 
             DIANTAO_UI ui = new DIANTAO_UI();
             ui.main(args[0]);
@@ -549,9 +549,9 @@ public class DIANTAO_UI {
     private void delay(){
             if(checkBox_delay.isSelected()){
                     int delay= Integer.parseInt(textField_delay.getText());
-                    log.info("delay {}  minutes...", delay);
+                    StaticLog.info("delay {}  minutes...", delay);
                     sleep(delay * 60);
-                    log.info("end delay.");
+                    StaticLog.info("end delay.");
             }
     }
     @SneakyThrows
@@ -601,7 +601,7 @@ public class DIANTAO_UI {
     private void slideOneLine(){
             String s = "700 2000 700 1795";
             String execForStr = RuntimeUtil.execForStr(cmd_swipe + randomPoint(s));
-            if(StrUtil.isNotBlank(execForStr)) log.info("##execForStr slideOneLine:{} ", execForStr);
+            if(StrUtil.isNotBlank(execForStr)) StaticLog.info("##execForStr slideOneLine:{} ", execForStr);
     }
     @SneakyThrows
     public void beginBatch(List<Slot> slots){
@@ -848,7 +848,7 @@ public class DIANTAO_UI {
         }
         void swipeNoRad(String s){
                 String execForStr = RuntimeUtil.execForStr(cmd_swipe + s);
-                if(StrUtil.isNotBlank(execForStr)) log.info("##execForStr swipeNoRad:{} ", execForStr);
+                if(StrUtil.isNotBlank(execForStr)) StaticLog.info("##execForStr swipeNoRad:{} ", execForStr);
         }
         void back(){
                 sleep(2);
@@ -875,7 +875,7 @@ public class DIANTAO_UI {
         private  String cmd_cap;
         @SneakyThrows
         public String ocr(){
-                log.info(cmd_cap);
+                StaticLog.info(cmd_cap);
                 int n=100;
                 while (n-->0){
                         Process process = RuntimeUtil.exec(cmd_cap);
@@ -925,11 +925,11 @@ public class DIANTAO_UI {
                         Integer x=(p0.getKey()+p2.getKey())/2;
                         Integer y=(p0.getValue()+p2.getValue())/2;
                         String XY=x+" "+y;
-                        log.info("XY={}",XY);
+                        StaticLog.info("XY={}",XY);
                         tap(XY);
                         return true;
                 }else{
-                        log.warn("no text find {},no tap",t);
+                        StaticLog.warn("no text find {},no tap",t);
                         return false;
                 }
         }
