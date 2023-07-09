@@ -4,6 +4,7 @@ import cn.hutool.core.img.ImgUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.lang.Pair;
 import cn.hutool.core.net.NetUtil;
+import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.RuntimeUtil;
@@ -104,7 +105,11 @@ public class DIANTAO_UI {
             cmd_tap=path+"shell input tap ";
             cmd_press=path+"shell input keyevent ";
             cmd_swipe=path+"shell input swipe ";
-            cmd_cap=path+"exec-out screencap -p";
+            cmd_cap=path+"exec-out screencap -p ";
+            ThreadUtil.execute(()->{
+                    String c = RuntimeUtil.execForStr(adb_path + " connect "+device.trim().split("\\s+")[1]);
+                    StaticLog.info("##adb connect:{}",c);
+            });
             SwingUtilities.invokeLater(()->{
                     try {
                             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -685,6 +690,11 @@ public class DIANTAO_UI {
                                                         String p=null;
                                                         if(subs.length==2)//sw65 7
                                                                 p=config.from;
+                                                        else if(subs.length==4){
+                                                                p = StrUtil.format("{} {} {} {}", subs[0], subs[1], subs[2], subs[3]);
+                                                                swipe(p);
+                                                                continue;
+                                                        }
                                                         else if(subs.length==6)
                                                                 p = StrUtil.format("{} {} {} {}", subs[2], subs[3], subs[4], subs[5]);
 
