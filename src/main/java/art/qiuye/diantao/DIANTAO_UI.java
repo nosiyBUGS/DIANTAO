@@ -812,7 +812,6 @@ public class DIANTAO_UI {
                         int times=s.间隔_广告时长/s.间隔_滑动;
                         for (int i = 0; i < times+1; i++) {
                                 this.sleep(s.间隔_滑动);
-                                if(!cis_direction) StaticLog.info("##cis_direction {} ", cis_direction);
                                 if(cis_direction || i%2==0)
                                         this.swipe(config.from);
                                 else
