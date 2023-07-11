@@ -765,8 +765,9 @@ public class DIANTAO_UI {
                                                 watchAdv(slot);
         //                                              writeStatus("pos="+pos);
                                         }
+                                        int finalPos = pos;
                                         SwingUtilities.invokeLater(()->{
-                                                ta_plan.replaceRange(slot.次数 + "", pos, pos +String.valueOf(slot.次数+1).length());
+                                                ta_plan.replaceRange(slot.次数 + "", finalPos, finalPos +String.valueOf(slot.次数+1).length());
                                         });
                                         writeStatus(StrUtil.format("{} c={}", name, slot.次数));
                                 }
