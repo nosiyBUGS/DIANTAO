@@ -60,9 +60,12 @@ public class DIANTAO_UI {
         String cmd_press;
         String cmd_swipe;
 
+        String cmd_current;
+
         private Types[] types;
 
-        private static Thread thread;
+        private  Thread thread;
+        private  Thread monitorThread;
         private Vector<ComboLabel<Integer>> items_walk;
         private Vector<ComboLabel<Integer>> items_work;
         private Vector<ComboLabel<Vector<String>>> items_return;
@@ -79,6 +82,7 @@ public class DIANTAO_UI {
         private JButton button_batch;
         private JTextArea status_area;
         private MiniCap miniCap;
+        private String[] activityNames;
 
         {
                 setting.set("host","smtp.qq.com");
@@ -104,6 +108,7 @@ public class DIANTAO_UI {
             cmd_press=path+"shell input keyevent ";
             cmd_swipe=path+"shell input swipe ";
             cmd_cap=path+"exec-out screencap -p ";
+            cmd_current=path+"shell dumpsys activity activities | grep mResumedActivity";
             ThreadUtil.execute(()->{
                     String c = RuntimeUtil.execForStr(adb_path + " connect "+device.trim().split("\\s+")[1]);
                     StaticLog.info("##adb connect:{}",c);
@@ -139,7 +144,7 @@ public class DIANTAO_UI {
                     MouseAdapter mouseAdapter = new MouseAdapter() {
                             @Override
                             public void mouseClicked(MouseEvent e) {
-                                    if (thread != null) thread.interrupt();
+                                    if (thread != null) thread.stop();
                                     lastConfig = ta_plan.getText();
                                     frame.setVisible(false);
                                     frame.dispose();
@@ -280,7 +285,7 @@ public class DIANTAO_UI {
 
                     JButton button_ok=new JButton("提交");
                     button_ok.addActionListener(e->{
-                            if  (thread!=null)thread.interrupt();
+                            if  (thread!=null)thread.stop();
                             thread=new Thread(() -> {
                                     delay();
                                     begin(getSlot(),true);
@@ -294,7 +299,9 @@ public class DIANTAO_UI {
                     button_stop = new JButton("结束线程");
                     button_stop.addActionListener(e->{
                             if(thread!=null){
-                                thread.interrupt();
+                                thread.stop();
+                                monitorThread.stop();
+                                activityNames=null;
                             }
 
                     });
@@ -456,8 +463,16 @@ public class DIANTAO_UI {
                     button_batch = new JButton("执行计划");
                     button_batch.addActionListener(e->{
                             String[] lines = ta_plan.getText().trim().split("\n");
-                            lines = Arrays.stream(lines).filter(e1 -> !e1.contains(CMT) && !e1.contains(BSY) && StrUtil.isNotBlank(e1)).toArray(String[]::new);
+                            SlotGroup group=new SlotGroup();
+                            Arrays.stream(lines).filter(e1->e1.startsWith(IDT_ACTIVITY)).findFirst().ifPresent(e2->{
+                                            group.activityNames = e2.substring(IDT_ACTIVITY.length()+1).split(";");
+                                            activityNames= group.activityNames;
+                                    }
+                            );
+                            lines = Arrays.stream(lines).filter(e1 -> !e1.contains(CMT) && !e1.contains(BSY) && !e1.contains(IDT_ACTIVITY) && StrUtil.isNotBlank(e1)).toArray(String[]::new);
+
                             ArrayList<Slot> slots = new ArrayList<>(lines.length);
+                            group.slots=slots;
                             int j=0;
                             for (int i = 0; i < lines.length; i++) {
                                     String line = lines[i];
@@ -502,15 +517,17 @@ public class DIANTAO_UI {
 //                                          if(slot.次数>0)
                                                             j++;
                                                     } else {
-                                                            int k=i-1;
-                                                            Slot pre = slots.get(k);
-                                                            while (pre.origin_arow==null) pre = slots.get(--k);
-                                                            if (!pre.origin_arow.equals(slot.origin_arow)) {
-                                                                    j++;
-                                                            } else {//拷贝上一份 j不回退
-                                                                    slot.arow = pre.arow;
-                                                                    slot.Y = pre.Y;
-                                                                    slot.back_point = pre.back_point;
+                                                            if(j>0){
+                                                                    int k=i-1;
+                                                                    Slot pre = slots.get(k);
+                                                                    while (pre.origin_arow==null) pre = slots.get(--k);//略过非#
+                                                                    if (!pre.origin_arow.equals(slot.origin_arow)) {
+                                                                            j++;
+                                                                    } else {//拷贝上一份 j不回退
+                                                                            slot.arow = pre.arow;
+                                                                            slot.Y = pre.Y;
+                                                                            slot.back_point = pre.back_point;
+                                                                    }
                                                             }
                                                     }
                                             }
@@ -518,12 +535,40 @@ public class DIANTAO_UI {
                                     slots.add(slot);
                             }
 
-                            if(thread!=null)thread.interrupt();
+                            if(thread!=null){
+                                    thread.stop();
+                            }
                             thread=new Thread(() -> {
                                     delay();
-                                    beginBatch(slots);
-                            });
+                                    beginBatch(group);
+                            },"thread");
                             thread.start();
+
+                            monitorThread=new Thread(()->{
+                                    if(activityNames!=null){
+                                            String current = RuntimeUtil.execForStr(cmd_current);
+                                            while (true){
+                                                    boolean contain=false;
+                                                    for (String activityName : activityNames) {
+                                                         if(current.contains(activityName)){
+                                                                 contain=true;
+                                                                 break;
+                                                         }
+                                                    }
+                                                    if(!contain){
+                                                        thread.suspend();
+                                                        writeStatus(StrUtil.format("current:{},require:{}",current,activityNames),false);
+                                                    }else {
+                                                        thread.resume();
+                                                    }
+                                                    sleep(2);
+                                                    current = RuntimeUtil.execForStr(cmd_current);
+                                                  }
+                                                }
+                                },"monitorThread");
+
+                            monitorThread.start();
+
                     });
                     JPanel panel_plan = new JPanel();
                     panel_plan.add(button_plan);
@@ -568,15 +613,20 @@ public class DIANTAO_UI {
                             int end = ta_plan.getLineEndOffset(k);
                             last_length=end-start;
                             String line = ta_plan.getText(start, last_length);
-                            if(line.startsWith(CMT) || line.startsWith(BSY))
+                            if(line.startsWith(CMT) || line.startsWith(BSY) || line.startsWith(IDT_ACTIVITY))
                                     lineunmber++;
                             j=end;
             }
             return j-last_length;
     }
+
     private void writeStatus(String text){
+                writeStatus(text,true);
+    }
+    private void writeStatus(String text,boolean writeConsole){
             SwingUtilities.invokeLater(()->{
-                    System.out.println(text);
+                    if(writeConsole)
+                        System.out.println(text);
                     status_area.append(LocalTime.now() +":"+text+"\n");
             });
 
@@ -607,7 +657,9 @@ public class DIANTAO_UI {
             if(StrUtil.isNotBlank(execForStr)) StaticLog.info("##execForStr slideOneLine:{} ", execForStr);
     }
     @SneakyThrows
-    public void beginBatch(List<Slot> slots){
+    public void beginBatch(SlotGroup group){
+
+            List<Slot> slots=group.slots;
             for (Slot slot : slots)
                     begin(slot,false);
             if(slots.size()>1){
@@ -617,7 +669,7 @@ public class DIANTAO_UI {
                             e.printStackTrace();
                     }
             }
-            Process process = RuntimeUtil.exec("mshta vbscript:msgbox(\"批量任务完成\",64,\"消息\")(window.close)");
+            Process process = RuntimeUtil.exec(StrUtil.format("mshta vbscript:msgbox(\"{}任务完成\",64,\"消息\")(window.close)",config.config_name));
             process.waitFor();
 
 
@@ -649,7 +701,6 @@ public class DIANTAO_UI {
                 config.config_name=confName;
                 miniCap = new MiniCap(config);
         }
-
 
         @SneakyThrows
         public void begin(Slot slot,boolean notify) {
@@ -763,11 +814,12 @@ public class DIANTAO_UI {
                                         }else {
                                                 tap(point);
                                                 watchAdv(slot);
-        //                                              writeStatus("pos="+pos);
                                         }
                                         int finalPos = pos;
+//                                        writeStatus("pos="+pos);
+
                                         SwingUtilities.invokeLater(()->{
-                                                ta_plan.replaceRange(slot.次数 + "", finalPos, finalPos +String.valueOf(slot.次数+1).length());
+                                                ta_plan.replaceRange((slot.次数+1) + "", finalPos, finalPos +String.valueOf(slot.次数+1).length());
                                         });
                                         writeStatus(StrUtil.format("{} c={}", name, slot.次数));
                                 }
@@ -870,10 +922,18 @@ public class DIANTAO_UI {
         }
 
         @SneakyThrows
-        void sleep(int s){
-                Thread.sleep(s*1000);
+        void sleep(int i){
+                Thread.sleep(i*1000);
         }
 
+        void sleep(int i,String activityName){
+                String current = RuntimeUtil.execForStr(cmd_current);
+                while (!current.contains(activityName)){
+                        writeStatus(StrUtil.format("current act:{},require act:{}",current,activityName),false);
+                        sleep(1);
+                }
+                sleep(i);
+        }
         public boolean horizontal(){//0 2 false 竖屏;1 3 true 横屏
                 String cmd=path +"adb shell dumpsys input | grep SurfaceOrientation";
                 String s = RuntimeUtil.execForStr(cmd).trim().substring(20);

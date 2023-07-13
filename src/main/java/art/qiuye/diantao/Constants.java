@@ -10,6 +10,8 @@ public class Constants {
     public static final String WALK = "walk";
     public static final String WORK = "work";
     public static final String CMD = "command";
+
+    public static final String ACT = "activity";
     public static final String OTHER = "other";
 
 
@@ -24,4 +26,6 @@ public class Constants {
     public static final String CMT="###";
 
     public static final String IDT_CMD = "[cmd]";
+
+    public static final String IDT_ACTIVITY = "[act]";
 }
