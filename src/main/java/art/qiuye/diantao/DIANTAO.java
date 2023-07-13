@@ -10,7 +10,7 @@ public class DIANTAO {
     private double[] WALK=new double[]{0.5,1,2,3,4,5,10,15,20,30,60,120,240};//m
     private double[] EXPRESS=new double[]{0.75,1,3,5,20,20,20,60};//m
     public static void main(String[] args) throws InterruptedException {
-        Thread t=new Thread(()->{
+        /*Thread t=new Thread(()->{
             while (true){
                 System.out.println("1");
                 try {
@@ -29,7 +29,13 @@ public class DIANTAO {
         Thread.sleep(3000);
         t.resume();
         System.out.println("t resume");
-        Thread.currentThread().join();
+        Thread.currentThread().join();*/
+        String[] ss = new String[]{"1", "2", "3", "4"};
+        for (String s : ss) {
+            if(s.equals("2")) ss = new String[]{"a", "b", "c"};
+            System.out.println(s);
+        }
+
     }
 
 
