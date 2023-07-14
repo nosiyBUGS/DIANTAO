@@ -28,4 +28,6 @@ public class Constants {
     public static final String IDT_CMD = "[cmd]";
 
     public static final String IDT_ACTIVITY = "[act]";
+
+    public static final String C_SLEEP = "c_sleep";
 }

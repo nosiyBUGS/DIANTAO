@@ -9,4 +9,6 @@ import java.util.List;
 public class SlotGroup {
     public List<Slot> slots;
     public String[] activityNames;
+
+    public boolean c_sleep;//direct whther interrupt sleep,otherwise call suspend
 }

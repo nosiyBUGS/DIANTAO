@@ -32,6 +32,7 @@ import java.io.*;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import static art.qiuye.diantao.Constants.*;
@@ -91,8 +92,8 @@ public class DIANTAO_UI {
                 setting.set("from","1281886693@qq.com");
                 setting.set("pass","tqblyhamaeqxijaj");
         }
-        MailAccount account=new MailAccount(setting);
-
+        private MailAccount account=new MailAccount(setting);
+        private ReentrantLock lock = new ReentrantLock();
         public static void main(String[] args) {
 
             DIANTAO_UI ui = new DIANTAO_UI();
@@ -465,8 +466,11 @@ public class DIANTAO_UI {
                             String[] lines = ta_plan.getText().trim().split("\n");
                             SlotGroup group=new SlotGroup();
                             Arrays.stream(lines).filter(e1->e1.startsWith(IDT_ACTIVITY)).findFirst().ifPresent(e2->{
-                                            group.activityNames = e2.substring(IDT_ACTIVITY.length()+1).split(";");
+                                    String[] split = e2.split(";");
+                                    group.activityNames = split[1].split(",");//[act];name1,name2
                                             activityNames= group.activityNames;
+                                            if(split.length==3 && split[2].equals(C_SLEEP))
+                                                group.c_sleep=true;
                                     }
                             );
                             lines = Arrays.stream(lines).filter(e1 -> !e1.contains(CMT) && !e1.contains(BSY) && !e1.contains(IDT_ACTIVITY) && StrUtil.isNotBlank(e1)).toArray(String[]::new);
@@ -556,12 +560,20 @@ public class DIANTAO_UI {
                                                          }
                                                     }
                                                     if(!contain){
-                                                        thread.suspend();
-                                                        writeStatus(StrUtil.format("current:{},require:{}",current,activityNames),false);
+                                                            if(!group.c_sleep && thread.getState().equals(Thread.State.TIMED_WAITING) || thread.getState().equals(Thread.State.WAITING)){
+                                                                lock.lock();
+                                                                thread.interrupt();
+                                                            }else {
+                                                                    writeStatus("THREAD SUSPEND");
+                                                                thread.suspend();
+                                                            }
+                                                            sleep(2);
+                                                            StaticLog.info("current:{},require:{}",current,activityNames);
                                                     }else {
-                                                        thread.resume();
+                                                            if(lock.isLocked())
+                                                                lock.unlock();//continue sleep
+                                                            thread.resume();
                                                     }
-                                                    sleep(2);
                                                     current = RuntimeUtil.execForStr(cmd_current);
                                                   }
                                                 }
@@ -921,19 +933,23 @@ public class DIANTAO_UI {
                 RuntimeUtil.execForStr(cmd_press+" KEYCODE_HOME");
         }
 
-        @SneakyThrows
         void sleep(int i){
-                Thread.sleep(i*1000);
+                long begin = System.currentTimeMillis();
+                int millis = i * 1000;
+                try {
+                        Thread.sleep(millis);
+                } catch (InterruptedException e) {
+                        writeStatus("INTERRUPTED WAIT FOR LOCK");
+                        long cost=System.currentTimeMillis()-begin;
+                        if(millis >cost){
+                                lock.lock();
+                                lock.unlock();
+                                writeStatus("GET UNLOCK CONTINUE SLEEP,left:"+((millis-cost)/1000));
+                                sleep((int) ((millis-cost)/1000+1));
+                        }
+                }
         }
 
-        void sleep(int i,String activityName){
-                String current = RuntimeUtil.execForStr(cmd_current);
-                while (!current.contains(activityName)){
-                        writeStatus(StrUtil.format("current act:{},require act:{}",current,activityName),false);
-                        sleep(1);
-                }
-                sleep(i);
-        }
         public boolean horizontal(){//0 2 false 竖屏;1 3 true 横屏
                 String cmd=path +"adb shell dumpsys input | grep SurfaceOrientation";
                 String s = RuntimeUtil.execForStr(cmd).trim().substring(20);
