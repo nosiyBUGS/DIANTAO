@@ -816,10 +816,10 @@ public class DIANTAO_UI {
                                                 watchAdv(slot);
                                         }
                                         int finalPos = pos;
-//                                        writeStatus("pos="+pos);
-
+                                        writeStatus("pos="+pos+" 次数="+slot.次数);
+                                        int finalC=slot.次数;
                                         SwingUtilities.invokeLater(()->{
-                                                ta_plan.replaceRange((slot.次数+1) + "", finalPos, finalPos +String.valueOf(slot.次数+1).length());
+                                                ta_plan.replaceRange((finalC) + "", finalPos, finalPos +String.valueOf(finalC+1).length());
                                         });
                                         writeStatus(StrUtil.format("{} c={}", name, slot.次数));
                                 }
