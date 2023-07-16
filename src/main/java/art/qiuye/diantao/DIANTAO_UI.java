@@ -146,6 +146,7 @@ public class DIANTAO_UI {
                             @Override
                             public void mouseClicked(MouseEvent e) {
                                     if (thread != null) thread.stop();
+                                    if (monitorThread != null) monitorThread.stop();
                                     lastConfig = ta_plan.getText();
                                     frame.setVisible(false);
                                     frame.dispose();
@@ -570,8 +571,14 @@ public class DIANTAO_UI {
                                                             sleep(2);
                                                             StaticLog.info("current:{},require:{}",current,activityNames);
                                                     }else {
-                                                            if(lock.isLocked())
-                                                                lock.unlock();//continue sleep
+                                                            if(lock.isLocked()){
+                                                                    try {
+                                                                        lock.unlock();//continue sleep
+
+                                                                    }catch (IllegalMonitorStateException ee){
+                                                                            ee.printStackTrace();
+                                                                    }
+                                                            }
                                                             thread.resume();
                                                     }
                                                     current = RuntimeUtil.execForStr(cmd_current);
@@ -828,7 +835,7 @@ public class DIANTAO_UI {
                                                 watchAdv(slot);
                                         }
                                         int finalPos = pos;
-                                        writeStatus("pos="+pos+" 次数="+slot.次数);
+//                                        writeStatus("pos="+pos+" 次数="+slot.次数);
                                         int finalC=slot.次数;
                                         SwingUtilities.invokeLater(()->{
                                                 ta_plan.replaceRange((finalC) + "", finalPos, finalPos +String.valueOf(finalC+1).length());
