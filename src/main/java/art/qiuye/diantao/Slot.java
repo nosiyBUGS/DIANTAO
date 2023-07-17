@@ -24,7 +24,7 @@ public class Slot {
      public String type;
      public String 注释;
 
-     public String ret;
+//     public String ret;
 
      public String back_point;
      public String cmds;

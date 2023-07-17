@@ -32,7 +32,6 @@ import java.io.*;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import static art.qiuye.diantao.Constants.*;
@@ -85,6 +84,8 @@ public class DIANTAO_UI {
         private MiniCap miniCap;
         private String[] activityNames;
 
+        private boolean thread_suspend=false;
+
         {
                 setting.set("host","smtp.qq.com");
                 setting.set("port","465");
@@ -93,7 +94,7 @@ public class DIANTAO_UI {
                 setting.set("pass","tqblyhamaeqxijaj");
         }
         private MailAccount account=new MailAccount(setting);
-        private ReentrantLock lock = new ReentrantLock();
+
         public static void main(String[] args) {
 
             DIANTAO_UI ui = new DIANTAO_UI();
@@ -481,7 +482,7 @@ public class DIANTAO_UI {
                             int j=0;
                             for (int i = 0; i < lines.length; i++) {
                                     String line = lines[i];
-                                    String[] params = line.split(";");
+                                    String[] params = line.split(";",-1);
                                     Slot slot = new Slot();
                                     slot.index=i;
                                     slot.params=params;
@@ -515,10 +516,8 @@ public class DIANTAO_UI {
                                                     slot.type = OTHER;
                                             }
                                             slot.back_point = params[4];
-                                            slot.ret = params[5];
                                             if (!slot.type.equals(OTHER)) {
-                                                    if (slot.ret.startsWith(RET)) j = 0;
-                                                    else if (slots.isEmpty()) {
+                                                    if (slots.isEmpty()) {
 //                                          if(slot.次数>0)
                                                             j++;
                                                     } else {
@@ -551,37 +550,41 @@ public class DIANTAO_UI {
 
                             monitorThread=new Thread(()->{
                                     if(activityNames!=null){
-                                            String current = RuntimeUtil.execForStr(cmd_current);
                                             while (true){
+                                                    String current = RuntimeUtil.execForStr(cmd_current);
+//                                                    StaticLog.info("##current {} ", current);
                                                     boolean contain=false;
                                                     for (String activityName : activityNames) {
+//                                                            StaticLog.info("##activityName {} ", activityName);
                                                          if(current.contains(activityName)){
                                                                  contain=true;
                                                                  break;
+                                                         }else {
+//                                                                 StaticLog.info("##activityName {} ,contain {}", activityName,contain);
                                                          }
                                                     }
                                                     if(!contain){
-                                                            if(!group.c_sleep && thread.getState().equals(Thread.State.TIMED_WAITING) || thread.getState().equals(Thread.State.WAITING)){
-                                                                lock.lock();
-                                                                thread.interrupt();
-                                                            }else {
-                                                                    writeStatus("THREAD SUSPEND");
-                                                                thread.suspend();
-                                                            }
-                                                            sleep(2);
-                                                            StaticLog.info("current:{},require:{}",current,activityNames);
-                                                    }else {
-                                                            if(lock.isLocked()){
-                                                                    try {
-                                                                        lock.unlock();//continue sleep
-
-                                                                    }catch (IllegalMonitorStateException ee){
-                                                                            ee.printStackTrace();
+//                                                            StaticLog.info("##activityNames {} ", activityNames);
+//                                                            StaticLog.info("##contain {} ", contain);
+                                                            if(!thread_suspend){
+                                                                    if(!group.c_sleep && thread.getState().equals(Thread.State.TIMED_WAITING)){
+                                                                            writeStatus("active thread interrupt");
+                                                                            thread.interrupt();
+                                                                    }else {
+                                                                            writeStatus("active thread suspend");
+                                                                            thread.suspend();
                                                                     }
+                                                                    thread_suspend=true;
+                                                                    StaticLog.info("current:{},require:{}",current,activityNames);
                                                             }
-                                                            thread.resume();
+                                                    }else {
+                                                            if(thread_suspend){
+                                                                    writeStatus("active thread resume");
+                                                                    thread_suspend=false;
+                                                                    thread.resume();
+                                                            }
                                                     }
-                                                    current = RuntimeUtil.execForStr(cmd_current);
+                                                    sleep(2);
                                                   }
                                                 }
                                 },"monitorThread");
@@ -737,12 +740,10 @@ public class DIANTAO_UI {
 //                                System.out.println("【第四排】:950 1600");
 //                                System.out.print("输入次数和时长以及间隔滑动时长:");
                                writeStatus("c = " +slot.次数);
-                                writeStatus("slot.间隔_广告时长 = " + slot.间隔_广告时长);
-                                writeStatus("slot.间隔_滑动 = " + slot.间隔_滑动);
 
                                 String point=slot.X+" "+ slot.Y;
-                                writeStatus("point = " + point);
-                                writeStatus("arow = " + slot.arow);
+//                                writeStatus("point = " + point);
+//                                writeStatus("arow = " + slot.arow);
                                 String[] cmds=null;
                                 if(slot.cmds!=null)
                                         cmds = slot.cmds.split(";");
@@ -842,18 +843,6 @@ public class DIANTAO_UI {
                                         });
                                         writeStatus(StrUtil.format("{} c={}", name, slot.次数));
                                 }
-                                if (slot.ret != null && slot.ret.startsWith(RET)) {//返回
-                                        int idx = Integer.parseInt(slot.ret.substring(RET.length()));
-                                        ComboLabel<Vector<String>> combo = items_return.get(idx - 1);
-                                        Vector<String> value = combo.getValue();
-                                        back();
-                                        swipe("521 400 521 1377");//复位
-                                        sleep(3);
-                                        tap(value.get(0));
-                                        sleep(3);
-                                        tap(value.get(1));
-                                        sleep(2);
-                                }
                                         writeStatus(StrUtil.format("{}任务完成", name));
                                         if(notify){
                                                 if(slot.次数>1){
@@ -946,12 +935,12 @@ public class DIANTAO_UI {
                 try {
                         Thread.sleep(millis);
                 } catch (InterruptedException e) {
-                        writeStatus("INTERRUPTED WAIT FOR LOCK");
                         long cost=System.currentTimeMillis()-begin;
                         if(millis >cost){
-                                lock.lock();
-                                lock.unlock();
-                                writeStatus("GET UNLOCK CONTINUE SLEEP,left:"+((millis-cost)/1000));
+                                thread_suspend=true;
+                                writeStatus("thread suspend");
+                                thread.suspend();
+                                writeStatus("thread resume,left:"+((millis-cost)/1000));
                                 sleep((int) ((millis-cost)/1000+1));
                         }
                 }
