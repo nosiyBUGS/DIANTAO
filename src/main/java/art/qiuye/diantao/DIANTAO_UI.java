@@ -43,8 +43,8 @@ public class DIANTAO_UI {
         private String device;
         private String adb_path;
         private String path;
-        private JCheckBox checkBox_delay;
-        private JTextField textField_delay;
+        private JCheckBox checkBox_cis;
+//        private JTextField textField_delay;
 
         private String cmd_start = path+"shell am start -n com.alibaba.android.rimet/com.alibaba.android.rimet.biz.LaunchHomeActivity";
         private String cmd_stop=path+"shell am force-stop com.alibaba.android.rimet";
@@ -126,22 +126,6 @@ public class DIANTAO_UI {
                     JMenu quick_menu= new JMenu("快捷操作");
                     JMenu offset_menu= new JMenu("偏移");
                     JMenu reload_menu= new JMenu("重载配置");
-                    JMenu cis_menu= new JMenu("顺式");
-                    ButtonGroup cis_group = new ButtonGroup();
-                    JRadioButtonMenuItem cis_true = new JRadioButtonMenuItem("true");
-                    cis_group.add(cis_true);
-                    JRadioButtonMenuItem cis_false = new JRadioButtonMenuItem("false");
-                    cis_group.add(cis_false);
-                    cis_menu.add(cis_true);
-                    cis_menu.add(cis_false);
-
-                    ActionListener cis_listener = e -> {
-                            JRadioButtonMenuItem source = (JRadioButtonMenuItem) e.getSource();
-                                    cis_direction = Boolean.parseBoolean(source.getText());
-//                                    System.out.println("cis_direction = " + cis_direction);
-                    };
-                    cis_true.addActionListener(cis_listener);
-                    cis_false.addActionListener(cis_listener);
 
                     MouseAdapter mouseAdapter = new MouseAdapter() {
                             @Override
@@ -169,7 +153,6 @@ public class DIANTAO_UI {
                     menuBar.add(quick_menu);
                     menuBar.add(offset_menu);
                     menuBar.add(reload_menu);
-                    menuBar.add(cis_menu);
                     frame.setJMenuBar(menuBar);
                     Container contentPane = frame.getContentPane();
                     JPanel manualPane = new JPanel();
@@ -201,10 +184,11 @@ public class DIANTAO_UI {
                     });
                     contentPane.add(manualPane);
 
-                    checkBox_delay = new JCheckBox("延迟");
-                    textField_delay = new JTextField(3);
-                    manualPane.add(checkBox_delay);
-                    manualPane.add(textField_delay);
+                    checkBox_cis = new JCheckBox("顺式",true);
+                    checkBox_cis.addActionListener(e->{
+                            cis_direction=checkBox_cis.isSelected();
+                    });
+                    manualPane.add(checkBox_cis);
 
                     JLabel label_count;
                     label_count = new JLabel("次数");
@@ -290,7 +274,6 @@ public class DIANTAO_UI {
                     button_ok.addActionListener(e->{
                             if  (thread!=null)thread.stop();
                             thread=new Thread(() -> {
-                                    delay();
                                     begin(getSlot(),true);
 //                                panel_X.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
 //                                panel_X.updateUI();
@@ -543,7 +526,6 @@ public class DIANTAO_UI {
                                     thread.stop();
                             }
                             thread=new Thread(() -> {
-                                    delay();
                                     beginBatch(group);
                             },"thread");
                             thread.start();
@@ -616,14 +598,6 @@ public class DIANTAO_UI {
 
     }
 
-    private void delay(){
-            if(checkBox_delay.isSelected()){
-                    int delay= Integer.parseInt(textField_delay.getText());
-                    StaticLog.info("delay {}  minutes...", delay);
-                    sleep(delay * 60);
-                    StaticLog.info("end delay.");
-            }
-    }
     @SneakyThrows
     private int getLinePos(int lineunmber){
             int j = 0;
