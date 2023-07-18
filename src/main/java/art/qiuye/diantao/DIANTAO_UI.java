@@ -72,7 +72,7 @@ public class DIANTAO_UI {
 
         private int offset_arow=0;
 
-        private boolean cis_direction=true;
+        private boolean cis_direction=false;
 
         private String lastConfig;
 
@@ -184,7 +184,7 @@ public class DIANTAO_UI {
                     });
                     contentPane.add(manualPane);
 
-                    checkBox_cis = new JCheckBox("顺式",true);
+                    checkBox_cis = new JCheckBox("顺式",false);
                     checkBox_cis.addActionListener(e->{
                             cis_direction=checkBox_cis.isSelected();
                     });
@@ -287,6 +287,7 @@ public class DIANTAO_UI {
                             if(thread!=null){
                                 thread.stop();
                                 monitorThread.stop();
+                                writeStatus("threads stopped");
                                 activityNames=null;
                             }
 
