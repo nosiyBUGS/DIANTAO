@@ -500,7 +500,7 @@ public class DIANTAO_UI {
                                                     slot.type = OTHER;
                                             }
                                             slot.back_point = params[4];
-                                            if (!slot.type.equals(OTHER)) {
+                                            if (slot.type.equals(WALK) || slot.type.equals(WORK)) {
                                                     if (slots.isEmpty()) {
 //                                          if(slot.次数>0)
                                                             j++;
