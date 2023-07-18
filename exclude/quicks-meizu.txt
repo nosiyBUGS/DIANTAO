@@ -110,7 +110,7 @@ $$$开宝箱番茄:
 ###[cmd];1;s300
 [cmd];1000;t900 1800;t530 1600;s305
 $$$浏览(抖音):
-[act];SplashActivity
+[act];MainActivity
 1;10800;5;#10;;!RET
 [cmd];1;h
 $$$小说(番茄):

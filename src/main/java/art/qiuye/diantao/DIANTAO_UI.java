@@ -558,7 +558,7 @@ public class DIANTAO_UI {
                                                                             thread.suspend();
                                                                     }
                                                                     thread_suspend=true;
-                                                                    StaticLog.info("current:{},require:{}",current,activityNames);
+                                                                    writeStatus(StrUtil.format("current:{},require:{}", current, activityNames));
                                                             }
                                                     }else {
                                                             if(thread_suspend){
@@ -912,12 +912,12 @@ public class DIANTAO_UI {
                 } catch (InterruptedException e) {
                         long cost=System.currentTimeMillis()-begin;
                         if(millis >cost){
-                                thread_suspend=true;
                                 writeStatus("thread suspend");
+                                thread_suspend=true;
                                 thread.suspend();
                                 writeStatus("thread resume,left:"+((millis-cost)/1000));
                                 sleep((int) ((millis-cost)/1000+1));
-                        }
+                        } else throw new IllegalStateException("millos<=cost:" + millis + ":" + cost);
                 }
         }
 
