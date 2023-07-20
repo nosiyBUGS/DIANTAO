@@ -513,23 +513,18 @@ public class DIANTAO_UI {
                                             }
                                             slot.back_point = params[4];
                                             if (slot.type.equals(WALK) || slot.type.equals(WORK)) {
-                                                    if (slots.isEmpty()) {
-//                                          if(slot.次数>0)
-                                                            j++;
-                                                    } else {
-                                                            if(j>0){
-                                                                    int k=i-1;
-                                                                    Slot pre = slots.get(k);
-                                                                    while (pre.origin_arow==null) pre = slots.get(--k);//略过非#
-                                                                    if (!pre.origin_arow.equals(slot.origin_arow)) {
-                                                                            j++;
-                                                                    } else {//拷贝上一份 j不回退
-                                                                            slot.arow = pre.arow;
-                                                                            slot.Y = pre.Y;
-                                                                            slot.back_point = pre.back_point;
-                                                                    }
+                                                    if(j>0){
+                                                            int k=i-1;
+                                                            Slot pre = slots.get(k);
+                                                            while (pre.origin_arow==null) pre = slots.get(--k);//略过非#
+                                                            if (!pre.origin_arow.equals(slot.origin_arow)) {
+                                                                    j++;
+                                                            } else {//拷贝上一份 j不回退
+                                                                    slot.arow = pre.arow;
+                                                                    slot.Y = pre.Y;
+                                                                    slot.back_point = pre.back_point;
                                                             }
-                                                    }
+                                                    }else j++;
                                             }
                                     }
                                     slots.add(slot);
