@@ -11,4 +11,6 @@ public class SlotGroup {
     public String[] activityNames;
 
     public boolean c_sleep;//direct whther interrupt sleep,otherwise call suspend
+
+    public int totalTime;
 }

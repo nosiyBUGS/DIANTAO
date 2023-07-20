@@ -3,7 +3,8 @@ package art.qiuye.diantao;
 import cn.hutool.log.Log;
 import cn.hutool.log.LogFactory;
 
-import java.util.Arrays;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 
 public class DIANTAO {
     public static final Log log= LogFactory.get();
@@ -12,9 +13,7 @@ public class DIANTAO {
     private double[] WALK=new double[]{0.5,1,2,3,4,5,10,15,20,30,60,120,240};//m
     private double[] EXPRESS=new double[]{0.75,1,3,5,20,20,20,60};//m
     public static void main(String[] args) throws InterruptedException {
-        String[] split = "1;65;3;153 659;;".split(";",-1);
-        System.out.println(Arrays.toString(split));
-        System.out.println(split[4]);
+        System.out.println(LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
 
     }
 

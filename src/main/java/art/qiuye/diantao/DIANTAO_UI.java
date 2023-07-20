@@ -4,10 +4,7 @@ import cn.hutool.core.img.ImgUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.lang.Pair;
 import cn.hutool.core.thread.ThreadUtil;
-import cn.hutool.core.util.ArrayUtil;
-import cn.hutool.core.util.RandomUtil;
-import cn.hutool.core.util.RuntimeUtil;
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.util.*;
 import cn.hutool.extra.mail.MailAccount;
 import cn.hutool.extra.mail.MailUtil;
 import cn.hutool.http.ContentType;
@@ -30,13 +27,16 @@ import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static art.qiuye.diantao.Constants.*;
 
 public class DIANTAO_UI {
+        private static final String TIME_PATTERN = "HH:mm:ss";
         static Log StaticLog = LogFactory.get();
         private Config config;
 
@@ -85,6 +85,7 @@ public class DIANTAO_UI {
         private String[] activityNames;
 
         private boolean thread_suspend=false;
+        private JTextArea status_bar;
 
         {
                 setting.set("host","smtp.qq.com");
@@ -297,9 +298,19 @@ public class DIANTAO_UI {
                     ta_plan = new JTextArea(15,50);
                     ta_plan.setLineWrap(true);
                     ta_plan.setText(lastConfig);
+                    Font status_font=new Font("宋体",Font.TRUETYPE_FONT,15);
                     status_area = new JTextArea(5,50);
                     JScrollPane status_pane = new JScrollPane(status_area);
                     status_area.setBorder(BorderFactory.createTitledBorder("status"));
+                    status_area.setLineWrap(true);
+                    status_area.setFont(status_font);
+                    status_bar = new JTextArea();
+                    status_bar.setFont(status_font);
+                    JScrollPane bar_pane = new JScrollPane(status_bar);
+                    status_bar.setEditable(false);
+                    status_bar.setRows(5);
+                    status_bar.setLineWrap(true);
+
                     Font font=new Font("宋体",Font.TRUETYPE_FONT,18);
                     UndoManager undoManager=new UndoManager();
                     ta_plan.getDocument().addUndoableEditListener(undoManager);
@@ -478,6 +489,7 @@ public class DIANTAO_UI {
                                             slot.次数 = Integer.parseInt(params[0]);
                                             slot.间隔_广告时长 = Integer.parseInt(params[1]);
                                             slot.间隔_滑动 = Integer.parseInt(params[2]);
+                                            group.totalTime+=slot.间隔_滑动;
                                             String idt = params[3];
                                             ComboLabel<Integer> item = null;
                                             String[] sp = idt.split(" ");
@@ -530,11 +542,14 @@ public class DIANTAO_UI {
                                     beginBatch(group);
                             },"thread");
                             thread.start();
-
+                            final Pattern current_pattern = Pattern.compile("[\\w\\.]*/[\\w\\.]*");
                             monitorThread=new Thread(()->{
-                                    if(activityNames!=null){
-                                            while (true){
-                                                    String current = RuntimeUtil.execForStr(cmd_current);
+                                    while (true){
+                                            String pre = RuntimeUtil.execForStr(cmd_current);
+                                            String  current= ReUtil.getGroup0(current_pattern, pre);
+                                            if(current==null)current=pre;
+                                            writeBar("{}\nthread:{}\nsuspend:{}\nact:{}\nactNames:{}",LocalTime.now().format(DateTimeFormatter.ofPattern(TIME_PATTERN)),thread.getState(),thread_suspend,current,activityNames);
+                                            if(activityNames!=null){
 //                                                    StaticLog.info("##current {} ", current);
                                                     boolean contain=false;
                                                     for (String activityName : activityNames) {
@@ -569,7 +584,7 @@ public class DIANTAO_UI {
                                                     }
                                                     sleep(2);
                                                   }
-                                                }
+                                    }
                                 },"monitorThread");
 
                             monitorThread.start();
@@ -582,6 +597,7 @@ public class DIANTAO_UI {
                     panel_ta.setLayout(new BoxLayout(panel_ta,BoxLayout.Y_AXIS));
                     panel_ta.add(ta_plan);
                     panel_ta.add(status_pane);
+                    panel_ta.add(bar_pane);
 
                     JPanel panel_stop=new JPanel();
                     panel_stop.add(button_ok);
@@ -590,7 +606,7 @@ public class DIANTAO_UI {
                     manualPane.add(panel_plan);
                     manualPane.add(panel_ta);
                     frame.pack();
-                    frame.setSize(600,650);
+                    frame.setSize(600,730);
                     frame.setLocation(600,100);
                     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
                     frame.setVisible(true);
@@ -617,14 +633,20 @@ public class DIANTAO_UI {
             return j-last_length;
     }
 
-    private void writeStatus(String text){
+    private void writeBar(String format, Object... arguments) {
+            SwingUtilities.invokeLater(()->{
+                    status_bar.setText(StrUtil.format(format,arguments));
+            });
+    }
+
+     private void writeStatus(String text){
                 writeStatus(text,true);
     }
     private void writeStatus(String text,boolean writeConsole){
             SwingUtilities.invokeLater(()->{
                     if(writeConsole)
                         System.out.println(text);
-                    status_area.append(LocalTime.now() +":"+text+"\n");
+                    status_area.append(LocalTime.now().format(DateTimeFormatter.ofPattern(TIME_PATTERN)) +":"+text+"\n");
             });
 
     }
@@ -659,7 +681,7 @@ public class DIANTAO_UI {
             List<Slot> slots=group.slots;
             for (Slot slot : slots)
                     begin(slot,false);
-            if(slots.size()>1){
+            if(slots.size()>1 || group.totalTime>100){
                     try{
                         MailUtil.send(account,"1281886693@qq.com",config.config_name+"任务完成:", JSON.toJSONString(slots),true);
                     }catch (RuntimeException e){
@@ -811,7 +833,7 @@ public class DIANTAO_UI {
                                                 watchAdv(slot);
                                         }
                                         int finalPos = pos;
-//                                        writeStatus("pos="+pos+" 次数="+slot.次数);
+                                        writeStatus("pos="+pos+" 次数="+slot.次数);
                                         int finalC=slot.次数;
                                         SwingUtilities.invokeLater(()->{
                                                 ta_plan.replaceRange((finalC) + "", finalPos, finalPos +String.valueOf(finalC+1).length());
