@@ -101,17 +101,20 @@ public class DIANTAO_UI {
             DIANTAO_UI ui = new DIANTAO_UI();
             ui.main(args[0]);
     }
-    @SneakyThrows
-    private void main(String confName) {
-            initConfig(confName);
-            adb_path=config.adb_path;
-            device = config.devices.get(0);
+    private void initDevice(){
             path=adb_path+device;
             cmd_tap=path+"shell input tap ";
             cmd_press=path+"shell input keyevent ";
             cmd_swipe=path+"shell input swipe ";
             cmd_cap=path+"exec-out screencap -p ";
             cmd_current=path+"shell dumpsys activity activities | grep mResumedActivity";
+    }
+    @SneakyThrows
+    private void main(String confName) {
+            initConfig(confName);
+            adb_path=config.adb_path;
+            device = config.devices.get(0);
+            initDevice();
             ThreadUtil.execute(()->{
                     String c = RuntimeUtil.execForStr(adb_path + " connect "+device.trim().split("\\s+")[1]);
                     StaticLog.info("##adb connect:{}",c);
@@ -252,10 +255,7 @@ public class DIANTAO_UI {
                     manualPane.add(comboBox_device);
                     comboBox_device.addItemListener(e->{
                             device=e.getItem().toString();
-                            path=adb_path+device;
-                            cmd_tap=path+"shell input tap ";
-                            cmd_press=path+"shell input keyevent ";
-                            cmd_swipe=path+"shell input swipe ";
+                           initDevice();
                     });
 
 
