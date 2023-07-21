@@ -275,7 +275,7 @@ public class DIANTAO_UI {
                     button_ok.addActionListener(e->{
                             if  (thread!=null)thread.stop();
                             thread=new Thread(() -> {
-                                    begin(getSlot(),true);
+                                    begin(getSlot(),true,null);
 //                                panel_X.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
 //                                panel_X.updateUI();
 
@@ -533,6 +533,9 @@ public class DIANTAO_UI {
                             if(thread!=null){
                                     thread.stop();
                             }
+                            if(monitorThread!=null){
+                                    monitorThread.stop();
+                            }
                             thread=new Thread(() -> {
                                     beginBatch(group);
                             },"thread");
@@ -675,7 +678,7 @@ public class DIANTAO_UI {
 
             List<Slot> slots=group.slots;
             for (Slot slot : slots)
-                    begin(slot,false);
+                    begin(slot,false,group);
             if(slots.size()>1 || group.totalTime>100){
                     try{
                         MailUtil.send(account,"1281886693@qq.com",config.config_name+"任务完成:", JSON.toJSONString(slots),true);
@@ -717,7 +720,7 @@ public class DIANTAO_UI {
         }
 
         @SneakyThrows
-        public void begin(Slot slot,boolean notify) {
+        public void begin(Slot slot,boolean notify,SlotGroup group) {
                 initSlot(slot);
                 types= new Types[]{Types.视频, Types.孵化};
                 Types type=types[0];
@@ -767,7 +770,9 @@ public class DIANTAO_UI {
                                                         }
                                                    }
                                                    else if(cmd.startsWith("s")){
-                                                        sleep(Integer.parseInt(cmd.substring(1)));
+                                                           int anInt = Integer.parseInt(cmd.substring(1));
+                                                           group.totalTime+=anInt;
+                                                           sleep(anInt);
                                                         sleeped=true;
                                                    }else if(cmd.startsWith("t")){
                                                            tap(cmd.substring(1));
