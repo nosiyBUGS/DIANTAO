@@ -36,7 +36,9 @@ import java.util.stream.Collectors;
 import static art.qiuye.diantao.Constants.*;
 
 public class DIANTAO_UI {
-        private static final String TIME_PATTERN = "HH:mm:ss";
+
+        private static final DateTimeFormatter TIME_FORMATTER=DateTimeFormatter.ofPattern("HH:mm:ss");
+
         static Log StaticLog = LogFactory.get();
         private Config config;
 
@@ -68,7 +70,7 @@ public class DIANTAO_UI {
         private  Thread monitorThread;
         private Vector<ComboLabel<Integer>> items_walk;
         private Vector<ComboLabel<Integer>> items_work;
-        private Vector<ComboLabel<Vector<String>>> items_return;
+//        private Vector<ComboLabel<Vector<String>>> items_return;
 
         private int offset_arow=0;
 
@@ -262,15 +264,6 @@ public class DIANTAO_UI {
                     JButton button_clear = new JButton("清除");
                     manualPane.add(button_clear);
 
-                    JCheckBox checkBox_return = new JCheckBox("返回");
-                    items_return = new Vector<>(3);
-                    items_return.add(new ComboLabel<>("走路",config.return_walk,1));//走路赚元宝 赚步数
-                    items_return.add(new ComboLabel<>("打工",config.return_work,2));//打工赚元宝 赚体力
-                    items_return.add(new ComboLabel<>("摇一摇",config.return_wave,3));//摇一摇赚元宝 赚次数
-                    JComboBox<ComboLabel<Vector<String>>> comboBox_return=new JComboBox<>(items_return);
-                    manualPane.add(checkBox_return);
-                    manualPane.add(comboBox_return);
-
                     JButton button_ok=new JButton("提交");
                     button_ok.addActionListener(e->{
                             if  (thread!=null)thread.stop();
@@ -451,12 +444,6 @@ public class DIANTAO_UI {
                                             ta_plan.append("$"+slot.arow+";");break;
                             }
                             ta_plan.append(slot.back_point +";");
-                            if(checkBox_return.isSelected()){
-                                    ComboLabel<String[]> item = (ComboLabel<String[]>) comboBox_return.getSelectedItem();
-                                    ta_plan.append(RET+ item.getArow());
-                            } else ta_plan.append(NRET);
-                            ta_plan.append("\n");
-                            checkBox_return.setSelected(false);
                     });
                     button_batch = new JButton("执行计划");
                     button_batch.addActionListener(e->{
@@ -537,6 +524,7 @@ public class DIANTAO_UI {
                                     monitorThread.stop();
                             }
                             thread=new Thread(() -> {
+                                    System.gc();
                                     beginBatch(group);
                             },"thread");
                             thread.start();
@@ -546,7 +534,7 @@ public class DIANTAO_UI {
                                             String pre = RuntimeUtil.execForStr(cmd_current);
                                             String  current= ReUtil.getGroup0(current_pattern, pre);
                                             if(current==null)current=pre;
-                                            writeBar("{}\nthread:{}\nsuspend:{}\nact:{}\nactNames:{}",LocalTime.now().format(DateTimeFormatter.ofPattern(TIME_PATTERN)),thread.getState(),thread_suspend,current,activityNames);
+                                            writeBar("{}\nthread:{}\nsuspend:{}\nact:{}\nactNames:{}",LocalTime.now().format(TIME_FORMATTER),thread.getState(),thread_suspend,current,activityNames);
                                             if(activityNames!=null){
 //                                                    StaticLog.info("##current {} ", current);
                                                     boolean contain=false;
@@ -644,7 +632,7 @@ public class DIANTAO_UI {
             SwingUtilities.invokeLater(()->{
                     if(writeConsole)
                         System.out.println(text);
-                    status_area.append(LocalTime.now().format(DateTimeFormatter.ofPattern(TIME_PATTERN)) +":"+text+"\n");
+                    status_area.append(LocalTime.now().format(TIME_FORMATTER) +":"+text+"\n");
             });
 
     }

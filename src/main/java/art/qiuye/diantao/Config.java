@@ -19,14 +19,8 @@ public class Config {
     public Integer walk_step;
     public Integer work_base;
     public Integer work_step;
-    public Vector<String> return_work;
-    public Vector<String> return_wave;
-    public Vector<String> return_walk;
 
     public Map<String,String> quicks;
-
-    public Integer walk_lines;
-    public Integer work_lines;
 
     public Boolean random_point;
 
