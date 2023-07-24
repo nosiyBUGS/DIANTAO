@@ -498,7 +498,7 @@ public class DIANTAO_UI {
                                                     slot.Y = Integer.valueOf(sp[1]);
                                                     slot.type = OTHER;
                                             }
-                                            slot.ex_cmds = params[4];
+                                            slot.ex_cmds = line.substring(params[0].length() + params[1].length() +params[2].length()+params[3].length()+ 4);
                                             if (slot.type.equals(WALK) || slot.type.equals(WORK)) {
                                                     if(j>0){
                                                             int k=i-1;
