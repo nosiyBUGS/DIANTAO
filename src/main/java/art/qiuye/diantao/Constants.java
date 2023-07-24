@@ -30,4 +30,10 @@ public class Constants {
     public static final String IDT_ACTIVITY = "[act]";
 
     public static final String C_SLEEP = "c_sleep";
+
+    //指令
+    public static final String INS_SW="sw";
+    public static final String INS_SW_FROM="swf";
+    public static final String INS_SW_REVERSE="swr";
+    public static final String INS_SW_TO="swt";
 }

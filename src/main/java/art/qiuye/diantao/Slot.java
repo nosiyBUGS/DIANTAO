@@ -26,7 +26,9 @@ public class Slot {
 
 //     public String ret;
 
-     public String back_point;
+//     public String back_point;
+
+     public String ex_cmds;
      public String cmds;
      public Integer origin_arow;
 

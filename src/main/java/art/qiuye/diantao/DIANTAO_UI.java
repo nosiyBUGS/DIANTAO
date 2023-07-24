@@ -443,7 +443,7 @@ public class DIANTAO_UI {
                                     case WORK:
                                             ta_plan.append("$"+slot.arow+";");break;
                             }
-                            ta_plan.append(slot.back_point +";");
+                            ta_plan.append(slot.ex_cmds +";");
                     });
                     button_batch = new JButton("执行计划");
                     button_batch.addActionListener(e->{
@@ -498,7 +498,7 @@ public class DIANTAO_UI {
                                                     slot.Y = Integer.valueOf(sp[1]);
                                                     slot.type = OTHER;
                                             }
-                                            slot.back_point = params[4];
+                                            slot.ex_cmds = params[4];
                                             if (slot.type.equals(WALK) || slot.type.equals(WORK)) {
                                                     if(j>0){
                                                             int k=i-1;
@@ -509,7 +509,7 @@ public class DIANTAO_UI {
                                                             } else {//拷贝上一份 j不回退
                                                                     slot.arow = pre.arow;
                                                                     slot.Y = pre.Y;
-                                                                    slot.back_point = pre.back_point;
+                                                                    slot.ex_cmds = pre.ex_cmds;
                                                             }
                                                     }else j++;
                                             }
@@ -733,72 +733,7 @@ public class DIANTAO_UI {
                                 while (slot.次数-- > 0) {
                                         int pos = getLinePos(slot.index);
                                         if(slot.type.equals(CMD)){
-                                                for (String cmd : cmds) {
-                                                        boolean sleeped=false;
-                                                   if(cmd.startsWith("sw")){
-                                                        if(cmd.equals("sw")){swipe(config.from);continue;}//sw
-
-                                                        String[] subs = cmd.substring(2).split("\\s");
-                                                        String p=null;
-                                                        if(subs.length==2)//sw65 7
-                                                                p=config.from;
-                                                        else if(subs.length==4){
-                                                                p = StrUtil.format("{} {} {} {}", subs[0], subs[1], subs[2], subs[3]);
-                                                                swipe(p);
-                                                                continue;
-                                                        }
-                                                        else if(subs.length==6)
-                                                                p = StrUtil.format("{} {} {} {}", subs[2], subs[3], subs[4], subs[5]);
-
-                                                        int total= Integer.parseInt(subs[0]);
-                                                        int t= Integer.parseInt(subs[1]);
-                                                        for (int i = 0; i < total/t+1; i++) {
-                                                                sleep(t);
-                                                                swipe(p);
-                                                        }
-                                                   }
-                                                   else if(cmd.startsWith("s")){
-                                                           int anInt = Integer.parseInt(cmd.substring(1));
-                                                           group.totalTime+=anInt;
-                                                           sleep(anInt);
-                                                        sleeped=true;
-                                                   }else if(cmd.startsWith("t")){
-                                                           tap(cmd.substring(1));
-                                                   }else if(cmd.startsWith("b")){
-                                                           back();
-                                                   }else if(cmd.startsWith("h")){
-                                                           home();
-                                                   }else if(cmd.startsWith("if")){//if0 0 100 200 看直播领钻石
-                                                           int n=10;
-                                                           String[] subs = cmd.substring(2).split("\\s");
-                                                           int x = Integer.parseInt(subs[0]);
-                                                           int y = Integer.parseInt(subs[1]);
-                                                           int width = Integer.parseInt(subs[2]);
-                                                           int height = Integer.parseInt(subs[3]);
-                                                           HttpRequest request = HttpUtil.createPost("http://snap.ie.sogou.com/recognition")
-                                                                   .contentType(ContentType.MULTIPART.getValue())
-                                                                   .header("Origin", "se-extension://ext-1055834318")
-                                                                   .header("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.81 Safari/537.36 SE 2.X MetaSr 1.0");
-                                                           while (n-->0){
-                                                                   tap(subs[7]+" "+subs[8]);
-                                                                   sleep(1);
-                                                                   ByteArrayInputStream inputStream = new ByteArrayInputStream(miniCap.frame());
-                                                                   ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                                                                   ImgUtil.cut(inputStream,outputStream,new Rectangle(x, y, width, height));
-                                                                   request.form("file", outputStream.toByteArray(),"file");
-                                                                   String body = request.execute().body();
-                                                                   StaticLog.info("## ocr body {} ", body);
-                                                                   if(body.contains(subs[4])){//包含
-                                                                           tap(subs[5]+" "+subs[6]);
-                                                                           inputStream.close();
-                                                                           outputStream.close();
-                                                                           break;
-                                                                   }
-
-                                                           }
-                                                   }
-                                                   if(!sleeped)sleep(1);//操作间隔
-                                                }
+                                               execute_cmd(cmds,group);
                                                 pos+=slot.params[0].length()+1;
 
                                         }else {
@@ -830,6 +765,102 @@ public class DIANTAO_UI {
                                 break;
                 }
         }
+
+        @SneakyThrows
+        private void execute_cmd(String cmds[], SlotGroup group){
+                for (String cmd : cmds) {
+                        boolean sleeped=false;
+                        if(cmd.startsWith("sw")){
+                                if(cmd.startsWith(INS_SW_FROM)){swipe(config.from);continue;}//swf
+                                if(cmd.equals(INS_SW_REVERSE)){writeStatus("single swr not supported");}//swr
+                                if(cmd.equals(INS_SW_TO)){swipe(config.to);continue;}//swt
+
+                                String[] subs = cmd.substring(2).split("\\s");
+                                String p=null;
+                                boolean reverse_flag=false;
+                                if(cmd.startsWith(INS_SW_FROM))
+                                        p = config.from;
+                                else if(cmd.startsWith(INS_SW_TO))
+                                        p=config.to;
+                                else if(cmd.startsWith(INS_SW_REVERSE))
+                                        reverse_flag=true;
+
+                                if(subs.length==2) {//sw65 7
+                                        int total= Integer.parseInt(subs[0]);
+                                        int t= Integer.parseInt(subs[1]);
+                                        for (int i = 0; i < total/t+1; i++) {
+                                                if(reverse_flag){
+                                                        if(i%2==0)
+                                                                p=config.from;
+                                                        else p=config.to;
+                                                }
+                                                 swipe(p);
+                                        }
+                                }
+                                else if(subs.length==4){
+                                        p = StrUtil.format("{} {} {} {}", subs[0], subs[1], subs[2], subs[3]);
+                                        swipe(p);
+                                        continue;
+                                }
+                                else if(subs.length==6){
+                                        int total= Integer.parseInt(subs[4]);
+                                        int t= Integer.parseInt(subs[5]);
+                                        for (int i = 0; i < total/t+1; i++) {
+                                                if(reverse_flag) {
+                                                        if(i%2==0)
+                                                                p=StrUtil.format("{} {} {} {}", subs[0], subs[1], subs[2], subs[3]);
+                                                        else p=StrUtil.format("{} {} {} {}", subs[2], subs[3], subs[0], subs[1]);
+                                                }else p=StrUtil.format("{} {} {} {}", subs[0], subs[1], subs[2], subs[3]);
+                                                swipe(p);
+                                        }
+                                }
+                        }
+                        else if(cmd.startsWith("s")){
+                                int anInt = Integer.parseInt(cmd.substring(1));
+                                if(group!=null)
+                                        group.totalTime+=anInt;
+                                sleep(anInt);
+                                sleeped=true;
+                        }else if(cmd.startsWith("t")){
+                                tap(cmd.substring(1));
+                        }else if(cmd.startsWith("b")){
+                                back();
+                        }else if(cmd.startsWith("h")){
+                                home();
+                        }else if(cmd.startsWith("if")){//if0 0 100 200 看直播领钻石
+                                int n=10;
+                                String[] subs = cmd.substring(2).split("\\s");
+                                int x = Integer.parseInt(subs[0]);
+                                int y = Integer.parseInt(subs[1]);
+                                int width = Integer.parseInt(subs[2]);
+                                int height = Integer.parseInt(subs[3]);
+                                HttpRequest request = HttpUtil.createPost("http://snap.ie.sogou.com/recognition")
+                                        .contentType(ContentType.MULTIPART.getValue())
+                                        .header("Origin", "se-extension://ext-1055834318")
+                                        .header("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.81 Safari/537.36 SE 2.X MetaSr 1.0");
+                                while (n-->0){
+                                        tap(subs[7]+" "+subs[8]);
+                                        sleep(1);
+                                        ByteArrayInputStream inputStream = new ByteArrayInputStream(miniCap.frame());
+                                        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                                        ImgUtil.cut(inputStream,outputStream,new Rectangle(x, y, width, height));
+                                        request.form("file", outputStream.toByteArray(),"file");
+                                        String body = request.execute().body();
+                                        StaticLog.info("## ocr body {} ", body);
+                                        if(body.contains(subs[4])){//包含
+                                                tap(subs[5]+" "+subs[6]);
+                                                inputStream.close();
+                                                outputStream.close();
+                                                break;
+                                        }
+
+                                }
+                        }
+                        if(!sleeped)sleep(1);//操作间隔
+                }
+        }
+
+
         enum Types{
                 孵化,
                 视频
@@ -841,35 +872,48 @@ public class DIANTAO_UI {
                 s.间隔_广告间隔 =Commons.间隔_广告间隔;
         }
         private void watchAdv(Slot s){
+                int direction=0;
+                if(s.ex_cmds!=null){
+                        if(s.ex_cmds.contains(INS_SW_FROM))
+                                direction=1;
+                        else if(s.ex_cmds.contains(INS_SW_TO))
+                                direction=2;
+                        else if(s.ex_cmds.contains(INS_SW_REVERSE))
+                                direction=3;
+                }
                 if(s.间隔_滑动>0){
                         int times=s.间隔_广告时长/s.间隔_滑动;
                         for (int i = 0; i < times+1; i++) {
-                                this.sleep(s.间隔_滑动);
-                                if(cis_direction || i%2==0)
-                                        this.swipe(config.from);
-                                else
-                                        this.swipe(config.to);
-                        }
-                        this.sleep(5);
+                                if(direction==0){
+                                        if(cis_direction || i%2==0)
+                                                this.swipe(config.from);
+                                        else
+                                                this.swipe(config.to);
+                                }else if(direction==1)
+                                        swipe(config.from);
+                                else if(direction==2)
+                                        swipe(config.to);
+                                else if(direction==3)
+                                        if(i%2==0)
+                                                this.swipe(config.from);
+                                        else
+                                                this.swipe(config.to);
 
+                                this.sleep(s.间隔_滑动);
+
+                        }
                 }else
                         this.sleep(s.间隔_广告时长);
                 this.sleep(2);
                 this.back();
-                if(StrUtil.isNotBlank(s.back_point)){
-                        sleep(4);
-//                        if(config.config_name.equals("vivo"))
-//                                tap(s.back_point);
-                                tap(s.back_point);
+                if(StrUtil.isNotBlank(s.ex_cmds)){
+                        execute_cmd(s.ex_cmds.split(";"),null);
                 }
-                this.sleep(s.间隔_广告间隔);
+//                this.sleep(s.间隔_广告间隔);
         }
         class Commons{
                 public static final String 关闭广告_竖屏="998 164";//981 176
                 public static final int 间隔_广告间隔=5;
-
-        }
-        class Points{
 
         }
 
