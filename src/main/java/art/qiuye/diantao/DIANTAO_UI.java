@@ -279,6 +279,7 @@ public class DIANTAO_UI {
                     button_stop = new JButton("结束线程");
                     button_stop.addActionListener(e->{
                             if(thread!=null){
+                                thread_suspend=false;
                                 thread.stop();
                                 monitorThread.stop();
                                 writeStatus("threads stopped");
@@ -301,7 +302,7 @@ public class DIANTAO_UI {
                     status_bar.setFont(status_font);
                     JScrollPane bar_pane = new JScrollPane(status_bar);
                     status_bar.setEditable(false);
-                    status_bar.setRows(5);
+                    status_bar.setRows(6);
                     status_bar.setLineWrap(true);
 
                     Font font=new Font("宋体",Font.TRUETYPE_FONT,18);
@@ -423,8 +424,7 @@ public class DIANTAO_UI {
                     for (Map.Entry<String, String> entry : quick_entries) {
                             JMenuItem item = new JMenuItem(entry.getKey());
                             item.addActionListener(e->{
-                                    ta_plan.setText(null);
-                                    ta_plan.append(entry.getValue());
+                                    ta_plan.setText(entry.getValue());
                                     offset_arow=0;
                             });
                             quick_menu.add(item);
@@ -592,7 +592,7 @@ public class DIANTAO_UI {
                     manualPane.add(panel_plan);
                     manualPane.add(panel_ta);
                     frame.pack();
-                    frame.setSize(600,730);
+                    frame.setSize(600,750);
                     frame.setLocation(600,100);
                     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
                     frame.setVisible(true);
@@ -769,9 +769,8 @@ public class DIANTAO_UI {
                                                    }else if(cmd.startsWith("h")){
                                                            home();
                                                    }else if(cmd.startsWith("if")){//if0 0 100 200 看直播领钻石
-                                                           int n=100;
+                                                           int n=10;
                                                            String[] subs = cmd.substring(2).split("\\s");
-                                                           tap(subs[7]+" "+subs[8]);//!
                                                            int x = Integer.parseInt(subs[0]);
                                                            int y = Integer.parseInt(subs[1]);
                                                            int width = Integer.parseInt(subs[2]);
@@ -781,35 +780,21 @@ public class DIANTAO_UI {
                                                                    .header("Origin", "se-extension://ext-1055834318")
                                                                    .header("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.81 Safari/537.36 SE 2.X MetaSr 1.0");
                                                            while (n-->0){
-//                                                                        FileUtil.writeBytes(miniCap.frame(), "C:\\Users\\Administrator\\Desktop\\frame.jpg");
-//                                                                   Process process = RuntimeUtil.exec(cmd_cap);
-//                                                                   InputStream inputStream = process.getInputStream();
-//                                                                   StaticLog.info("## start frame ");
+                                                                   tap(subs[7]+" "+subs[8]);
+                                                                   sleep(1);
                                                                    ByteArrayInputStream inputStream = new ByteArrayInputStream(miniCap.frame());
-//                                                                   StaticLog.info("## framed ");
                                                                    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-//                                                                   BufferedImage image= ImageIO.read(inputStream);
-//                                                                   String path = System.getProperty("user.dir") + "/exclude/screen.png";
-//                                                                   String write = System.getProperty("user.dir") + "/exclude/clip.png";
-
-//                                                                   StaticLog.info("##start clip ");
-//                                                                   ImgUtil.cut(image,new File(write),new Rectangle(x, y, width, height) );
                                                                    ImgUtil.cut(inputStream,outputStream,new Rectangle(x, y, width, height));
-//                                                                   StaticLog.info("## cliped{} ");
                                                                    request.form("file", outputStream.toByteArray(),"file");
                                                                    String body = request.execute().body();
                                                                    StaticLog.info("## ocr body {} ", body);
                                                                    if(body.contains(subs[4])){//包含
-//                                                                           sleep(3);
-//                                                                           tap(subs[7]+" "+subs[8]);
-                                                                           sleep(1);
                                                                            tap(subs[5]+" "+subs[6]);
                                                                            inputStream.close();
                                                                            outputStream.close();
                                                                            break;
-                                                                   }else {
-                                                                           tap(subs[7]+" "+subs[8]);
                                                                    }
+
                                                            }
                                                    }
                                                    if(!sleeped)sleep(1);//操作间隔
@@ -821,10 +806,10 @@ public class DIANTAO_UI {
                                                 watchAdv(slot);
                                         }
                                         int finalPos = pos;
-                                        writeStatus("pos="+pos+" 次数="+slot.次数);
-                                        int finalC=slot.次数;
-                                        SwingUtilities.invokeLater(()->{
-                                                ta_plan.replaceRange((finalC) + "", finalPos, finalPos +String.valueOf(finalC+1).length());
+//                                        writeStatus("pos="+pos+" 次数="+slot.次数);
+//                                        int finalC=slot.次数;
+                                        SwingUtilities.invokeAndWait(()->{
+                                                ta_plan.replaceRange(slot.次数 + "", finalPos, finalPos +String.valueOf(slot.次数+1).length());
                                         });
                                         writeStatus(StrUtil.format("{} c={}", name, slot.次数));
                                 }
