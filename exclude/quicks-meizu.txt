@@ -37,7 +37,7 @@ $$$钻石:
 1;35;0;950 1100;;!RET
 $$$浏览(快手):
 [act];HomeActivity,hotoDetailActivity;c_sleep
-1;3300;60;#10;;!RET
+1;3300;60;#10;
 $$$饭补:
 [act];com.kuaishou.nebula
 10;30;0;260 1860;;!RET
@@ -133,4 +133,4 @@ $$$起床
 4;65;3;153 659;;
 $$$番茄:短剧
 [act];ShortSeriesActivity
-1;14400;30;#10;;!RET
+1;14400;75;#10;swt

@@ -534,7 +534,7 @@ public class DIANTAO_UI {
                                             String pre = RuntimeUtil.execForStr(cmd_current);
                                             String  current= ReUtil.getGroup0(current_pattern, pre);
                                             if(current==null)current=pre;
-                                            writeBar("{}\nthread:{}\nsuspend:{}\nact:{}\nactNames:{}",LocalTime.now().format(TIME_FORMATTER),thread.getState(),thread_suspend,current,activityNames);
+                                            writeBar("{}\nthread:{}\nsuspend:{}\ncurrent:{}\nactNames:{}",LocalTime.now().format(TIME_FORMATTER),thread.getState(),thread_suspend,current,activityNames);
                                             if(activityNames!=null){
 //                                                    StaticLog.info("##current {} ", current);
                                                     boolean contain=false;
@@ -872,6 +872,7 @@ public class DIANTAO_UI {
                 s.间隔_广告间隔 =Commons.间隔_广告间隔;
         }
         private void watchAdv(Slot s){
+                this.sleep(s.间隔_广告时长);
                 int direction=0;
                 if(s.ex_cmds!=null){
                         if(s.ex_cmds.contains(INS_SW_FROM))
@@ -903,7 +904,6 @@ public class DIANTAO_UI {
 
                         }
                 }else
-                        this.sleep(s.间隔_广告时长);
                 this.sleep(2);
                 this.back();
                 if(StrUtil.isNotBlank(s.ex_cmds)){
