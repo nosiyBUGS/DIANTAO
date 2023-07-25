@@ -872,7 +872,7 @@ public class DIANTAO_UI {
                 s.间隔_广告间隔 =Commons.间隔_广告间隔;
         }
         private void watchAdv(Slot s){
-                this.sleep(s.间隔_广告时长);
+                this.sleep(s.间隔_滑动);
                 int direction=0;
                 if(s.ex_cmds!=null){
                         if(s.ex_cmds.contains(INS_SW_FROM))
