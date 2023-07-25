@@ -771,19 +771,27 @@ public class DIANTAO_UI {
                 for (String cmd : cmds) {
                         boolean sleeped=false;
                         if(cmd.startsWith("sw")){
-                                if(cmd.startsWith(INS_SW_FROM)){swipe(config.from);continue;}//swf
+                                int len="sw".length();
+                                if(cmd.equals(INS_SW_FROM)){swipe(config.from);continue;}//swf
                                 if(cmd.equals(INS_SW_REVERSE)){writeStatus("single swr not supported");}//swr
                                 if(cmd.equals(INS_SW_TO)){swipe(config.to);continue;}//swt
 
-                                String[] subs = cmd.substring(2).split("\\s");
+
                                 String p=null;
                                 boolean reverse_flag=false;
-                                if(cmd.startsWith(INS_SW_FROM))
+                                if(cmd.startsWith(INS_SW_FROM)){
                                         p = config.from;
-                                else if(cmd.startsWith(INS_SW_TO))
+                                        len=INS_SW_FROM.length();
+                                }
+                                else if(cmd.startsWith(INS_SW_TO)){
                                         p=config.to;
-                                else if(cmd.startsWith(INS_SW_REVERSE))
+                                        len=INS_SW_TO.length();
+                                }
+                                else if(cmd.startsWith(INS_SW_REVERSE)){
                                         reverse_flag=true;
+                                        len=INS_SW_REVERSE.length();
+                                }
+                                String[] subs = cmd.substring(len).split("\\s");
 
                                 if(subs.length==2) {//sw65 7
                                         int total= Integer.parseInt(subs[0]);
@@ -793,7 +801,8 @@ public class DIANTAO_UI {
                                                         if(i%2==0)
                                                                 p=config.from;
                                                         else p=config.to;
-                                                }
+                                                }else p=config.from;
+                                                sleep(t);
                                                  swipe(p);
                                         }
                                 }
@@ -811,6 +820,7 @@ public class DIANTAO_UI {
                                                                 p=StrUtil.format("{} {} {} {}", subs[0], subs[1], subs[2], subs[3]);
                                                         else p=StrUtil.format("{} {} {} {}", subs[2], subs[3], subs[0], subs[1]);
                                                 }else p=StrUtil.format("{} {} {} {}", subs[0], subs[1], subs[2], subs[3]);
+                                                sleep(t);
                                                 swipe(p);
                                         }
                                 }
@@ -875,12 +885,20 @@ public class DIANTAO_UI {
                 this.sleep(s.间隔_滑动);
                 int direction=0;
                 if(s.ex_cmds!=null){
-                        if(s.ex_cmds.contains(INS_SW_FROM))
+                        if(s.ex_cmds.contains(INS_SW_FROM)){
                                 direction=1;
-                        else if(s.ex_cmds.contains(INS_SW_TO))
+                                s.ex_cmds=s.ex_cmds.replace(INS_SW_FROM,"");
+                        }
+                        else if(s.ex_cmds.contains(INS_SW_TO)){
                                 direction=2;
-                        else if(s.ex_cmds.contains(INS_SW_REVERSE))
+                                s.ex_cmds=s.ex_cmds.replace(INS_SW_TO,"");
+
+                        }
+                        else if(s.ex_cmds.contains(INS_SW_REVERSE)){
                                 direction=3;
+                                s.ex_cmds=s.ex_cmds.replace(INS_SW_REVERSE,"");
+
+                        }
                 }
                 if(s.间隔_滑动>0){
                         int times=s.间隔_广告时长/s.间隔_滑动;
@@ -904,12 +922,12 @@ public class DIANTAO_UI {
 
                         }
                 }else
-                this.sleep(2);
+                        this.sleep(s.间隔_广告时长);
                 this.back();
+                sleep(5);
                 if(StrUtil.isNotBlank(s.ex_cmds)){
                         execute_cmd(s.ex_cmds.split(";"),null);
                 }
-//                this.sleep(s.间隔_广告间隔);
         }
         class Commons{
                 public static final String 关闭广告_竖屏="998 164";//981 176
