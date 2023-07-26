@@ -46,7 +46,6 @@ public class DIANTAO_UI {
         private String adb_path;
         private String path;
         private JCheckBox checkBox_cis;
-//        private JTextField textField_delay;
 
         private String cmd_start = path+"shell am start -n com.alibaba.android.rimet/com.alibaba.android.rimet.biz.LaunchHomeActivity";
         private String cmd_stop=path+"shell am force-stop com.alibaba.android.rimet";
