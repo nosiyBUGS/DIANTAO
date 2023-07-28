@@ -21,8 +21,6 @@ import lombok.SneakyThrows;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
-import javax.swing.event.InternalFrameAdapter;
-import javax.swing.event.InternalFrameEvent;
 import javax.swing.undo.UndoManager;
 import java.awt.*;
 import java.awt.event.*;
@@ -89,11 +87,6 @@ public class DIANTAO_UI {
 
         private boolean thread_suspend=false;
         private JTextArea status_bar;
-        private static JFrame frame;
-        private static JDesktopPane desktopPane;
-
-        private static List<DIANTAO_UI> intances=new ArrayList<>();
-        private JInternalFrame iFrame;
 
         {
                 setting.set("host","smtp.qq.com");
@@ -105,17 +98,8 @@ public class DIANTAO_UI {
         private MailAccount account=new MailAccount(setting);
 
         public static void main(String[] args) {
-            DIANTAO_UI ui = new DIANTAO_UI();
-                SwingUtilities.invokeLater(()-> {
-                                try {
-                                        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-                                } catch (Exception e) {
-                                        throw new RuntimeException(e);
-                                }
-                                frame = new JFrame(args[0] + "-操作");
-                                desktopPane = new JDesktopPane();
 
-                        });
+            DIANTAO_UI ui = new DIANTAO_UI();
             ui.main(args[0]);
     }
     private void initDevice(){
@@ -137,53 +121,29 @@ public class DIANTAO_UI {
                     StaticLog.info("##adb connect:{}",c);
             });
             SwingUtilities.invokeLater(()->{
-                    JPanel manualPane = new JPanel();
-                    iFrame = new JInternalFrame(this +"-"+intances.size(),true,true,true);
-                    iFrame.setSize(600,750);
-                    iFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-                    iFrame.addInternalFrameListener(new InternalFrameAdapter() {
-                            @Override
-                            public void internalFrameClosed(InternalFrameEvent e) {
-                                   onClose();
-                                    intances.remove(DIANTAO_UI.this);
-                                    StaticLog.info("##closed,threads stop,instances:{}",intances.size());
-                            }
-                    });
-                    if(!intances.isEmpty()){
-                            JInternalFrame pre=intances.get(intances.size()-1).iFrame;
-                            iFrame.setLocation(pre.getX()+(int)pre.getSize().getWidth(),pre.getY());
+                    try {
+                            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+                    } catch (Exception e) {
+                            throw new RuntimeException(e);
                     }
-                    intances.add(this);
-                    desktopPane.add(iFrame);
-                    iFrame.add(manualPane);
-                    iFrame.setVisible(true);
+                    JFrame frame = new JFrame(confName+"-操作");
                     JMenuBar menuBar=new JMenuBar();
                     JMenu quick_menu= new JMenu("快捷操作");
                     JMenu offset_menu= new JMenu("偏移");
                     JMenu reload_menu= new JMenu("重载配置");
-                    JMenuBar frameBar=new JMenuBar();
-                    JMenu new_win_menu= new JMenu("新窗口");
-                    frameBar.add(new_win_menu);
-                    iFrame.setJMenuBar(menuBar);
-                    frame.setJMenuBar(frameBar);
+
                     MouseAdapter mouseAdapter = new MouseAdapter() {
                             @Override
                             public void mouseClicked(MouseEvent e) {
-                                    onClose();
+                                    if (thread != null) thread.stop();
+                                    if (monitorThread != null) monitorThread.stop();
                                     lastConfig = ta_plan.getText();
-                                    iFrame.setVisible(false);
-                                    iFrame.dispose();
+                                    frame.setVisible(false);
+                                    frame.dispose();
                                     main(confName);
-
                             }
                     };
                     reload_menu.addMouseListener(mouseAdapter);
-                    new_win_menu.addMouseListener(new MouseAdapter() {
-                            @Override
-                            public void mouseClicked(MouseEvent e) {
-                                    new DIANTAO_UI().main(confName);
-                            }
-                    });
                     ButtonGroup offset_buttonGroup=new ButtonGroup();
                     ItemListener offsetItemlistener = e -> {
                             String text = ((JRadioButtonMenuItem) e.getItem()).getText();
@@ -198,8 +158,9 @@ public class DIANTAO_UI {
                     menuBar.add(quick_menu);
                     menuBar.add(offset_menu);
                     menuBar.add(reload_menu);
-
-
+                    frame.setJMenuBar(menuBar);
+                    Container contentPane = frame.getContentPane();
+                    JPanel manualPane = new JPanel();
                     frame.addWindowFocusListener(new WindowFocusListener() {
                             @Override
                             public void windowGainedFocus(WindowEvent e) {
@@ -226,8 +187,7 @@ public class DIANTAO_UI {
                                     button_batch.doClick();
                             }
                     });
-//                    frame.setContentPane(manualPane);
-                    frame.setContentPane(desktopPane);
+                    contentPane.add(manualPane);
 
                     checkBox_cis = new JCheckBox("顺式",false);
                     checkBox_cis.addActionListener(e->{
@@ -305,7 +265,7 @@ public class DIANTAO_UI {
 
                     JButton button_ok=new JButton("提交");
                     button_ok.addActionListener(e->{
-                            onClose();
+                            if  (thread!=null)thread.stop();
                             thread=new Thread(() -> {
                                     begin(getSlot(),true,null);
 //                                panel_X.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
@@ -319,7 +279,8 @@ public class DIANTAO_UI {
                     button_stop.addActionListener(e->{
                             if(thread!=null){
                                 thread_suspend=false;
-                                onClose();
+                                thread.stop();
+                                monitorThread.stop();
                                 writeStatus("threads stopped");
                                 activityNames=null;
                             }
@@ -547,6 +508,7 @@ public class DIANTAO_UI {
                                                             } else {//拷贝上一份 j不回退
                                                                     slot.arow = pre.arow;
                                                                     slot.Y = pre.Y;
+                                                                    slot.ex_cmds = pre.ex_cmds;
                                                             }
                                                     }else j++;
                                             }
@@ -554,7 +516,12 @@ public class DIANTAO_UI {
                                     slots.add(slot);
                             }
 
-                           onClose();
+                            if(thread!=null){
+                                    thread.stop();
+                            }
+                            if(monitorThread!=null){
+                                    monitorThread.stop();
+                            }
                             thread=new Thread(() -> {
                                     System.gc();
                                     beginBatch(group);
@@ -624,7 +591,7 @@ public class DIANTAO_UI {
                     manualPane.add(panel_plan);
                     manualPane.add(panel_ta);
                     frame.pack();
-                    frame.setSize(1200,800);
+                    frame.setSize(600,750);
                     frame.setLocation(600,100);
                     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
                     frame.setVisible(true);
@@ -632,14 +599,7 @@ public class DIANTAO_UI {
             });
 
     }
-    private void onClose(){
-            if(thread!=null){
-                    thread.stop();
-            }
-            if(monitorThread!=null){
-                    monitorThread.stop();
-            }
-    }
+
     @SneakyThrows
     private int getLinePos(int lineunmber){
             int j = 0;
