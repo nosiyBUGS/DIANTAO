@@ -127,3 +127,9 @@ $$$起床
 $$$番茄:短剧
 [act];ShortSeriesActivity
 1;14400;30;#10;swr
+$$$浏览(抖音):
+[act];MainActivity,SplashActivity
+1;14400;7;#10;swf
+[cmd];1;h
+$$$番茄:领金币
+[cmd];8;t920 120;t550 1220;s35;b;

@@ -21,6 +21,8 @@ import lombok.SneakyThrows;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
+import javax.swing.event.InternalFrameAdapter;
+import javax.swing.event.InternalFrameEvent;
 import javax.swing.undo.UndoManager;
 import java.awt.*;
 import java.awt.event.*;
@@ -87,6 +89,11 @@ public class DIANTAO_UI {
 
         private boolean thread_suspend=false;
         private JTextArea status_bar;
+        private static JFrame frame;
+        private static JDesktopPane desktopPane;
+
+        private static List<DIANTAO_UI> intances=new ArrayList<>();
+        private JInternalFrame iFrame;
 
         {
                 setting.set("host","smtp.qq.com");
@@ -98,8 +105,17 @@ public class DIANTAO_UI {
         private MailAccount account=new MailAccount(setting);
 
         public static void main(String[] args) {
-
             DIANTAO_UI ui = new DIANTAO_UI();
+                SwingUtilities.invokeLater(()-> {
+                                try {
+                                        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+                                } catch (Exception e) {
+                                        throw new RuntimeException(e);
+                                }
+                                frame = new JFrame(args[0] + "-操作");
+                                desktopPane = new JDesktopPane();
+
+                        });
             ui.main(args[0]);
     }
     private void initDevice(){
@@ -121,29 +137,53 @@ public class DIANTAO_UI {
                     StaticLog.info("##adb connect:{}",c);
             });
             SwingUtilities.invokeLater(()->{
-                    try {
-                            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-                    } catch (Exception e) {
-                            throw new RuntimeException(e);
+                    JPanel manualPane = new JPanel();
+                    iFrame = new JInternalFrame(this +"-"+intances.size(),true,true,true);
+                    iFrame.setSize(600,750);
+                    iFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+                    iFrame.addInternalFrameListener(new InternalFrameAdapter() {
+                            @Override
+                            public void internalFrameClosed(InternalFrameEvent e) {
+                                   onClose();
+                                    intances.remove(DIANTAO_UI.this);
+                                    StaticLog.info("##closed,threads stop,instances:{}",intances.size());
+                            }
+                    });
+                    if(!intances.isEmpty()){
+                            JInternalFrame pre=intances.get(intances.size()-1).iFrame;
+                            iFrame.setLocation(pre.getX()+(int)pre.getSize().getWidth(),pre.getY());
                     }
-                    JFrame frame = new JFrame(confName+"-操作");
+                    intances.add(this);
+                    desktopPane.add(iFrame);
+                    iFrame.add(manualPane);
+                    iFrame.setVisible(true);
                     JMenuBar menuBar=new JMenuBar();
                     JMenu quick_menu= new JMenu("快捷操作");
                     JMenu offset_menu= new JMenu("偏移");
                     JMenu reload_menu= new JMenu("重载配置");
-
+                    JMenuBar frameBar=new JMenuBar();
+                    JMenu new_win_menu= new JMenu("新窗口");
+                    frameBar.add(new_win_menu);
+                    iFrame.setJMenuBar(menuBar);
+                    frame.setJMenuBar(frameBar);
                     MouseAdapter mouseAdapter = new MouseAdapter() {
                             @Override
                             public void mouseClicked(MouseEvent e) {
-                                    if (thread != null) thread.stop();
-                                    if (monitorThread != null) monitorThread.stop();
+                                    onClose();
                                     lastConfig = ta_plan.getText();
-                                    frame.setVisible(false);
-                                    frame.dispose();
+                                    iFrame.setVisible(false);
+                                    iFrame.dispose();
                                     main(confName);
+
                             }
                     };
                     reload_menu.addMouseListener(mouseAdapter);
+                    new_win_menu.addMouseListener(new MouseAdapter() {
+                            @Override
+                            public void mouseClicked(MouseEvent e) {
+                                    new DIANTAO_UI().main(confName);
+                            }
+                    });
                     ButtonGroup offset_buttonGroup=new ButtonGroup();
                     ItemListener offsetItemlistener = e -> {
                             String text = ((JRadioButtonMenuItem) e.getItem()).getText();
@@ -158,9 +198,8 @@ public class DIANTAO_UI {
                     menuBar.add(quick_menu);
                     menuBar.add(offset_menu);
                     menuBar.add(reload_menu);
-                    frame.setJMenuBar(menuBar);
-                    Container contentPane = frame.getContentPane();
-                    JPanel manualPane = new JPanel();
+
+
                     frame.addWindowFocusListener(new WindowFocusListener() {
                             @Override
                             public void windowGainedFocus(WindowEvent e) {
@@ -187,7 +226,8 @@ public class DIANTAO_UI {
                                     button_batch.doClick();
                             }
                     });
-                    contentPane.add(manualPane);
+//                    frame.setContentPane(manualPane);
+                    frame.setContentPane(desktopPane);
 
                     checkBox_cis = new JCheckBox("顺式",false);
                     checkBox_cis.addActionListener(e->{
@@ -265,7 +305,7 @@ public class DIANTAO_UI {
 
                     JButton button_ok=new JButton("提交");
                     button_ok.addActionListener(e->{
-                            if  (thread!=null)thread.stop();
+                            onClose();
                             thread=new Thread(() -> {
                                     begin(getSlot(),true,null);
 //                                panel_X.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
@@ -279,8 +319,7 @@ public class DIANTAO_UI {
                     button_stop.addActionListener(e->{
                             if(thread!=null){
                                 thread_suspend=false;
-                                thread.stop();
-                                monitorThread.stop();
+                                onClose();
                                 writeStatus("threads stopped");
                                 activityNames=null;
                             }
@@ -508,7 +547,6 @@ public class DIANTAO_UI {
                                                             } else {//拷贝上一份 j不回退
                                                                     slot.arow = pre.arow;
                                                                     slot.Y = pre.Y;
-                                                                    slot.ex_cmds = pre.ex_cmds;
                                                             }
                                                     }else j++;
                                             }
@@ -516,12 +554,7 @@ public class DIANTAO_UI {
                                     slots.add(slot);
                             }
 
-                            if(thread!=null){
-                                    thread.stop();
-                            }
-                            if(monitorThread!=null){
-                                    monitorThread.stop();
-                            }
+                           onClose();
                             thread=new Thread(() -> {
                                     System.gc();
                                     beginBatch(group);
@@ -591,7 +624,7 @@ public class DIANTAO_UI {
                     manualPane.add(panel_plan);
                     manualPane.add(panel_ta);
                     frame.pack();
-                    frame.setSize(600,750);
+                    frame.setSize(1200,800);
                     frame.setLocation(600,100);
                     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
                     frame.setVisible(true);
@@ -599,7 +632,14 @@ public class DIANTAO_UI {
             });
 
     }
-
+    private void onClose(){
+            if(thread!=null){
+                    thread.stop();
+            }
+            if(monitorThread!=null){
+                    monitorThread.stop();
+            }
+    }
     @SneakyThrows
     private int getLinePos(int lineunmber){
             int j = 0;
@@ -770,27 +810,19 @@ public class DIANTAO_UI {
                 for (String cmd : cmds) {
                         boolean sleeped=false;
                         if(cmd.startsWith("sw")){
-                                int len="sw".length();
-                                if(cmd.equals(INS_SW_FROM)){swipe(config.from);continue;}//swf
+                                if(cmd.startsWith(INS_SW_FROM)){swipe(config.from);continue;}//swf
                                 if(cmd.equals(INS_SW_REVERSE)){writeStatus("single swr not supported");}//swr
                                 if(cmd.equals(INS_SW_TO)){swipe(config.to);continue;}//swt
 
-
+                                String[] subs = cmd.substring(2).split("\\s");
                                 String p=null;
                                 boolean reverse_flag=false;
-                                if(cmd.startsWith(INS_SW_FROM)){
+                                if(cmd.startsWith(INS_SW_FROM))
                                         p = config.from;
-                                        len=INS_SW_FROM.length();
-                                }
-                                else if(cmd.startsWith(INS_SW_TO)){
+                                else if(cmd.startsWith(INS_SW_TO))
                                         p=config.to;
-                                        len=INS_SW_TO.length();
-                                }
-                                else if(cmd.startsWith(INS_SW_REVERSE)){
+                                else if(cmd.startsWith(INS_SW_REVERSE))
                                         reverse_flag=true;
-                                        len=INS_SW_REVERSE.length();
-                                }
-                                String[] subs = cmd.substring(len).split("\\s");
 
                                 if(subs.length==2) {//sw65 7
                                         int total= Integer.parseInt(subs[0]);
@@ -800,8 +832,7 @@ public class DIANTAO_UI {
                                                         if(i%2==0)
                                                                 p=config.from;
                                                         else p=config.to;
-                                                }else p=config.from;
-                                                sleep(t);
+                                                }
                                                  swipe(p);
                                         }
                                 }
@@ -819,7 +850,6 @@ public class DIANTAO_UI {
                                                                 p=StrUtil.format("{} {} {} {}", subs[0], subs[1], subs[2], subs[3]);
                                                         else p=StrUtil.format("{} {} {} {}", subs[2], subs[3], subs[0], subs[1]);
                                                 }else p=StrUtil.format("{} {} {} {}", subs[0], subs[1], subs[2], subs[3]);
-                                                sleep(t);
                                                 swipe(p);
                                         }
                                 }
@@ -885,18 +915,16 @@ public class DIANTAO_UI {
                 int direction=0;
                 if(s.ex_cmds!=null){
                         if(s.ex_cmds.contains(INS_SW_FROM)){
-                                direction=1;
                                 s.ex_cmds=s.ex_cmds.replace(INS_SW_FROM,"");
+                                direction=1;
                         }
                         else if(s.ex_cmds.contains(INS_SW_TO)){
-                                direction=2;
                                 s.ex_cmds=s.ex_cmds.replace(INS_SW_TO,"");
-
+                                direction=2;
                         }
                         else if(s.ex_cmds.contains(INS_SW_REVERSE)){
-                                direction=3;
                                 s.ex_cmds=s.ex_cmds.replace(INS_SW_REVERSE,"");
-
+                                direction=3;
                         }
                 }
                 if(s.间隔_滑动>0){
@@ -923,10 +951,10 @@ public class DIANTAO_UI {
                 }else
                         this.sleep(s.间隔_广告时长);
                 this.back();
-                sleep(5);
                 if(StrUtil.isNotBlank(s.ex_cmds)){
                         execute_cmd(s.ex_cmds.split(";"),null);
                 }
+                this.sleep(s.间隔_广告间隔);
         }
         class Commons{
                 public static final String 关闭广告_竖屏="998 164";//981 176
