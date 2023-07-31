@@ -23,6 +23,7 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.event.InternalFrameAdapter;
 import javax.swing.event.InternalFrameEvent;
+import javax.swing.text.PlainDocument;
 import javax.swing.undo.UndoManager;
 import java.awt.*;
 import java.awt.event.*;
@@ -42,7 +43,7 @@ public class DIANTAO_UI {
         private static final DateTimeFormatter TIME_FORMATTER=DateTimeFormatter.ofPattern("HH:mm:ss");
 
         static Log StaticLog = LogFactory.get();
-        private Config config;
+        private static Config config;
 
         private String device;
         private String adb_path;
@@ -344,79 +345,22 @@ public class DIANTAO_UI {
                     status_bar.setLineWrap(true);
 
                     Font font=new Font("宋体",Font.TRUETYPE_FONT,18);
-                    UndoManager undoManager=new UndoManager();
+                    UndoManager undoManager = new UndoManager();
                     ta_plan.getDocument().addUndoableEditListener(undoManager);
                     ta_plan.setFont(font);
                     //undo
-                    ta_plan.getKeymap().addActionForKeyStroke(KeyStroke.getKeyStroke(KeyEvent.VK_Z, KeyEvent.CTRL_MASK), new AbstractAction() {
-                            @Override
-                            public void actionPerformed(ActionEvent e) {
-                                    if(undoManager.canUndo())
-                                        undoManager.undo();
-                            }
-                    });
+                    ta_plan.getKeymap().addActionForKeyStroke(CTRL_Z, CTRL_Z_ACTION);
                     //redo
-                    ta_plan.getKeymap().addActionForKeyStroke(KeyStroke.getKeyStroke(KeyEvent.VK_Z, KeyEvent.CTRL_MASK | KeyEvent.SHIFT_MASK), new AbstractAction() {
-                            @SneakyThrows
-                            @Override
-                            public void actionPerformed(ActionEvent e) {
-                                    if(undoManager.canRedo())
-                                        undoManager.redo();
-                            }
-                    });
+                    ta_plan.getKeymap().addActionForKeyStroke(CTRL_SHIFT_Z,CTRL_SHIFT_Z_ACTION );
                     // comment/uncomment line
-                    ta_plan.getKeymap().addActionForKeyStroke(KeyStroke.getKeyStroke("F3"), new AbstractAction() {
-                            @SneakyThrows
-                            @Override
-                            public void actionPerformed(ActionEvent e) {
-                                    JTextArea source= (JTextArea) e.getSource();
-                                    int linenumber = source.getLineOfOffset(source.getCaretPosition());
-                                    int start = source.getLineStartOffset(linenumber);
-                                    int end = source.getLineEndOffset(linenumber);
-                                    String line = source.getText(start, end - start);
-                                    if(!line.startsWith(BSY)){
-                                            if(line.startsWith(CMT))
-                                                    source.replaceRange("",start,start+CMT.length());
-                                            else source.insert(CMT,start);
-                                    }
-                                    if(source.getCaretPosition()<source.getText().length())
-                                        source.setCaretPosition(end+CMT.length());
-                            }
-                    });
+                    ta_plan.getKeymap().addActionForKeyStroke(F3,F3_ACTION);
 
                     //duplicate current line
-                    ta_plan.getKeymap().addActionForKeyStroke(KeyStroke.getKeyStroke(KeyEvent.VK_D, KeyEvent.CTRL_MASK), new AbstractAction() {
-                            @SneakyThrows
-                            @Override
-                            public void actionPerformed(ActionEvent e) {
-                                    JTextArea source= (JTextArea) e.getSource();
-                                    int linenumber = source.getLineOfOffset(source.getCaretPosition());
-                                    int start = source.getLineStartOffset(linenumber);
-                                    int end = source.getLineEndOffset(linenumber);
-                                    String line = source.getText(start, end - start);
-                                    if(StrUtil.isNotBlank(line)){
-                                        if(linenumber== source.getLineCount()-1)//the last line
-                                                source.insert("\n"+line,end);
-                                        else
-                                                source.insert(line,end);
-                                    }
-                            }
-                    });
+                    ta_plan.getKeymap().addActionForKeyStroke(CTRL_D,CTRL_D_ACTION);
 
                     //remove current line
-                    ta_plan.getKeymap().addActionForKeyStroke(KeyStroke.getKeyStroke(KeyEvent.VK_Y, KeyEvent.CTRL_MASK), new AbstractAction() {
-                            @SneakyThrows
-                            @Override
-                            public void actionPerformed(ActionEvent e) {
-                                    JTextArea source= (JTextArea) e.getSource();
-                                    int linenumber = source.getLineOfOffset(source.getCaretPosition());
-                                    int start = source.getLineStartOffset(linenumber);
-                                    int end = source.getLineEndOffset(linenumber);
-                                    String line = source.getText(start, end - start);
-                                    source.replaceRange("",start,end);
-                            }
-                    });
-                    ta_plan.getKeymap().addActionForKeyStroke(KeyStroke.getKeyStroke(KeyEvent.VK_E, KeyEvent.CTRL_MASK), new AbstractAction() {
+                    ta_plan.getKeymap().addActionForKeyStroke(CTRL_Y,CTRL_Y_ACTION);
+                   /* ta_plan.getKeymap().addActionForKeyStroke(KeyStroke.getKeyStroke(KeyEvent.VK_E, KeyEvent.CTRL_MASK), new AbstractAction() {
                             @SneakyThrows
                             @Override
                             public void actionPerformed(ActionEvent e) {
@@ -430,7 +374,7 @@ public class DIANTAO_UI {
                                     System.out.println(end);
                                     JOptionPane.showMessageDialog(frame, ta_plan.getText(start,end-start));
                             }
-                    });
+                    });*/
                     //回写
                     ta_plan.getKeymap().addActionForKeyStroke(KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.CTRL_MASK), new AbstractAction() {
                             @Override
@@ -1091,6 +1035,82 @@ public class DIANTAO_UI {
                 }
                 return ArrayUtil.join(xys, " ");
         }
+        /*********************action varibles**************/
+            public static final KeyStroke CTRL_Z=KeyStroke.getKeyStroke(KeyEvent.VK_Z, KeyEvent.CTRL_MASK);
+            public static final AbstractAction CTRL_Z_ACTION=new AbstractAction() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                            PlainDocument document = ((PlainDocument) ((JTextArea) e.getSource()).getDocument());
+                            UndoManager manager= (UndoManager) document.getUndoableEditListeners()[0];
+                            if(manager.canUndo()){
+                                    manager.undo();
+                            }
+                    }
+            };
+
+            public static final KeyStroke CTRL_SHIFT_Z=KeyStroke.getKeyStroke(KeyEvent.VK_Z, KeyEvent.CTRL_MASK | KeyEvent.SHIFT_MASK);
+            public static final AbstractAction CTRL_SHIFT_Z_ACTION=new AbstractAction() {
+                    @SneakyThrows
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                            PlainDocument document = ((PlainDocument) ((JTextArea) e.getSource()).getDocument());
+                            UndoManager manager= (UndoManager) document.getUndoableEditListeners()[0];
+                            if(manager.canRedo()){
+                                    manager.redo();
+                            }
+                    }
+            };
+                public static final KeyStroke F3=KeyStroke.getKeyStroke("F3");
+                public static final AbstractAction F3_ACTION= new AbstractAction() {
+                        @SneakyThrows
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                                JTextArea source= (JTextArea) e.getSource();
+                                int linenumber = source.getLineOfOffset(source.getCaretPosition());
+                                int start = source.getLineStartOffset(linenumber);
+                                int end = source.getLineEndOffset(linenumber);
+                                String line = source.getText(start, end - start);
+                                if(!line.startsWith(BSY)){
+                                        if(line.startsWith(CMT))
+                                                source.replaceRange("",start,start+CMT.length());
+                                        else source.insert(CMT,start);
+                                }
+                                if(source.getCaretPosition()<source.getText().length())
+                                        source.setCaretPosition(end+CMT.length());
+                        }
+                };
+        public static final KeyStroke CTRL_D= KeyStroke.getKeyStroke(KeyEvent.VK_D, KeyEvent.CTRL_MASK);
+        public static final AbstractAction CTRL_D_ACTION= new AbstractAction() {
+                @SneakyThrows
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                        JTextArea source= (JTextArea) e.getSource();
+                        int linenumber = source.getLineOfOffset(source.getCaretPosition());
+                        int start = source.getLineStartOffset(linenumber);
+                        int end = source.getLineEndOffset(linenumber);
+                        String line = source.getText(start, end - start);
+                        if(StrUtil.isNotBlank(line)){
+                                if(linenumber== source.getLineCount()-1)//the last line
+                                        source.insert("\n"+line,end);
+                                else
+                                        source.insert(line,end);
+                        }
+                }
+        };
+
+        public static final KeyStroke CTRL_Y= KeyStroke.getKeyStroke(KeyEvent.VK_Y, KeyEvent.CTRL_MASK);
+        public static final AbstractAction CTRL_Y_ACTION= new AbstractAction() {
+                @SneakyThrows
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                        JTextArea source= (JTextArea) e.getSource();
+                        int linenumber = source.getLineOfOffset(source.getCaretPosition());
+                        int start = source.getLineStartOffset(linenumber);
+                        int end = source.getLineEndOffset(linenumber);
+//                                    String line = source.getText(start, end - start);
+                        source.replaceRange("",start,end);
+                }
+        };
 
 
 
