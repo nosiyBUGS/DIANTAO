@@ -150,8 +150,8 @@ public class DIANTAO_UI {
                             }
                     });
                     if(!intances.isEmpty()){
-                            JInternalFrame pre=intances.get(intances.size()-1).iFrame;
-                            iFrame.setLocation(pre.getX()+(int)pre.getSize().getWidth(),pre.getY());
+//                            JInternalFrame pre=intances.get(intances.size()-1).iFrame;
+                            iFrame.setLocation(100,0);
                     }
                     intances.add(this);
                     desktopPane.add(iFrame);
@@ -369,17 +369,18 @@ public class DIANTAO_UI {
                             @SneakyThrows
                             @Override
                             public void actionPerformed(ActionEvent e) {
-                                    int linenumber = ta_plan.getLineOfOffset(ta_plan.getCaretPosition());
-                                    int start = ta_plan.getLineStartOffset(linenumber);
-                                    int end = ta_plan.getLineEndOffset(linenumber);
-                                    String line = ta_plan.getText(start, end - start);
+                                    JTextArea source= (JTextArea) e.getSource();
+                                    int linenumber = source.getLineOfOffset(source.getCaretPosition());
+                                    int start = source.getLineStartOffset(linenumber);
+                                    int end = source.getLineEndOffset(linenumber);
+                                    String line = source.getText(start, end - start);
                                     if(!line.startsWith(BSY)){
                                             if(line.startsWith(CMT))
-                                                    ta_plan.replaceRange("",start,start+CMT.length());
-                                            else ta_plan.insert(CMT,start);
+                                                    source.replaceRange("",start,start+CMT.length());
+                                            else source.insert(CMT,start);
                                     }
-                                    if(ta_plan.getCaretPosition()<ta_plan.getText().length())
-                                        ta_plan.setCaretPosition(end+CMT.length());
+                                    if(source.getCaretPosition()<source.getText().length())
+                                        source.setCaretPosition(end+CMT.length());
                             }
                     });
 
@@ -388,15 +389,16 @@ public class DIANTAO_UI {
                             @SneakyThrows
                             @Override
                             public void actionPerformed(ActionEvent e) {
-                                    int linenumber = ta_plan.getLineOfOffset(ta_plan.getCaretPosition());
-                                    int start = ta_plan.getLineStartOffset(linenumber);
-                                    int end = ta_plan.getLineEndOffset(linenumber);
-                                    String line = ta_plan.getText(start, end - start);
+                                    JTextArea source= (JTextArea) e.getSource();
+                                    int linenumber = source.getLineOfOffset(source.getCaretPosition());
+                                    int start = source.getLineStartOffset(linenumber);
+                                    int end = source.getLineEndOffset(linenumber);
+                                    String line = source.getText(start, end - start);
                                     if(StrUtil.isNotBlank(line)){
-                                        if(linenumber== ta_plan.getLineCount()-1)//the last line
-                                                ta_plan.insert("\n"+line,end);
+                                        if(linenumber== source.getLineCount()-1)//the last line
+                                                source.insert("\n"+line,end);
                                         else
-                                                ta_plan.insert(line,end);
+                                                source.insert(line,end);
                                     }
                             }
                     });
@@ -406,17 +408,19 @@ public class DIANTAO_UI {
                             @SneakyThrows
                             @Override
                             public void actionPerformed(ActionEvent e) {
-                                    int linenumber = ta_plan.getLineOfOffset(ta_plan.getCaretPosition());
-                                    int start = ta_plan.getLineStartOffset(linenumber);
-                                    int end = ta_plan.getLineEndOffset(linenumber);
-                                    String line = ta_plan.getText(start, end - start);
-                                    ta_plan.replaceRange("",start,end);
+                                    JTextArea source= (JTextArea) e.getSource();
+                                    int linenumber = source.getLineOfOffset(source.getCaretPosition());
+                                    int start = source.getLineStartOffset(linenumber);
+                                    int end = source.getLineEndOffset(linenumber);
+                                    String line = source.getText(start, end - start);
+                                    source.replaceRange("",start,end);
                             }
                     });
                     ta_plan.getKeymap().addActionForKeyStroke(KeyStroke.getKeyStroke(KeyEvent.VK_E, KeyEvent.CTRL_MASK), new AbstractAction() {
                             @SneakyThrows
                             @Override
                             public void actionPerformed(ActionEvent e) {
+                                    JTextArea ta_plan= (JTextArea) e.getSource();
                                     System.out.println("ta_plan.getCaretPosition() = " + ta_plan.getCaretPosition());
                                     int linenumber = ta_plan.getLineOfOffset(ta_plan.getCaretPosition());
                                     System.out.println(linenumber);
@@ -431,7 +435,8 @@ public class DIANTAO_UI {
                     ta_plan.getKeymap().addActionForKeyStroke(KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.CTRL_MASK), new AbstractAction() {
                             @Override
                             public void actionPerformed(ActionEvent e) {
-                                    List<String> textList = Arrays.stream(ta_plan.getText().split("\n")).filter(StrUtil::isNotBlank).collect(Collectors.toList());
+                                    JTextArea source= (JTextArea) e.getSource();
+                                    List<String> textList = Arrays.stream(source.getText().split("\n")).filter(StrUtil::isNotBlank).collect(Collectors.toList());
                                     List<String> list = FileUtil.readUtf8Lines(config.quicks_path);
                                     ArrayList<String> collect = new ArrayList<>();
                                     boolean replace_flag=false;
