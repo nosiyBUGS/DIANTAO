@@ -201,14 +201,17 @@ public class DIANTAO_UI {
                     menuBar.add(reload_menu);
 
 
-                    frame.addWindowFocusListener(new WindowFocusListener() {
+                    iFrame.addInternalFrameListener(new InternalFrameAdapter() {
                             @Override
-                            public void windowGainedFocus(WindowEvent e) {
+                            public void internalFrameActivated(InternalFrameEvent e) {
                                     manualPane.setBackground(Color.CYAN);
+
                             }
+
                             @Override
-                            public void windowLostFocus(WindowEvent e) {
+                            public void internalFrameDeactivated(InternalFrameEvent e) {
                                     manualPane.setBackground(Color.WHITE);
+
                             }
                     });
                     //stop
