@@ -80,7 +80,7 @@ public class DIANTAO_UI {
 
         private String lastConfig;
 
-        Setting setting=new Setting();
+        static Setting setting=new Setting();
         private JTextArea ta_plan;
         private JButton button_stop;
         private JButton button_batch;
@@ -93,17 +93,18 @@ public class DIANTAO_UI {
         private static JFrame frame;
         private static JDesktopPane desktopPane;
 
-        private static List<DIANTAO_UI> intances=new ArrayList<>();
+        private static final List<DIANTAO_UI> intances=new ArrayList<>();
         private JInternalFrame iFrame;
+        private JPanel manualPane;
 
-        {
+        static {
                 setting.set("host","smtp.qq.com");
                 setting.set("port","465");
                 setting.set("sslEnable","true");
                 setting.set("from","1281886693@qq.com");
                 setting.set("pass","tqblyhamaeqxijaj");
         }
-        private MailAccount account=new MailAccount(setting);
+        private final static MailAccount account=new MailAccount(setting);
 
         public static void main(String[] args) {
             DIANTAO_UI ui = new DIANTAO_UI();
@@ -138,7 +139,7 @@ public class DIANTAO_UI {
                     StaticLog.info("##adb connect:{}",c);
             });
             SwingUtilities.invokeLater(()->{
-                    JPanel manualPane = new JPanel();
+                    manualPane = new JPanel();
                     iFrame = new JInternalFrame(this +"-"+intances.size(),true,true,true);
                     iFrame.setSize(600,750);
                     iFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
@@ -204,13 +205,15 @@ public class DIANTAO_UI {
                     iFrame.addInternalFrameListener(new InternalFrameAdapter() {
                             @Override
                             public void internalFrameActivated(InternalFrameEvent e) {
-                                    manualPane.setBackground(Color.CYAN);
+                                    if(thread==null || thread.getState().equals(Thread.State.TERMINATED))
+                                        manualPane.setBackground(Color.CYAN);
 
                             }
 
                             @Override
                             public void internalFrameDeactivated(InternalFrameEvent e) {
-                                    manualPane.setBackground(Color.WHITE);
+                                    if(thread==null || thread.getState().equals(Thread.State.TERMINATED))
+                                        manualPane.setBackground(Color.WHITE);
 
                             }
                     });
@@ -234,9 +237,7 @@ public class DIANTAO_UI {
                     frame.setContentPane(desktopPane);
 
                     checkBox_cis = new JCheckBox("顺式",false);
-                    checkBox_cis.addActionListener(e->{
-                            cis_direction=checkBox_cis.isSelected();
-                    });
+                    checkBox_cis.addActionListener(e-> cis_direction=checkBox_cis.isSelected());
                     manualPane.add(checkBox_cis);
 
                     JLabel label_count;
@@ -317,6 +318,8 @@ public class DIANTAO_UI {
 
                             });
                             thread.start();
+                            manualPane.setBackground(Color.GREEN);
+
 
                     });
                     button_stop = new JButton("结束线程");
@@ -512,6 +515,7 @@ public class DIANTAO_UI {
                                     beginBatch(group);
                             },"thread");
                             thread.start();
+                            manualPane.setBackground(Color.GREEN);
                             final Pattern current_pattern = Pattern.compile("[\\w\\.]*/[\\w\\.]*");
                             monitorThread=new Thread(()->{
                                     while (true){
