@@ -591,6 +591,7 @@ public class DIANTAO_UI {
     private void onClose(){
             if(thread!=null){
                     thread.stop();
+                    manualPane.setBackground(Color.CYAN);
             }
             if(monitorThread!=null){
                     monitorThread.stop();
