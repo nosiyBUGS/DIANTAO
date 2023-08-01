@@ -2,6 +2,8 @@ package art.qiuye.diantao;
 
 import cn.hutool.core.img.ImgUtil;
 import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.io.file.FileWriter;
+import cn.hutool.core.io.file.LineSeparator;
 import cn.hutool.core.lang.Pair;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.*;
@@ -29,6 +31,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -97,6 +100,8 @@ public class DIANTAO_UI {
         private JInternalFrame iFrame;
         private JPanel manualPane;
 
+        private static final String NN=LineSeparator.LINUX.getValue();
+
         static {
                 setting.set("host","smtp.qq.com");
                 setting.set("port","465");
@@ -105,6 +110,7 @@ public class DIANTAO_UI {
                 setting.set("pass","tqblyhamaeqxijaj");
         }
         private final static MailAccount account=new MailAccount(setting);
+        private String current_quick_item;
 
         public static void main(String[] args) {
             DIANTAO_UI ui = new DIANTAO_UI();
@@ -386,7 +392,7 @@ public class DIANTAO_UI {
                             @Override
                             public void actionPerformed(ActionEvent e) {
                                     JTextArea source= (JTextArea) e.getSource();
-                                    List<String> textList = Arrays.stream(source.getText().split("\n")).filter(StrUtil::isNotBlank).collect(Collectors.toList());
+                                    List<String> textList = Arrays.stream(source.getText().split(NN)).filter(StrUtil::isNotBlank).collect(Collectors.toList());
                                     List<String> list = FileUtil.readUtf8Lines(config.quicks_path);
                                     ArrayList<String> collect = new ArrayList<>();
                                     boolean replace_flag=false;
@@ -406,10 +412,23 @@ public class DIANTAO_UI {
                                             }
                                     }
                                     if(!replace_flag) collect.addAll(textList);
-                                    FileUtil.writeUtf8Lines(collect, config.quicks_path);
-                                    writeStatus("write back quicks done");
+                                    FileWriter.create(new File(config.quicks_path), StandardCharsets.UTF_8).writeLines(collect,LineSeparator.LINUX,false);
+//                                    FileUtil.writeUtf8Lines(collect, config.quicks_path);
+                                    writeStatus("save quicks done");
                                     mouseAdapter.mouseClicked(null);
 
+                            }
+                    });
+                    //更新
+                    ta_plan.getKeymap().addActionForKeyStroke(KeyStroke.getKeyStroke(KeyEvent.VK_U, KeyEvent.CTRL_MASK), new AbstractAction() {
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                    JTextArea source = (JTextArea) e.getSource();
+                                    String origin = FileUtil.readUtf8String(config.quicks_path);
+                                    origin = origin.replace(current_quick_item, source.getText());
+                                    FileUtil.writeUtf8String(origin, config.quicks_path);
+                                    writeStatus("update quicks done");
+                                    mouseAdapter.mouseClicked(null);
                             }
                     });
 
@@ -417,14 +436,24 @@ public class DIANTAO_UI {
                     for (Map.Entry<String, String> entry : quick_entries) {
                             JMenuItem item = new JMenuItem(entry.getKey());
                             item.addActionListener(e->{
-                                    ta_plan.setText(entry.getValue());
-                                    offset_arow=0;
+                                    if(e.getModifiers()==KeyEvent.BUTTON3_MASK){
+                                            quick_menu.remove(item);
+                                            config.quicks.remove(item.getActionCommand());
+                                            FileWriter.create(new File(config.quicks_path), StandardCharsets.UTF_8).writeLines(config.quicks.values(),LineSeparator.LINUX,false);
+                                            writeStatus("##item removed:"+e.getActionCommand());
+                                    }else {
+                                            ta_plan.setText(entry.getValue());
+                                            current_quick_item = entry.getValue();
+                                            offset_arow=0;
+                                    }
+
                             });
                             quick_menu.add(item);
                     }
                     button_clear.addActionListener(e->{
                             ta_plan.setText(null);
                     });
+
                     button_plan.addActionListener(e->{
                             Slot slot = getSlot();
                             ta_plan.append(slot.次数.toString()+";");
@@ -440,7 +469,7 @@ public class DIANTAO_UI {
                     });
                     button_batch = new JButton("执行计划");
                     button_batch.addActionListener(e->{
-                            String[] lines = ta_plan.getText().trim().split("\n");
+                            String[] lines = ta_plan.getText().trim().split(NN);
                             SlotGroup group=new SlotGroup();
                             Arrays.stream(lines).filter(e1->e1.startsWith(IDT_ACTIVITY)).findFirst().ifPresent(e2->{
                                     String[] split = e2.split(";");
@@ -572,7 +601,6 @@ public class DIANTAO_UI {
                     panel_ta.add(ta_plan);
                     panel_ta.add(status_pane);
                     panel_ta.add(bar_pane);
-
                     JPanel panel_stop=new JPanel();
                     panel_stop.add(button_ok);
                     panel_stop.add(button_stop);
@@ -600,7 +628,7 @@ public class DIANTAO_UI {
     @SneakyThrows
     private int getLinePos(int lineunmber){
             int j = 0;
-//            while (!ta_plan.getText(j++, 1).equals("\n"));//no need to pass first line
+//            while (!ta_plan.getText(j++, 1).equals(NN));//no need to pass first line
             int last_length=0;
             while (lineunmber-- >= 0){
                             int k = ta_plan.getLineOfOffset(j);
@@ -628,7 +656,7 @@ public class DIANTAO_UI {
             SwingUtilities.invokeLater(()->{
                     if(writeConsole)
                         System.out.println(text);
-                    status_area.append(LocalTime.now().format(TIME_FORMATTER) +":"+text+"\n");
+                    status_area.append(LocalTime.now().format(TIME_FORMATTER) +":"+text+NN);
             });
 
     }
@@ -687,12 +715,12 @@ public class DIANTAO_UI {
                         String line = list.get(i);
                         if(line.startsWith(BSY)) {
                                 StringBuilder sb = new StringBuilder(line);
-                                sb.append('\n');
+                                sb.append(NN);
                                 int j;
                                 for (j = i + 1; j < list.size(); j++) {
                                         if (list.get(j).startsWith(BSY))
                                                 break;
-                                        sb.append(list.get(j)).append('\n');
+                                        sb.append(list.get(j)).append(NN);
                                 }
                                 map.put(line.substring(BSY.length()), sb.toString());
                                 i = j-1;
@@ -1099,7 +1127,7 @@ public class DIANTAO_UI {
                         String line = source.getText(start, end - start);
                         if(StrUtil.isNotBlank(line)){
                                 if(linenumber== source.getLineCount()-1)//the last line
-                                        source.insert("\n"+line,end);
+                                        source.insert(NN+line,end);
                                 else
                                         source.insert(line,end);
                         }
