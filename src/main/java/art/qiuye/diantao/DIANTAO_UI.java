@@ -795,11 +795,12 @@ public class DIANTAO_UI {
                 for (String cmd : cmds) {
                         boolean sleeped=false;
                         if(cmd.startsWith("sw")){
-                                if(cmd.startsWith(INS_SW_FROM)){swipe(config.from);continue;}//swf
+                                if(cmd.equals(INS_SW_FROM)){swipe(config.from);continue;}//swf
                                 if(cmd.equals(INS_SW_REVERSE)){writeStatus("single swr not supported");}//swr
                                 if(cmd.equals(INS_SW_TO)){swipe(config.to);continue;}//swt
-
-                                String[] subs = cmd.substring(2).split("\\s");
+                                final Pattern pt= Pattern.compile("^[a-z]+");
+                                String prefix = ReUtil.getGroup0(pt, cmd);
+                                String[] subs = cmd.substring(prefix.length()).split("\\s");
                                 String p=null;
                                 boolean reverse_flag=false;
                                 if(cmd.startsWith(INS_SW_FROM))
@@ -808,6 +809,7 @@ public class DIANTAO_UI {
                                         p=config.to;
                                 else if(cmd.startsWith(INS_SW_REVERSE))
                                         reverse_flag=true;
+                                else {writeStatus("combine sw not supported");return;}
 
                                 if(subs.length==2) {//sw65 7
                                         int total= Integer.parseInt(subs[0]);
