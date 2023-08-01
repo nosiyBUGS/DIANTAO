@@ -820,6 +820,7 @@ public class DIANTAO_UI {
                                                                 p=config.from;
                                                         else p=config.to;
                                                 }
+                                                sleep(t);
                                                  swipe(p);
                                         }
                                 }
@@ -837,7 +838,9 @@ public class DIANTAO_UI {
                                                                 p=StrUtil.format("{} {} {} {}", subs[0], subs[1], subs[2], subs[3]);
                                                         else p=StrUtil.format("{} {} {} {}", subs[2], subs[3], subs[0], subs[1]);
                                                 }else p=StrUtil.format("{} {} {} {}", subs[0], subs[1], subs[2], subs[3]);
+                                                sleep(t);
                                                 swipe(p);
+
                                         }
                                 }
                         }
