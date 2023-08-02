@@ -1,7 +1,7 @@
 package art.qiuye.diantao;
 
 
-import java.util.Map;
+import java.util.TreeMap;
 import java.util.Vector;
 
 /**
@@ -20,7 +20,7 @@ public class Config {
     public Integer work_base;
     public Integer work_step;
 
-    public Map<String,String> quicks;
+    public TreeMap<String,String> quicks;
 
     public Boolean random_point;
 

@@ -392,26 +392,25 @@ public class DIANTAO_UI {
                             @Override
                             public void actionPerformed(ActionEvent e) {
                                     JTextArea source= (JTextArea) e.getSource();
-                                    List<String> textList = Arrays.stream(source.getText().split(NN)).filter(StrUtil::isNotBlank).collect(Collectors.toList());
-                                    List<String> list = FileUtil.readUtf8Lines(config.quicks_path);
+                                    String text=source.getText();
+                                    List<String> textList = Arrays.stream(text.split(NN)).filter(StrUtil::isNotBlank).collect(Collectors.toList());
+                                    List<String> values = new ArrayList<>(config.quicks.values());
+                                    /*List<String> lines = new ArrayList<>();
+                                    for (String value : values)
+                                            lines.addAll(Arrays.asList(value.split(NN)));*/
                                     ArrayList<String> collect = new ArrayList<>();
                                     boolean replace_flag=false;
-                                    for (int i = 0; i < list.size(); i++) {
-                                            String s = list.get(i);
-                                            if (!s.equals(textList.get(0))) {
-                                                    collect.add(s);
-                                            } else {
-                                                    collect.addAll(textList);
+                                    for (int i = 0; i < values.size(); i++) {
+                                            String s = values.get(i);
+                                            if (s.startsWith(textList.get(0))) {
+                                                    collect.add(text);
                                                     replace_flag = true;
-                                                    int j;
-                                                    for (j = i + 1; j < list.size(); j++) {
-                                                            if (list.get(j).startsWith(BSY))
-                                                                    break;
-                                                    }
-                                                    i = j - 1;
+                                            } else {
+                                                    collect.add(s);
                                             }
                                     }
-                                    if(!replace_flag) collect.addAll(textList);
+                                    if(!replace_flag) collect.add(text);
+                                    Collections.sort(collect);
                                     FileWriter.create(new File(config.quicks_path), StandardCharsets.UTF_8).writeLines(collect,LineSeparator.LINUX,false);
 //                                    FileUtil.writeUtf8Lines(collect, config.quicks_path);
                                     writeStatus("save quicks done");
@@ -541,10 +540,11 @@ public class DIANTAO_UI {
                            onClose();
                             thread=new Thread(() -> {
                                     System.gc();
+                                    manualPane.setBackground(Color.GREEN);
                                     beginBatch(group);
+                                    manualPane.setBackground(Color.CYAN);
                             },"thread");
                             thread.start();
-                            manualPane.setBackground(Color.GREEN);
                             final Pattern current_pattern = Pattern.compile("[\\w\\.]*/[\\w\\.]*");
                             monitorThread=new Thread(()->{
                                     while (true){
@@ -710,7 +710,7 @@ public class DIANTAO_UI {
                 String quicks = System.getProperty("user.dir") + "/exclude/quicks-" + confName + ".txt";
                 config.quicks_path = quicks;
                 List<String> list = FileUtil.readUtf8Lines(quicks).stream().filter(StrUtil::isNotBlank).collect(Collectors.toList());
-                Map<String,String>  map=new LinkedHashMap<>();
+                TreeMap<String,String> map=new TreeMap<>();
                 for (int i = 0; i < list.size(); i++) {
                         String line = list.get(i);
                         if(line.startsWith(BSY)) {
