@@ -134,11 +134,15 @@ public class DIANTAO_UI {
             cmd_cap=path+"exec-out screencap -p ";
             cmd_current=path+"shell dumpsys activity activities | grep mResumedActivity";
     }
-    @SneakyThrows
-    private void main(String confName) {
+
+    private void main(String confName){
             initConfig(confName);
+            main(config.devices.get(0),true);
+    }
+    @SneakyThrows
+    private void main(String dev,boolean first) {
             adb_path=config.adb_path;
-            device = config.devices.get(0);
+            device = dev;
             initDevice();
             ThreadUtil.execute(()->{
                     String c = RuntimeUtil.execForStr(adb_path + " connect "+device.trim().split("\\s+")[1]);
@@ -181,7 +185,7 @@ public class DIANTAO_UI {
                                     lastConfig = ta_plan.getText();
                                     iFrame.setVisible(false);
                                     iFrame.dispose();
-                                    main(confName);
+                                    main(device,false);
 
                             }
                     };
@@ -189,7 +193,7 @@ public class DIANTAO_UI {
                     new_win_menu.addMouseListener(new MouseAdapter() {
                             @Override
                             public void mouseClicked(MouseEvent e) {
-                                    new DIANTAO_UI().main(confName);
+                                    new DIANTAO_UI().main(device,false);
                             }
                     });
                     ButtonGroup offset_buttonGroup=new ButtonGroup();
@@ -301,13 +305,15 @@ public class DIANTAO_UI {
 
                     JLabel label_device = new JLabel("设备");
                     manualPane.add(label_device);
-                    Vector<String> items_device=config.devices;
-                    JComboBox<String> comboBox_device=new JComboBox<>(items_device);
+                    if(!first && !config.devices.get(0).equals(dev))
+                            config.devices.add(0,dev);
+
+                    JComboBox<String> comboBox_device=new JComboBox<>(config.devices);
                     comboBox_device.setEditable(true);
                     manualPane.add(comboBox_device);
-                    comboBox_device.addItemListener(e->{
-                            device=e.getItem().toString();
-                           initDevice();
+                    comboBox_device.addActionListener(e->{
+                            device=((JComboBox<String>) e.getSource()).getSelectedItem().toString();
+                            initDevice();
                     });
 
 
