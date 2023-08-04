@@ -141,6 +141,7 @@ public class DIANTAO_UI {
     }
     @SneakyThrows
     private void main(String dev,boolean first) {
+                if(!first)initConfig(config.config_name);
             adb_path=config.adb_path;
             device = dev;
             initDevice();
@@ -173,6 +174,8 @@ public class DIANTAO_UI {
                     JMenu quick_menu= new JMenu("快捷操作");
                     JMenu offset_menu= new JMenu("偏移");
                     JMenu reload_menu= new JMenu("重载配置");
+                    JMenu upload_menu= new JMenu("上传配置");
+                    JMenu down_menu= new JMenu("下载配置");
                     JMenuBar frameBar=new JMenuBar();
                     JMenu new_win_menu= new JMenu("新窗口");
                     frameBar.add(new_win_menu);
@@ -196,6 +199,14 @@ public class DIANTAO_UI {
                                     new DIANTAO_UI().main(device,false);
                             }
                     });
+                    upload_menu.addMouseListener(new MouseAdapter() {
+                                                         @Override
+                                                         public void mouseClicked(MouseEvent e) {
+                                                                 JOptionPane.showMessageDialog(iFrame,"uoload");
+
+                                                         }
+                                                 }
+                    );
                     ButtonGroup offset_buttonGroup=new ButtonGroup();
                     ItemListener offsetItemlistener = e -> {
                             String text = ((JRadioButtonMenuItem) e.getItem()).getText();
@@ -210,6 +221,8 @@ public class DIANTAO_UI {
                     menuBar.add(quick_menu);
                     menuBar.add(offset_menu);
                     menuBar.add(reload_menu);
+                    menuBar.add(upload_menu);
+                    menuBar.add(down_menu);
 
 
                     iFrame.addInternalFrameListener(new InternalFrameAdapter() {

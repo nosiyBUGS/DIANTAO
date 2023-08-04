@@ -1,6 +1,6 @@
 $$$小说:
 [act];StubStandardActivity10,ReaderActivity,SplashActivity
-[cmd];1877;swf700 200 400 200;s6
+[cmd];1867;swf700 200 400 200;s6
 [cmd];1;h
 
 $$$开宝箱(快手):
@@ -50,7 +50,7 @@ $$$走路:
 1;35;3;#6;;!RET
 1;35;3;#7;;!RET
 
-$$$赶早:
+$$$点淘-赶早:
 3;33;0;#4;;!RET
 
 $$$金币购:
