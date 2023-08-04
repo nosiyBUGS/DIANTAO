@@ -48,24 +48,24 @@ public class MiniCap {
     private boolean initial;
     private boolean init(){
         String s=null;
-        s=RuntimeUtil.execForStr(StrUtil.format("{} {} shell ls {}/minicap",adb_path,device,push_dir));
+        s=RuntimeUtil.execForStr(StrUtil.format("{} {}shell ls {}/minicap",adb_path,device,push_dir));
         if(s.contains(NO_FILE)){
-            s=RuntimeUtil.execForStr(StrUtil.format(adb_path+"{} push {} {}", device, s_dir + "minicap", push_dir));
+            s=RuntimeUtil.execForStr(StrUtil.format(adb_path+"{}push {} {}", device, s_dir + "minicap", push_dir));
             StaticLog.info("##minicap push1 {} ", s);
             if(s.contains("error"))return false;
-            s=RuntimeUtil.execForStr(StrUtil.format(adb_path+"{} push {} {}", device, s_dir + "minicap.so", push_dir));
+            s=RuntimeUtil.execForStr(StrUtil.format(adb_path+"{}push {} {}", device, s_dir + "minicap.so", push_dir));
             StaticLog.info("##minicap push2 {} ", s);
 
-            s=RuntimeUtil.execForStr(StrUtil.format(adb_path+"{} shell chmod 755 {}/minicap", device, push_dir));
+            s=RuntimeUtil.execForStr(StrUtil.format(adb_path+"{}shell chmod 755 {}/minicap", device, push_dir));
             StaticLog.info("##minicap chmod {} ", s);
         }
 
-        String exist = StrUtil.format(adb_path + " {} shell ps -u shell", device);
+        String exist = StrUtil.format(adb_path + "{}shell ps -u shell", device);
         s=RuntimeUtil.execForStr(exist);
         StaticLog.info("##exist {} \n {}", exist,s);
         if(!s.contains("minicap")){
             ThreadUtil.execute(()->{
-                String ld = StrUtil.format(adb_path + "{} shell LD_LIBRARY_PATH={} {}/minicap -P 1080x1920@1080x1920/0", device, push_dir, push_dir);
+                String ld = StrUtil.format(adb_path + "{}shell LD_LIBRARY_PATH={} {}/minicap -P 1080x1920@1080x1920/0", device, push_dir, push_dir);
                 StaticLog.info("##ld {}",ld);
                 String s1=RuntimeUtil.execForStr(ld);
                 StaticLog.info("##ld {} \n {} \n {}", ld,s1,"minicap process exited");
@@ -73,7 +73,7 @@ public class MiniCap {
             });
         }
         ThreadUtil.sleep(3 * 1000);
-        String forward = StrUtil.format(adb_path + "{} forward tcp:{} localabstract:minicap", device, forwardPort);
+        String forward = StrUtil.format(adb_path + "{}forward tcp:{} localabstract:minicap", device, forwardPort);
         s=RuntimeUtil.execForStr(forward);
         StaticLog.info("##minicap forward {}\n {}", s,forward);
         return true;
