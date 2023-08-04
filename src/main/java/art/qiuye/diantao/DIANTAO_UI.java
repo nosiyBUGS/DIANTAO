@@ -1,5 +1,6 @@
 package art.qiuye.diantao;
 
+import art.qiuye.diantao.db.DianConfig;
 import cn.hutool.core.img.ImgUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.file.FileWriter;
@@ -7,6 +8,8 @@ import cn.hutool.core.io.file.LineSeparator;
 import cn.hutool.core.lang.Pair;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.*;
+import cn.hutool.db.Db;
+import cn.hutool.db.Entity;
 import cn.hutool.extra.mail.MailAccount;
 import cn.hutool.extra.mail.MailUtil;
 import cn.hutool.http.ContentType;
@@ -32,6 +35,9 @@ import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -100,7 +106,10 @@ public class DIANTAO_UI {
         private JInternalFrame iFrame;
         private JPanel manualPane;
 
-        private static final String NN=LineSeparator.LINUX.getValue();
+        private static final String LF =LineSeparator.LINUX.getValue();
+        private static final String CR_LF =LineSeparator.LINUX.getValue();
+
+        public static final Db db=Db.use();
 
         static {
                 setting.set("host","smtp.qq.com");
@@ -145,9 +154,19 @@ public class DIANTAO_UI {
             adb_path=config.adb_path;
             device = dev;
             initDevice();
+            ThreadUtil.execute(()-> {
+                    String c = RuntimeUtil.execForStr(adb_path + " connect " + device.trim().split("\\s+")[1]);
+                    writeStatus("##adb connect:{}", c);
+            });
             ThreadUtil.execute(()->{
-                    String c = RuntimeUtil.execForStr(adb_path + " connect "+device.trim().split("\\s+")[1]);
-                    StaticLog.info("##adb connect:{}",c);
+                    try {
+                            sleep(1);
+                            writeStatus("db connecting...");
+                            db.getConnection();
+                    } catch (SQLException e) {
+                            throw new RuntimeException(e);
+                    }
+                    writeStatus("db connected ");
             });
             SwingUtilities.invokeLater(()->{
                     manualPane = new JPanel();
@@ -202,11 +221,44 @@ public class DIANTAO_UI {
                     upload_menu.addMouseListener(new MouseAdapter() {
                                                          @Override
                                                          public void mouseClicked(MouseEvent e) {
-                                                                 JOptionPane.showMessageDialog(iFrame,"uoload");
-
+                                                                 Entity entity=Entity.create(TB_CONFIG);
+                                                                 entity.set(FD_VENDOR,config.config_name)
+                                                                                 .set("quick",FileUtil.readUtf8String(config.quicks_path))
+                                                                                .set("config",FileUtil.readUtf8String(config.config_path))
+                                                                                .set("updateTime", Timestamp.from(Instant.now()));
+                                                                 try {
+                                                                         db.insertOrUpdate(entity,FD_VENDOR);
+                                                                 } catch (SQLException ex) {
+                                                                         ex.printStackTrace();
+                                                                         JOptionPane.showMessageDialog(iFrame,ex.getMessage(),"失败",JOptionPane.ERROR_MESSAGE);
+                                                                         return;
+                                                                 }
+                                                                 JOptionPane.showMessageDialog(iFrame, config.config_name,"成功",JOptionPane.INFORMATION_MESSAGE);
                                                          }
                                                  }
                     );
+                    down_menu.addMouseListener(new MouseAdapter() {
+                            @Override
+                            public void mouseClicked(MouseEvent e) {
+                                    DianConfig dianConfig=null;
+                                    try {
+                                            Entity entity = db.get(new Entity(TB_CONFIG).set(FD_VENDOR, config.config_name));
+                                            dianConfig=entity.toBean(DianConfig.class);
+                                    } catch (SQLException ex) {
+                                            ex.printStackTrace();
+                                            JOptionPane.showMessageDialog(iFrame,ex.getMessage(),"失败",JOptionPane.ERROR_MESSAGE);
+                                            return;
+                                    }
+                                    new File(config.config_path).renameTo(new File(config.config_path+".0"));
+                                    dianConfig.config = dianConfig.config.replaceAll(CR_LF, LF);
+                                    FileUtil.writeUtf8String(dianConfig.config, config.config_path);
+
+                                    new File(config.quicks_path).renameTo(new File(config.quicks_path+".0"));
+                                    dianConfig.quick = dianConfig.quick.replaceAll(CR_LF, LF);
+                                    FileUtil.writeUtf8String(dianConfig.quick, config.quicks_path);
+                                    JOptionPane.showMessageDialog(iFrame,"成功");
+                            }
+                    });
                     ButtonGroup offset_buttonGroup=new ButtonGroup();
                     ItemListener offsetItemlistener = e -> {
                             String text = ((JRadioButtonMenuItem) e.getItem()).getText();
@@ -412,11 +464,11 @@ public class DIANTAO_UI {
                             public void actionPerformed(ActionEvent e) {
                                     JTextArea source= (JTextArea) e.getSource();
                                     String text=source.getText();
-                                    List<String> textList = Arrays.stream(text.split(NN)).filter(StrUtil::isNotBlank).collect(Collectors.toList());
+                                    List<String> textList = Arrays.stream(text.split(LF)).filter(StrUtil::isNotBlank).collect(Collectors.toList());
                                     List<String> values = new ArrayList<>(config.quicks.values());
                                     /*List<String> lines = new ArrayList<>();
                                     for (String value : values)
-                                            lines.addAll(Arrays.asList(value.split(NN)));*/
+                                            lines.addAll(Arrays.asList(value.split(LF)));*/
                                     ArrayList<String> collect = new ArrayList<>();
                                     boolean replace_flag=false;
                                     for (int i = 0; i < values.size(); i++) {
@@ -487,7 +539,7 @@ public class DIANTAO_UI {
                     });
                     button_batch = new JButton("执行计划");
                     button_batch.addActionListener(e->{
-                            String[] lines = ta_plan.getText().trim().split(NN);
+                            String[] lines = ta_plan.getText().trim().split(LF);
                             SlotGroup group=new SlotGroup();
                             Arrays.stream(lines).filter(e1->e1.startsWith(IDT_ACTIVITY)).findFirst().ifPresent(e2->{
                                     String[] split = e2.split(";");
@@ -647,7 +699,7 @@ public class DIANTAO_UI {
     @SneakyThrows
     private int getLinePos(int lineunmber){
             int j = 0;
-//            while (!ta_plan.getText(j++, 1).equals(NN));//no need to pass first line
+//            while (!ta_plan.getText(j++, 1).equals(LF));//no need to pass first line
             int last_length=0;
             while (lineunmber-- >= 0){
                             int k = ta_plan.getLineOfOffset(j);
@@ -668,14 +720,14 @@ public class DIANTAO_UI {
             });
     }
 
-     private void writeStatus(String text){
-                writeStatus(text,true);
+     private void writeStatus(String text,String... arguments){
+                writeStatus(StrUtil.format(text,arguments),true);
     }
     private void writeStatus(String text,boolean writeConsole){
             SwingUtilities.invokeLater(()->{
                     if(writeConsole)
                         System.out.println(text);
-                    status_area.append(LocalTime.now().format(TIME_FORMATTER) +":"+text+NN);
+                    status_area.append(LocalTime.now().format(TIME_FORMATTER) +":"+text+ LF);
             });
 
     }
@@ -726,20 +778,22 @@ public class DIANTAO_UI {
         @SneakyThrows
         private void initConfig(String confName){
                 this.config = JSONObject.parseObject(FileUtil.getInputStream(System.getProperty("user.dir") + "/exclude/config-"+confName+".json"), Config.class, Feature.OrderedField);
-                String quicks = System.getProperty("user.dir") + "/exclude/quicks-" + confName + ".txt";
-                config.quicks_path = quicks;
-                List<String> list = FileUtil.readUtf8Lines(quicks).stream().filter(StrUtil::isNotBlank).collect(Collectors.toList());
+                String quicks_path = System.getProperty("user.dir") + "/exclude/quicks-" + confName + ".txt";
+                String config_path = System.getProperty("user.dir") + "/exclude/config-" + confName + ".json";
+                config.quicks_path = quicks_path;
+                config.config_path=config_path;
+                List<String> list = FileUtil.readUtf8Lines(quicks_path).stream().filter(StrUtil::isNotBlank).collect(Collectors.toList());
                 TreeMap<String,String> map=new TreeMap<>();
                 for (int i = 0; i < list.size(); i++) {
                         String line = list.get(i);
                         if(line.startsWith(BSY)) {
                                 StringBuilder sb = new StringBuilder(line);
-                                sb.append(NN);
+                                sb.append(LF);
                                 int j;
                                 for (j = i + 1; j < list.size(); j++) {
                                         if (list.get(j).startsWith(BSY))
                                                 break;
-                                        sb.append(list.get(j)).append(NN);
+                                        sb.append(list.get(j)).append(LF);
                                 }
                                 map.put(line.substring(BSY.length()), sb.toString());
                                 i = j-1;
@@ -1151,7 +1205,7 @@ public class DIANTAO_UI {
                         String line = source.getText(start, end - start);
                         if(StrUtil.isNotBlank(line)){
                                 if(linenumber== source.getLineCount()-1)//the last line
-                                        source.insert(NN+line,end);
+                                        source.insert(LF +line,end);
                                 else
                                         source.insert(line,end);
                         }

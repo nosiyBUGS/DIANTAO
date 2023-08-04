@@ -36,4 +36,8 @@ public class Constants {
     public static final String INS_SW_FROM="swf";
     public static final String INS_SW_REVERSE="swr";
     public static final String INS_SW_TO="swt";
+
+    public static final String TB_CONFIG="dian_config";
+
+    public static final String FD_VENDOR = "vendor";
 }

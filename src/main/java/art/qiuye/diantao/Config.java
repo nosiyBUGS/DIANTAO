@@ -26,6 +26,7 @@ public class Config {
 
     public String config_name;
     public String quicks_path;
+    public String config_path;
 
     public String from;
 
