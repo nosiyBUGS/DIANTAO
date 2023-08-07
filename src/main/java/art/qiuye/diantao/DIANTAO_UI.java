@@ -129,7 +129,9 @@ public class DIANTAO_UI {
                                 } catch (Exception e) {
                                         throw new RuntimeException(e);
                                 }
-                                frame = new JFrame(args[0] + "-操作");
+                                String title;
+                                frame = new JFrame();
+                                frame.setTitle(args[0] + "-操作-"+frame.hashCode());
                                 desktopPane = new JDesktopPane();
 
                         });
@@ -207,6 +209,9 @@ public class DIANTAO_UI {
                                     lastConfig = ta_plan.getText();
                                     iFrame.setVisible(false);
                                     iFrame.dispose();
+                                    JPanel jp=new JPanel();
+//                                    jp.setSize(400,400);
+//                                    frame.setContentPane(jp);
                                     main(device,false);
 
                             }
@@ -308,7 +313,6 @@ public class DIANTAO_UI {
                                     button_batch.doClick();
                             }
                     });
-//                    frame.setContentPane(manualPane);
                     frame.setContentPane(desktopPane);
 
                     checkBox_cis = new JCheckBox("顺式",false);
@@ -678,11 +682,13 @@ public class DIANTAO_UI {
                     manualPane.add(panel_stop);
                     manualPane.add(panel_plan);
                     manualPane.add(panel_ta);
-                    frame.pack();
-                    frame.setSize(1200,800);
-                    frame.setLocation(600,100);
-                    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                    frame.setVisible(true);
+                    if(first){
+                            frame.pack();
+                            frame.setSize(600,800);
+                            frame.setLocation(600,100);
+                            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                            frame.setVisible(true);
+                    }
 
             });
 
