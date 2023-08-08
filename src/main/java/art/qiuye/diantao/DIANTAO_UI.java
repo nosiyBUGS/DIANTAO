@@ -210,9 +210,9 @@ public class DIANTAO_UI {
                                     iFrame.setVisible(false);
                                     iFrame.dispose();
                                     JPanel jp=new JPanel();
-//                                    jp.setSize(400,400);
-//                                    frame.setContentPane(jp);
+//                                    StaticLog.info("##current quick item before {}",current_quick_item);
                                     main(device,false);
+//                                    StaticLog.info("##current quick item after reload {}",current_quick_item);
 
                             }
                     };
@@ -570,7 +570,7 @@ public class DIANTAO_UI {
                                             slot.cmds = line.substring(params[0].length() + params[1].length() + 2);
                                     }else {
                                             slot.次数 = Integer.parseInt(params[0]);
-                                            slot.间隔_广告时长 = Integer.parseInt(params[1]);
+                                            slot.间隔_广告时长 = parseSecond(params[1]);
                                             slot.间隔_滑动 = Integer.parseInt(params[2]);
                                             group.totalTime+=slot.间隔_滑动;
                                             String idt = params[3];
@@ -618,6 +618,7 @@ public class DIANTAO_UI {
                                     manualPane.setBackground(Color.GREEN);
                                     beginBatch(group);
                                     manualPane.setBackground(Color.CYAN);
+                                    StaticLog.info("## set cyan");
                             },"thread");
                             thread.start();
                             final Pattern current_pattern = Pattern.compile("[\\w\\.]*/[\\w\\.]*");
@@ -726,7 +727,7 @@ public class DIANTAO_UI {
             });
     }
 
-     private void writeStatus(String text,String... arguments){
+     private void writeStatus(String text,Object... arguments){
                 writeStatus(StrUtil.format(text,arguments),true);
     }
     private void writeStatus(String text,boolean writeConsole){
@@ -924,7 +925,7 @@ public class DIANTAO_UI {
                                 }
                         }
                         else if(cmd.startsWith("s")){
-                                int anInt = Integer.parseInt(cmd.substring(1));
+                                int anInt = parseSecond(cmd.substring(1));
                                 if(group!=null)
                                         group.totalTime+=anInt;
                                 sleep(anInt);
@@ -974,7 +975,21 @@ public class DIANTAO_UI {
                 视频
                 ;
         }
-
+        private int parseSecond(String format){//such as 1h2m3s
+                if(format.charAt(format.length()-1)<='9') format += "s";//if end with number
+                int anInt=0;
+                int level=1;
+                int len=format.length();
+                for (int i = 0; i <len ; i++) {
+                        char v = format.charAt(len-1-i);
+                        if(v <='9') anInt += (v-'0')*Math.pow(10, i-1)*level;
+                        else if(v=='m'){level=60;len=len-i;i=0;}
+                        else if (v=='h'){level=3600;len=len-i;i=0;}
+                        else if (v=='s'){level=1;len=len-i;i=0;}
+                }
+                writeStatus("##anInt {} ", anInt);
+                return anInt;
+        }
         private void initSlot(Slot s){
                 s. 关闭广告_竖屏 =Commons.关闭广告_竖屏;
                 s.间隔_广告间隔 =Commons.间隔_广告间隔;
