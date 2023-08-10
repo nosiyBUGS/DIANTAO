@@ -964,6 +964,21 @@ public class DIANTAO_UI {
                                         }
 
                                 }
+                        }else if(cmd.startsWith("at")){//at 26:00
+                                String[] split=cmd.split("\\s");
+                                String[] ss0 = split[1].split(":");
+                                int t0h = Integer.parseInt(ss0[0]);
+                                int t0m = Integer.parseInt(ss0[1]);
+                                int t0 = t0h * 3600 + t0m * 60;
+                                int now=LocalTime.now().toSecondOfDay();
+                                if(now<t0){
+                                        int inter=t0-now;
+                                        writeStatus("qulify sleep {}",inter);
+                                        sleep(inter);
+                                }else {
+                                        writeStatus("now exceed {},skip cmd",split[1]);
+                                        break;
+                                }
                         }
                         if(!sleeped)sleep(1);//操作间隔
                 }
@@ -987,7 +1002,6 @@ public class DIANTAO_UI {
                         else if (v=='h'){level=3600;len=len-i;i=0;}
                         else if (v=='s'){level=1;len=len-i;i=0;}
                 }
-                writeStatus("##anInt {} ", anInt);
                 return anInt;
         }
         private void initSlot(Slot s){

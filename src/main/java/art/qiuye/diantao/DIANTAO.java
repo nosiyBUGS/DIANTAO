@@ -1,12 +1,11 @@
 package art.qiuye.diantao;
 
-import cn.hutool.db.Db;
-import cn.hutool.db.Entity;
 import cn.hutool.log.Log;
 import cn.hutool.log.LogFactory;
 import cn.hutool.log.StaticLog;
 
 import java.sql.SQLException;
+import java.time.LocalTime;
 
 public class DIANTAO {
     public static final Log log= LogFactory.get();
@@ -27,8 +26,11 @@ public class DIANTAO {
         internalFrame.setVisible(true);
         internalFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);*/
 
-        Entity config = Db.use().get(new Entity("config"));
-        StaticLog.info("##config {} ", config);
+//        Entity config = Db.use().get(new Entity("config"));
+//        StaticLog.info("##config {} ", config);
+        LocalTime time = LocalTime.parse("24:00");
+        StaticLog.info("##time toSecondOfDay {} ", time.toSecondOfDay());
+        StaticLog.info("##time second {} ", time.getSecond());
     }
 
 
