@@ -836,20 +836,22 @@ public class DIANTAO_UI {
                                         cmds = slot.cmds.split(";");
                                 while (slot.次数-- > 0) {
                                         int pos = getLinePos(slot.index);
+                                        boolean nom=false;
                                         if(slot.type.equals(CMD)){
+                                                nom = slot.cmds.contains(INS_NO_MODIFY);
                                                execute_cmd(cmds,group);
                                                 pos+=slot.params[0].length()+1;
 
                                         }else {
+                                                nom = slot.ex_cmds.contains(INS_NO_MODIFY);
                                                 tap(point);
                                                 watchAdv(slot);
                                         }
                                         int finalPos = pos;
-//                                        writeStatus("pos="+pos+" 次数="+slot.次数);
-//                                        int finalC=slot.次数;
-                                        SwingUtilities.invokeAndWait(()->{
-                                                ta_plan.replaceRange(slot.次数 + "", finalPos, finalPos +String.valueOf(slot.次数+1).length());
-                                        });
+                                        if(!nom)
+                                                SwingUtilities.invokeAndWait(()->{
+                                                        ta_plan.replaceRange(slot.次数 + "", finalPos, finalPos +String.valueOf(slot.次数+1).length());
+                                                });
                                         writeStatus(StrUtil.format("{} c={}", name, slot.次数));
                                 }
                                         writeStatus(StrUtil.format("{}任务完成", name));
