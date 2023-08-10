@@ -34,6 +34,7 @@ public class MiniCap {
     private String device;
 
     public static final String NO_FILE = "No such file";
+    public static final String NO_FOUND = "not found";
 
 //    private int read=0;
 
@@ -48,8 +49,8 @@ public class MiniCap {
     private boolean initial;
     private boolean init(){
         String s=null;
-        s=RuntimeUtil.execForStr(StrUtil.format("{} {}shell ls {}/minicap",adb_path,device,push_dir));
-        if(s.contains(NO_FILE)){
+        s=RuntimeUtil.execForStr(StrUtil.format("{}{}shell ls {}/minicap",adb_path,device,push_dir));
+        if(s.contains(NO_FILE) || s.contains(NO_FOUND)){
             s=RuntimeUtil.execForStr(StrUtil.format(adb_path+"{}push {} {}", device, s_dir + "minicap", push_dir));
             StaticLog.info("##minicap push1 {} ", s);
             if(s.contains("error"))return false;
