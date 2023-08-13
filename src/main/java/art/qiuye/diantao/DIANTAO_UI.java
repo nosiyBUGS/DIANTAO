@@ -978,8 +978,8 @@ public class DIANTAO_UI {
                                         writeStatus("qulify sleep {}",inter);
                                         sleep(inter);
                                 }else {
-                                        writeStatus("now exceed {},skip cmd",split[1]);
-                                        break;
+                                        writeStatus("now exceed {},continue cmd",split[1]);
+                                        continue;
                                 }
                         }
                         if(!sleeped)sleep(1);//操作间隔
