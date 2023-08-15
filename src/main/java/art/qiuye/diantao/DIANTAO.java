@@ -5,7 +5,6 @@ import cn.hutool.log.LogFactory;
 import cn.hutool.log.StaticLog;
 
 import java.sql.SQLException;
-import java.time.LocalTime;
 
 public class DIANTAO {
     public static final Log log= LogFactory.get();
@@ -28,9 +27,17 @@ public class DIANTAO {
 
 //        Entity config = Db.use().get(new Entity("config"));
 //        StaticLog.info("##config {} ", config);
-        LocalTime time = LocalTime.parse("24:00");
-        StaticLog.info("##time toSecondOfDay {} ", time.toSecondOfDay());
-        StaticLog.info("##time second {} ", time.getSecond());
+        String[] a = new String[]{"a", "b", "c"};
+        String[] b = new String[]{"A", "B", "C"};
+        for (int i = 0; i < a.length; i++) {
+            String s = a[i];
+            if(s.equals("b")){
+                a=b;
+                StaticLog.info("##a {} ", a);
+            }
+            System.out.println(s);
+
+        }
     }
 
 

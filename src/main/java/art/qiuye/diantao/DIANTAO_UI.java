@@ -359,8 +359,8 @@ public class DIANTAO_UI {
                     items_work = new Vector<>();
                     int work_base=config.work_base;
                     for (int i = 0; i <10 ; i++) {
-                            items_walk.add(new ComboLabel<>(StrUtil.format("第{}排",i+1),walk_base+i*config.walk_step,i+1,WALK));
-                            items_work.add(new ComboLabel<>(StrUtil.format("打工第{}排",i+1),work_base+i*config.work_step,i+1,WORK));
+                            items_walk.add(new ComboLabel<>(StrUtil.format("第{}排",i+1),walk_base+i*config.walk_step,i+1, T_WALK));
+                            items_work.add(new ComboLabel<>(StrUtil.format("打工第{}排",i+1),work_base+i*config.work_step,i+1, T_WORK));
                     }
                     items_work.add(new ComboLabel<>("溢出",10000,-1,OVERFLOW));
                     items_Y.addAll(items_walk);
@@ -534,9 +534,9 @@ public class DIANTAO_UI {
                             ta_plan.append(slot.间隔_广告时长.toString()+";");
                             ta_plan.append(slot.间隔_滑动.toString()+";");
                             switch (slot.type){
-                                    case WALK:
+                                    case T_WALK:
                                             ta_plan.append("#"+slot.arow+";");break;
-                                    case WORK:
+                                    case T_WORK:
                                             ta_plan.append("$"+slot.arow+";");break;
                             }
                             ta_plan.append(slot.ex_cmds +";");
@@ -545,16 +545,38 @@ public class DIANTAO_UI {
                     button_batch.addActionListener(e->{
                             String[] lines = ta_plan.getText().trim().split(LF);
                             SlotGroup group=new SlotGroup();
-                            Arrays.stream(lines).filter(e1->e1.startsWith(IDT_ACTIVITY)).findFirst().ifPresent(e2->{
-                                    String[] split = e2.split(";");
-                                    group.activityNames = split[1].split(",");//[act];name1,name2
+                            ArrayList<String> collect = new ArrayList<>();
+                            boolean ref_flag = false;
+                            for (String line : lines) {
+                                    if(line.startsWith(IDT_ACTIVITY)){
+                                            String[] split = line.split(";");
+                                            group.activityNames = split[1].split(",");//[act];name1,name2
                                             activityNames= group.activityNames;
                                             if(split.length==3 && split[2].equals(C_SLEEP))
-                                                group.c_sleep=true;
+                                                    group.c_sleep=true;
+                                            collect.add(line);
+                                    }else if(!line.contains(INS_REF) )
+                                            collect.add(line);
+                                    else if(line.contains(INS_REF)){
+                                            ref_flag = true;
+                                            String[] subs = line.split(";");
+                                            String v = config.quicks.get(subs[1]);
+                                            collect.add(CMT+line);
+                                            String[] split = v.split(LF);
+                                            String[] range = Arrays.copyOfRange(split, 1, split.length);
+                                            collect.addAll(Arrays.asList(range));
                                     }
-                            );
-                            lines = Arrays.stream(lines).filter(e1 -> !e1.contains(CMT) && !e1.contains(BSY) && !e1.contains(IDT_ACTIVITY) && StrUtil.isNotBlank(e1)).toArray(String[]::new);
+                            }
+                            if(ref_flag){
+                                    ta_plan.setText(null);
+                                    for (String s : collect){
+                                            ta_plan.append(s);
+                                            ta_plan.append(LF);
+                                    }
+                                    lines = collect.toArray(new String[collect.size()]);
+                            }
 
+                            lines = Arrays.stream(lines).filter(e1 -> !e1.contains(CMT) && !e1.contains(BSY) && !e1.contains(IDT_ACTIVITY) && StrUtil.isNotBlank(e1)).toArray(String[]::new);
                             ArrayList<Slot> slots = new ArrayList<>(lines.length);
                             group.slots=slots;
                             int j=0;
@@ -565,10 +587,11 @@ public class DIANTAO_UI {
                                     slot.index=i;
                                     slot.params=params;
                                     if(params[0].startsWith(IDT_CMD)){
-                                            slot.type=CMD;
+                                            slot.type= T_CMD;
                                             slot.次数 = Integer.parseInt(params[1]);
                                             slot.cmds = line.substring(params[0].length() + params[1].length() + 2);
-                                    }else {
+                                    }
+                                            else {
                                             slot.次数 = Integer.parseInt(params[0]);
                                             slot.间隔_广告时长 = parseSecond(params[1]);
                                             slot.间隔_滑动 = Integer.parseInt(params[2]);
@@ -580,22 +603,22 @@ public class DIANTAO_UI {
                                                     int idx = Integer.parseInt(idt.substring(1)) + offset_arow;
                                                     slot.origin_arow = idx;
                                                     slot.arow = idx - j;
-                                                    if (idt.startsWith("#")) {//WALK
+                                                    if (idt.startsWith("#")) {//T_WALK
                                                             item = items_walk.get(idx - 1 - j);
-                                                            slot.type = WALK;
+                                                            slot.type = T_WALK;
                                                     } else if (idt.startsWith("$")) {
                                                             item = items_work.get(idx - 1 - j);
-                                                            slot.type = WORK;
+                                                            slot.type = T_WORK;
                                                     }
                                                     slot.X = common_x;
                                                     slot.Y = item.getValue();
                                             } else {//point
                                                     slot.X = Integer.valueOf(sp[0]);
                                                     slot.Y = Integer.valueOf(sp[1]);
-                                                    slot.type = OTHER;
+                                                    slot.type = T_OTHER;
                                             }
                                             slot.ex_cmds = line.substring(params[0].length() + params[1].length() +params[2].length()+params[3].length()+ 4);
-                                            if (slot.type.equals(WALK) || slot.type.equals(WORK)) {
+                                            if (slot.type.equals(T_WALK) || slot.type.equals(T_WORK)) {
                                                     if(j>0){
                                                             int k=i-1;
                                                             Slot pre = slots.get(k);
@@ -754,7 +777,7 @@ public class DIANTAO_UI {
             }
             else {
                     slot.Y = Integer.parseInt(item.toString());
-                    slot.type=WALK;
+                    slot.type= T_WALK;
             }
             return slot;
     }
@@ -837,7 +860,7 @@ public class DIANTAO_UI {
                                 while (slot.次数-- > 0) {
                                         int pos = getLinePos(slot.index);
                                         boolean nom=false;
-                                        if(slot.type.equals(CMD)){
+                                        if(slot.type.equals(T_CMD)){
                                                 nom = slot.cmds.contains(INS_NO_MODIFY);
                                                execute_cmd(cmds,group);
                                                 pos+=slot.params[0].length()+1;
@@ -847,11 +870,12 @@ public class DIANTAO_UI {
                                                 tap(point);
                                                 watchAdv(slot);
                                         }
-                                        int finalPos = pos;
-                                        if(!nom)
+                                        if(!nom){
+                                                int finalPos = pos;
                                                 SwingUtilities.invokeAndWait(()->{
                                                         ta_plan.replaceRange(slot.次数 + "", finalPos, finalPos +String.valueOf(slot.次数+1).length());
                                                 });
+                                        }
                                         writeStatus(StrUtil.format("{} c={}", name, slot.次数));
                                 }
                                         writeStatus(StrUtil.format("{}任务完成", name));
@@ -874,6 +898,29 @@ public class DIANTAO_UI {
 
         @SneakyThrows
         private void execute_cmd(String cmds[], SlotGroup group){
+                /*LinkedList<String> collect = new LinkedList<>();
+                boolean ref_flag = false;
+                for (String cmd : cmds) {
+                        if(!cmd.contains(INS_REF))
+                                collect.add(cmd);
+                        else {
+                                ref_flag = true;
+                            String[] subs = cmd.split(";");
+                            String v = config.quicks.get(subs[1]);
+                            collect.add(LF);
+                            collect.add(subs[1].replace(BSY, CMT));
+                            collect.addAll(Arrays.asList(v.split(LF)));
+                            collect.add(LF);
+
+                        }
+                }
+                if(ref_flag){
+                        for (String cmd : cmds)
+                                ta_plan.append(cmd);
+                        button_batch.doClick();
+                        collect.clear();collect=null;
+                        return;
+                }*/
                 for (String cmd : cmds) {
                         boolean sleeped=false;
                         if(cmd.startsWith("sw")){
