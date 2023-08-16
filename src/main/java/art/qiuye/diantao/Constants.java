@@ -35,6 +35,7 @@ public class Constants {
 
     public static final String INS_NO_MODIFY="nom";
     public static final String INS_REF="ref";
+    public static final String INS_J0="j0";
 
     public static final String TB_CONFIG="dian_config";
 

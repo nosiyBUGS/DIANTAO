@@ -555,9 +555,9 @@ public class DIANTAO_UI {
                                             if(split.length==3 && split[2].equals(C_SLEEP))
                                                     group.c_sleep=true;
                                             collect.add(line);
-                                    }else if(!line.contains(INS_REF) )
+                                    }else if(!line.startsWith(IDT_REF) )
                                             collect.add(line);
-                                    else if(line.contains(INS_REF)){
+                                    else if(line.startsWith(IDT_REF)){
                                             ref_flag = true;
                                             String[] subs = line.split(";");
                                             String v = config.quicks.get(subs[1]);
@@ -590,6 +590,7 @@ public class DIANTAO_UI {
                                             slot.type= T_CMD;
                                             slot.次数 = Integer.parseInt(params[1]);
                                             slot.cmds = line.substring(params[0].length() + params[1].length() + 2);
+                                            if(slot.cmds.contains(INS_J0))j=0;
                                     }
                                             else {
                                             slot.次数 = Integer.parseInt(params[0]);
@@ -600,6 +601,7 @@ public class DIANTAO_UI {
                                             ComboLabel<Integer> item = null;
                                             String[] sp = idt.split(" ");
                                             if (sp.length == 1) {//relative location
+                                                    if(slot.ex_cmds!=null && slot.ex_cmds.contains(INS_J0))j=0;
                                                     int idx = Integer.parseInt(idt.substring(1)) + offset_arow;
                                                     slot.origin_arow = idx;
                                                     slot.arow = idx - j;
@@ -696,8 +698,9 @@ public class DIANTAO_UI {
                     panel_plan.add(button_plan);
                     panel_plan.add(button_batch);
                     JPanel panel_ta = new JPanel();
+                    JScrollPane ta_sc_pane = new JScrollPane(ta_plan,ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
                     panel_ta.setLayout(new BoxLayout(panel_ta,BoxLayout.Y_AXIS));
-                    panel_ta.add(ta_plan);
+                    panel_ta.add(ta_sc_pane);
                     panel_ta.add(status_pane);
                     panel_ta.add(bar_pane);
                     JPanel panel_stop=new JPanel();
