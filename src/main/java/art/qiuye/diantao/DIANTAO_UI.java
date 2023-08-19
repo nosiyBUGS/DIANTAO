@@ -569,10 +569,12 @@ public class DIANTAO_UI {
                             }
                             if(ref_flag){
                                     ta_plan.setText(null);
+                                    StringBuilder sb = new StringBuilder();
                                     for (String s : collect){
-                                            ta_plan.append(s);
-                                            ta_plan.append(LF);
+                                            sb.append(s);
+                                            sb.append(LF);
                                     }
+                                    ta_plan.append(sb.toString());
                                     lines = collect.toArray(new String[collect.size()]);
                             }
 
@@ -901,29 +903,6 @@ public class DIANTAO_UI {
 
         @SneakyThrows
         private void execute_cmd(String cmds[], SlotGroup group){
-                /*LinkedList<String> collect = new LinkedList<>();
-                boolean ref_flag = false;
-                for (String cmd : cmds) {
-                        if(!cmd.contains(INS_REF))
-                                collect.add(cmd);
-                        else {
-                                ref_flag = true;
-                            String[] subs = cmd.split(";");
-                            String v = config.quicks.get(subs[1]);
-                            collect.add(LF);
-                            collect.add(subs[1].replace(BSY, CMT));
-                            collect.addAll(Arrays.asList(v.split(LF)));
-                            collect.add(LF);
-
-                        }
-                }
-                if(ref_flag){
-                        for (String cmd : cmds)
-                                ta_plan.append(cmd);
-                        button_batch.doClick();
-                        collect.clear();collect=null;
-                        return;
-                }*/
                 for (String cmd : cmds) {
                         boolean sleeped=false;
                         if(cmd.startsWith("sw")){
