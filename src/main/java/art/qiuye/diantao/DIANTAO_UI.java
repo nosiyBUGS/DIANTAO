@@ -33,6 +33,7 @@ import javax.swing.undo.UndoManager;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
+import java.beans.PropertyVetoException;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
@@ -205,14 +206,20 @@ public class DIANTAO_UI {
                     MouseAdapter mouseAdapter = new MouseAdapter() {
                             @Override
                             public void mouseClicked(MouseEvent e) {
+                                    if(e.getSource() instanceof JTextArea){
+                                            iFrame= (JInternalFrame) ((JTextArea) e.getSource()).getRootPane().getParent();
+                                            ta_plan= (JTextArea) e.getSource();
+                                    }
                                     onClose();
                                     lastConfig = ta_plan.getText();
                                     iFrame.setVisible(false);
+                                    try {
+                                            iFrame.setClosed(true);
+                                    } catch (PropertyVetoException ex) {
+                                            throw new RuntimeException(ex);
+                                    }
                                     iFrame.dispose();
-                                    JPanel jp=new JPanel();
-//                                    StaticLog.info("##current quick item before {}",current_quick_item);
                                     main(device,false);
-//                                    StaticLog.info("##current quick item after reload {}",current_quick_item);
 
                             }
                     };
@@ -470,9 +477,6 @@ public class DIANTAO_UI {
                                     String text=source.getText();
                                     List<String> textList = Arrays.stream(text.split(LF)).filter(StrUtil::isNotBlank).collect(Collectors.toList());
                                     List<String> values = new ArrayList<>(config.quicks.values());
-                                    /*List<String> lines = new ArrayList<>();
-                                    for (String value : values)
-                                            lines.addAll(Arrays.asList(value.split(LF)));*/
                                     ArrayList<String> collect = new ArrayList<>();
                                     boolean replace_flag=false;
                                     for (int i = 0; i < values.size(); i++) {
@@ -489,7 +493,8 @@ public class DIANTAO_UI {
                                     FileWriter.create(new File(config.quicks_path), StandardCharsets.UTF_8).writeLines(collect,LineSeparator.LINUX,false);
 //                                    FileUtil.writeUtf8Lines(collect, config.quicks_path);
                                     writeStatus("save quicks done");
-                                    mouseAdapter.mouseClicked(null);
+                                    MouseEvent mouseEvent = new MouseEvent(source, 0, 0, 0, 0, 0, 0, 0,0,false,0);
+                                    mouseAdapter.mouseClicked(mouseEvent);
 
                             }
                     });
@@ -730,6 +735,7 @@ public class DIANTAO_UI {
             if(monitorThread!=null){
                     monitorThread.stop();
             }
+            activityNames=null;
     }
     @SneakyThrows
     private int getLinePos(int lineunmber){
