@@ -507,7 +507,8 @@ public class DIANTAO_UI {
                                     origin = origin.replace(current_quick_item, source.getText());
                                     FileUtil.writeUtf8String(origin, config.quicks_path);
                                     writeStatus("update quicks done");
-                                    mouseAdapter.mouseClicked(null);
+                                    MouseEvent mouseEvent = new MouseEvent(source, 0, 0, 0, 0, 0, 0, 0,0,false,0);
+                                    mouseAdapter.mouseClicked(mouseEvent);
                             }
                     });
 
