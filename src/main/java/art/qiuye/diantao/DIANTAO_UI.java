@@ -261,27 +261,32 @@ public class DIANTAO_UI {
                                                  }
                     );
                     down_menu.addMouseListener(new MouseAdapter() {
+                            @SneakyThrows
                             @Override
                             public void mouseClicked(MouseEvent e) {
                                     DianConfig dianConfig=null;
                                     try {
                                             Entity entity = db.get(new Entity(TB_CONFIG).set(FD_VENDOR, config.config_name));
                                             dianConfig=entity.toBean(DianConfig.class);
+                                            dianConfig.config = JSON.toJavaObject( JSON.parseObject(entity.getStr("config")), Config.class);
                                     } catch (SQLException ex) {
                                             ex.printStackTrace();
                                             JOptionPane.showMessageDialog(iFrame,ex.getMessage(),"下载失败",JOptionPane.ERROR_MESSAGE);
                                             return;
                                     }
-                                    if(dianConfig.version>config.version)
-                                        new File(config.config_path).renameTo(new File(config.version_path+"."+config.version));
+                                    if(dianConfig.config.version>config.version){
+                                            File c=new File(config.config_path);
+                                            File q=new File(config.quicks_path);
+                                            FileUtil.copy(c,new File(config.version_path+c.getName()+"."+config.version),true);
+                                            FileUtil.copy(c,new File(config.version_path+q.getName()+"."+config.version),true);
+                                    }
                                     else {
-                                            JOptionPane.showMessageDialog(iFrame,"数据库版本更旧，无需下载："+dianConfig.version);
+                                            JOptionPane.showMessageDialog(iFrame,"数据库版本更旧，无需下载："+dianConfig.config.version);
                                             return;
                                     }
-                                    dianConfig.config = dianConfig.config.replaceAll(CR_LF, LF);
-                                    FileUtil.writeUtf8String(dianConfig.config, config.config_path);
+//                                    dianConfig.config = dianConfig.config.replaceAll(CR_LF, LF);
+                                    FileUtil.writeUtf8String(dianConfig.config.toString(), config.config_path);
 
-                                    new File(config.quicks_path).renameTo(new File(config.quicks_path+".0"));
                                     dianConfig.quick = dianConfig.quick.replaceAll(CR_LF, LF);
                                     FileUtil.writeUtf8String(dianConfig.quick, config.quicks_path);
                                     JOptionPane.showMessageDialog(iFrame,"下载成功");
@@ -850,9 +855,9 @@ public class DIANTAO_UI {
                 this.config = JSONObject.parseObject(FileUtil.getInputStream(System.getProperty("user.dir") + "/exclude/config-"+confName+".json"), Config.class, Feature.OrderedField);
                 String quicks_path = System.getProperty("user.dir") + "/exclude/quicks-" + confName + ".txt";
                 String config_path = System.getProperty("user.dir") + "/exclude/config-" + confName + ".json";
+                config.version_path = System.getProperty("user.dir") + "/exclude/versions/";
                 config.quicks_path = quicks_path;
                 config.config_path=config_path;
-                config.version_path=config_path+"/versions";
                 List<String> list = FileUtil.readUtf8Lines(quicks_path).stream().filter(StrUtil::isNotBlank).collect(Collectors.toList());
                 TreeMap<String,String> map=new TreeMap<>();
                 for (int i = 0; i < list.size(); i++) {

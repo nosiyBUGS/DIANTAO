@@ -1,9 +1,9 @@
 package art.qiuye.diantao.db;
 
+import art.qiuye.diantao.Config;
+
 import java.io.Serializable;
 import java.sql.Timestamp;
-
-import lombok.Data;
 
 /**
  * config
@@ -18,7 +18,7 @@ public class DianConfig implements Serializable {
     /**
      * 主要配置
      */
-    public String config;
+    public Config config;
 
     /**
      * 快捷配置

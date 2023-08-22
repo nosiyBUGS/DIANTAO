@@ -1,6 +1,10 @@
 package art.qiuye.diantao;
 
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.annotation.JSONField;
+import com.alibaba.fastjson.serializer.SerializerFeature;
+
 import java.util.TreeMap;
 import java.util.Vector;
 
@@ -11,6 +15,7 @@ import java.util.Vector;
 
 public class Config {
     public String adb_path;
+
     public Vector<String> devices;
     public Vector<Integer> items_time;
     public Vector<Integer> items_interval;
@@ -20,6 +25,8 @@ public class Config {
     public Integer work_base;
     public Integer work_step;
 
+
+    @JSONField(serialize = false)
     public TreeMap<String,String> quicks;
 
     public Boolean random_point;
@@ -28,7 +35,16 @@ public class Config {
     public String quicks_path;
     public String config_path;
 
+    public String version_path;
+
+
     public String from;
 
     public String to;
+
+    public Integer version;
+    @Override
+    public String toString() {
+        return JSON.toJSONString(this, SerializerFeature.PrettyFormat);
+    }
 }

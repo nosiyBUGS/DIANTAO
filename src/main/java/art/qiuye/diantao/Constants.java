@@ -43,4 +43,6 @@ public class Constants {
 
     public static final String IDT_CMD = "[cmd]";
     public static final String IDT_REF = "["+INS_REF+"]";
+
+//    public static final Pattern PATTERN_VERSION = Pattern.compile("(?<=(\"version\":\\s?))\\d+");
 }
