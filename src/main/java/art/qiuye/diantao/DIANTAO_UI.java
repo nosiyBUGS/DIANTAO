@@ -8,6 +8,7 @@ import cn.hutool.core.io.file.LineSeparator;
 import cn.hutool.core.lang.Pair;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.*;
+import cn.hutool.crypto.SecureUtil;
 import cn.hutool.db.Db;
 import cn.hutool.db.Entity;
 import cn.hutool.extra.mail.MailAccount;
@@ -231,12 +232,22 @@ public class DIANTAO_UI {
                             }
                     });
                     upload_menu.addMouseListener(new MouseAdapter() {
+                                                         @SneakyThrows
                                                          @Override
                                                          public void mouseClicked(MouseEvent e) {
+                                                                 DianConfig dianConfig = db.get(new Entity(TB_CONFIG).set(FD_VENDOR, config.config_name)).toBean(DianConfig.class);
+                                                                 String quick_value = FileUtil.readUtf8String(config.quicks_path);
+                                                                 if(SecureUtil.md5(dianConfig.quick).equals(SecureUtil.md5(quick_value))){
+                                                                         JOptionPane.showMessageDialog(iFrame, config.config_name+":hash equal,not upload","info",JOptionPane.INFORMATION_MESSAGE);
+                                                                         return;
+                                                                 }
                                                                  Entity entity=Entity.create(TB_CONFIG);
+                                                                 String config_value = FileUtil.readUtf8String(config.config_path);
+//                                                                 int version = Integer.parseInt(ReUtil.getGroup0(PATTERN_VERSION, config_value));
+//                                                                 config_value=ReUtil.replaceAll(config_value, PATTERN_VERSION, String.valueOf(version + 1));
                                                                  entity.set(FD_VENDOR,config.config_name)
-                                                                                 .set("quick",FileUtil.readUtf8String(config.quicks_path))
-                                                                                .set("config",FileUtil.readUtf8String(config.config_path))
+                                                                                 .set("quick", quick_value)
+                                                                                .set("config",config_value)
                                                                                 .set("updateTime", Timestamp.from(Instant.now()));
                                                                  try {
                                                                          db.insertOrUpdate(entity,FD_VENDOR);
@@ -258,17 +269,22 @@ public class DIANTAO_UI {
                                             dianConfig=entity.toBean(DianConfig.class);
                                     } catch (SQLException ex) {
                                             ex.printStackTrace();
-                                            JOptionPane.showMessageDialog(iFrame,ex.getMessage(),"失败",JOptionPane.ERROR_MESSAGE);
+                                            JOptionPane.showMessageDialog(iFrame,ex.getMessage(),"下载失败",JOptionPane.ERROR_MESSAGE);
                                             return;
                                     }
-                                    new File(config.config_path).renameTo(new File(config.config_path+".0"));
+                                    if(dianConfig.version>config.version)
+                                        new File(config.config_path).renameTo(new File(config.version_path+"."+config.version));
+                                    else {
+                                            JOptionPane.showMessageDialog(iFrame,"数据库版本更旧，无需下载："+dianConfig.version);
+                                            return;
+                                    }
                                     dianConfig.config = dianConfig.config.replaceAll(CR_LF, LF);
                                     FileUtil.writeUtf8String(dianConfig.config, config.config_path);
 
                                     new File(config.quicks_path).renameTo(new File(config.quicks_path+".0"));
                                     dianConfig.quick = dianConfig.quick.replaceAll(CR_LF, LF);
                                     FileUtil.writeUtf8String(dianConfig.quick, config.quicks_path);
-                                    JOptionPane.showMessageDialog(iFrame,"成功");
+                                    JOptionPane.showMessageDialog(iFrame,"下载成功");
                             }
                     });
                     ButtonGroup offset_buttonGroup=new ButtonGroup();
@@ -491,6 +507,8 @@ public class DIANTAO_UI {
                                     if(!replace_flag) collect.add(text);
                                     Collections.sort(collect);
                                     FileWriter.create(new File(config.quicks_path), StandardCharsets.UTF_8).writeLines(collect,LineSeparator.LINUX,false);
+                                    config.version+=1;
+                                    FileUtil.writeUtf8String(config.toString(), config.config_path);
 //                                    FileUtil.writeUtf8Lines(collect, config.quicks_path);
                                     writeStatus("save quicks done");
                                     MouseEvent mouseEvent = new MouseEvent(source, 0, 0, 0, 0, 0, 0, 0,0,false,0);
@@ -506,6 +524,8 @@ public class DIANTAO_UI {
                                     String origin = FileUtil.readUtf8String(config.quicks_path);
                                     origin = origin.replace(current_quick_item, source.getText());
                                     FileUtil.writeUtf8String(origin, config.quicks_path);
+                                    config.version+=1;
+                                    FileUtil.writeUtf8String(config.toString(), config.config_path);
                                     writeStatus("update quicks done");
                                     MouseEvent mouseEvent = new MouseEvent(source, 0, 0, 0, 0, 0, 0, 0,0,false,0);
                                     mouseAdapter.mouseClicked(mouseEvent);
@@ -728,7 +748,7 @@ public class DIANTAO_UI {
             });
 
     }
-    private void onClose(){
+    private void onClose() {
             if(thread!=null){
                     thread.stop();
                     manualPane.setBackground(Color.CYAN);
@@ -736,7 +756,15 @@ public class DIANTAO_UI {
             if(monitorThread!=null){
                     monitorThread.stop();
             }
-            activityNames=null;
+            ThreadUtil.execute(()->{
+                    try {
+                            db.getConnection().close();
+                            System.out.println("previous connection closed");
+                    } catch (SQLException e) {
+                            throw new RuntimeException(e);
+                    }
+
+            });
     }
     @SneakyThrows
     private int getLinePos(int lineunmber){
@@ -824,6 +852,7 @@ public class DIANTAO_UI {
                 String config_path = System.getProperty("user.dir") + "/exclude/config-" + confName + ".json";
                 config.quicks_path = quicks_path;
                 config.config_path=config_path;
+                config.version_path=config_path+"/versions";
                 List<String> list = FileUtil.readUtf8Lines(quicks_path).stream().filter(StrUtil::isNotBlank).collect(Collectors.toList());
                 TreeMap<String,String> map=new TreeMap<>();
                 for (int i = 0; i < list.size(); i++) {
