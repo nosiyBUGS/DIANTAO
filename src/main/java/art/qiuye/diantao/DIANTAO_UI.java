@@ -1051,8 +1051,15 @@ public class DIANTAO_UI {
                                         writeStatus("qulify sleep {}",inter);
                                         sleep(inter);
                                 }else {
-                                        writeStatus("now exceed {},continue cmd",split[1]);
-                                        continue;
+                                        if(cmd.equals("atc")){
+                                                writeStatus("now exceed {},continue cmd",split[1]);
+                                                continue;
+                                        }
+                                        else if(cmd.equals("atb")){
+                                                writeStatus("now exceed {},break cmd",split[1]);
+                                                break;
+                                        }
+                                        else writeStatus("not support at,use atc or atb instead");
                                 }
                         }
                         if(!sleeped)sleep(1);//操作间隔
