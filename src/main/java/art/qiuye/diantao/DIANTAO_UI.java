@@ -125,7 +125,12 @@ public class DIANTAO_UI {
 
         public static void main(String[] args) {
             DIANTAO_UI ui = new DIANTAO_UI();
+
                 SwingUtilities.invokeLater(()-> {
+                        Thread.currentThread().setUncaughtExceptionHandler((t, e) -> {
+                                e.printStackTrace();
+                                JOptionPane.showMessageDialog(null,e,"ERROR",JOptionPane.ERROR_MESSAGE);
+                        });
                                 try {
                                         UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
                                 } catch (Exception e) {
