@@ -136,7 +136,6 @@ public class DIANTAO_UI {
                                 } catch (Exception e) {
                                         throw new RuntimeException(e);
                                 }
-                                String title;
                                 frame = new JFrame();
                                 frame.setTitle(args[0] + "-操作-"+frame.hashCode());
                                 desktopPane = new JDesktopPane();
@@ -191,7 +190,6 @@ public class DIANTAO_UI {
                             }
                     });
                     if(!intances.isEmpty()){
-//                            JInternalFrame pre=intances.get(intances.size()-1).iFrame;
                             iFrame.setLocation(100,0);
                     }
                     intances.add(this);
@@ -844,7 +842,7 @@ public class DIANTAO_UI {
                     begin(slot,false,group);
             if(slots.size()>1 || group.totalTime>100){
                     try{
-                        MailUtil.send(account,"1281886693@qq.com",config.config_name+"任务完成:", JSON.toJSONString(slots),true);
+                        MailUtil.send(account,"1281886693@qq.com",config.config_name+":"+current_quick_item+":任务完成:", JSON.toJSONString(slots),true);
                     }catch (RuntimeException e){
                             e.printStackTrace();
                     }
