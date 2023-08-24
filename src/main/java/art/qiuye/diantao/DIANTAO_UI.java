@@ -552,6 +552,7 @@ public class DIANTAO_UI {
                                     }else {
                                             ta_plan.setText(entry.getValue());
                                             current_quick_item = entry.getValue();
+                                            activityNames=null;
                                             offset_arow=0;
                                     }
 
@@ -1041,6 +1042,7 @@ public class DIANTAO_UI {
                                 }
                         }else if(cmd.startsWith("at")){//at 26:00
                                 String[] split=cmd.split("\\s");
+                                String s0 = split[0];
                                 String[] ss0 = split[1].split(":");
                                 int t0h = Integer.parseInt(ss0[0]);
                                 int t0m = Integer.parseInt(ss0[1]);
@@ -1051,11 +1053,11 @@ public class DIANTAO_UI {
                                         writeStatus("qulify sleep {}",inter);
                                         sleep(inter);
                                 }else {
-                                        if(cmd.equals("atc")){
+                                        if(s0.equals("atc")){
                                                 writeStatus("now exceed {},continue cmd",split[1]);
                                                 continue;
                                         }
-                                        else if(cmd.equals("atb")){
+                                        else if(s0.equals("atb")){
                                                 writeStatus("now exceed {},break cmd",split[1]);
                                                 break;
                                         }
