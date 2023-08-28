@@ -1,0 +1,53 @@
+{
+	"adb_path":"C:\\program_files_arch\\QtScrcpy-win-x64-v2.1.2\\adb",
+	"config_name":"oppo",
+	"config_path":"C:\\Users\\tassel\\IdeaProjects\\DIANTAO/exclude/config-oppo.json",
+	"devices":[
+		" -s 192.168.2.19:5555 "
+	],
+	"from":"750 1377 750 200",
+	"items_count":[
+		1,
+		2,
+		3,
+		4,
+		5,
+		6,
+		7,
+		8,
+		9,
+		10
+	],
+	"items_interval":[
+		0,
+		3,
+		5,
+		7,
+		10,
+		25,
+		30,
+		45
+	],
+	"items_time":[
+		25,
+		30,
+		35,
+		65,
+		70,
+		95,
+		130,
+		190,
+		305,
+		1200,
+		7200
+	],
+	"quicks_path":"C:\\Users\\tassel\\IdeaProjects\\DIANTAO/exclude/quicks-oppo.txt",
+	"random_point":false,
+	"to":"750 300 750 1377",
+	"version":23,
+	"version_path":"C:\\Users\\tassel\\IdeaProjects\\DIANTAO/exclude/versions/",
+	"walk_base":870,
+	"walk_step":200,
+	"work_base":1170,
+	"work_step":200
+}
