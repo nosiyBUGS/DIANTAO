@@ -3,6 +3,7 @@ package art.qiuye.diantao;
 import art.qiuye.diantao.db.DianConfig;
 import cn.hutool.core.img.ImgUtil;
 import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.io.IORuntimeException;
 import cn.hutool.core.io.file.FileWriter;
 import cn.hutool.core.io.file.LineSeparator;
 import cn.hutool.core.lang.Pair;
@@ -129,7 +130,7 @@ public class DIANTAO_UI {
                 SwingUtilities.invokeLater(()-> {
                         Thread.currentThread().setUncaughtExceptionHandler((t, e) -> {
                                 e.printStackTrace();
-                                JOptionPane.showMessageDialog(null,e,"ERROR",JOptionPane.ERROR_MESSAGE);
+                                JOptionPane.showMessageDialog(null,e,"ERROR-"+config.config_name,JOptionPane.ERROR_MESSAGE);
                         });
                                 try {
                                         UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -300,7 +301,7 @@ public class DIANTAO_UI {
                             String text = ((JRadioButtonMenuItem) e.getItem()).getText();
                             offset_arow = Integer.parseInt(text);
                     };
-                    for (int i = -1; i <=2 ; i++) {
+                    for (int i = -5; i <=5 ; i++) {
                             JRadioButtonMenuItem b = new JRadioButtonMenuItem(String.valueOf(i));
                             b.addItemListener(offsetItemlistener);
                             offset_buttonGroup.add(b);
@@ -849,7 +850,6 @@ public class DIANTAO_UI {
                     }
             }
             Process process = RuntimeUtil.exec(StrUtil.format("mshta vbscript:msgbox(\"{}任务完成\",64,\"消息\")(window.close)",config.config_name));
-            process.waitFor();
 
 
     }
@@ -940,7 +940,6 @@ public class DIANTAO_UI {
 
                                                 }
                                                 Process process = RuntimeUtil.exec("mshta vbscript:msgbox(\"视频任务完成\",64,\"消息\")(window.close)");
-                                                process.waitFor();
                                         }
                                 break;
                 }
@@ -1023,17 +1022,25 @@ public class DIANTAO_UI {
                                         .contentType(ContentType.MULTIPART.getValue())
                                         .header("Origin", "se-extension://ext-1055834318")
                                         .header("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.81 Safari/537.36 SE 2.X MetaSr 1.0");
-                                while (n-->0){
-                                        tap(subs[7]+" "+subs[8]);
+                                while (n-->0) {
+                                        tap(subs[7] + " " + subs[8]);
                                         sleep(1);
                                         ByteArrayInputStream inputStream = new ByteArrayInputStream(miniCap.frame());
                                         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                                        ImgUtil.cut(inputStream,outputStream,new Rectangle(x, y, width, height));
-                                        request.form("file", outputStream.toByteArray(),"file");
-                                        String body = request.execute().body();
+                                        ImgUtil.cut(inputStream, outputStream, new Rectangle(x, y, width, height));
+                                        request.form("file", outputStream.toByteArray(), "file");
+                                        String body;
+                                        try {
+
+                                                body = request.execute().body();
+                                        } catch (IORuntimeException e) {
+                                                writeStatus(e.getMessage());
+                                                body = request.execute().body();
+                                                e.printStackTrace();
+                                        }
                                         StaticLog.info("## ocr body {} ", body);
-                                        if(body.contains(subs[4])){//包含
-                                                tap(subs[5]+" "+subs[6]);
+                                        if (body.contains(subs[4])) {//包含
+                                                tap(subs[5] + " " + subs[6]);
                                                 inputStream.close();
                                                 outputStream.close();
                                                 break;
