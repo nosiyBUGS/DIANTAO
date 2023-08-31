@@ -164,7 +164,7 @@ public class DIANTAO_UI {
             device = dev;
             initDevice();
             ThreadUtil.execute(()-> {
-                    String c = RuntimeUtil.execForStr(adb_path + " connect " + device.trim().split("\\s+")[1]);
+                    String c = RuntimeUtil.execForStr(StandardCharsets.UTF_8,adb_path + " connect " + device.trim().split("\\s+")[1]);
                     writeStatus("##adb connect:{}", c);
             });
             ThreadUtil.execute(()->{
