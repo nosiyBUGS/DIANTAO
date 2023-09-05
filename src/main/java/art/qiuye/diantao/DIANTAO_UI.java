@@ -724,10 +724,10 @@ public class DIANTAO_UI {
 
                         });
                         JButton button_down = new JButton("下移(ctrl+shift+↓)");
-                        referencees.put(button_down, ta_plan);
+//                        referencees.put(button_down, ta_plan);
                         button_down.addActionListener(CTRL_SHIFT_DOWN_ACTION);
                         JButton button_up = new JButton("上移(ctrl+shift+↑)");
-                        referencees.put(button_up, ta_plan);
+//                        referencees.put(button_up, ta_plan);
                         button_up.addActionListener(CTRL_SHIFT_UP_ACTION);
                         JPanel panel_plan = new JPanel();
                         panel_plan.add(button_F3);
