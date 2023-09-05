@@ -38,6 +38,7 @@ import java.awt.image.BufferedImage;
 import java.beans.PropertyVetoException;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -64,12 +65,12 @@ public class DIANTAO_UI {
 
         private String cmd_start = path+"shell am start -n com.alibaba.android.rimet/com.alibaba.android.rimet.biz.LaunchHomeActivity";
         private String cmd_stop=path+"shell am force-stop com.alibaba.android.rimet";
-        private JComboBox<Integer> comboBox_count;
-        private JComboBox<Integer> comboBox_time;
-        private JComboBox<Integer> comboBox_interval;
-        private JTextField textField_X;
-        private JComboBox<ComboLabel<Integer>> comboBox_Y;
-        private Vector<ComboLabel<Integer>> items_Y;
+//        private JComboBox<Integer> comboBox_count;
+//        private JComboBox<Integer> comboBox_time;
+//        private JComboBox<Integer> comboBox_interval;
+//        private JTextField textField_X;
+//        private JComboBox<ComboLabel<Integer>> comboBox_Y;
+//        private Vector<ComboLabel<Integer>> items_Y;
         String cmd_cap1=path+"shell screencap  -p /sdcard/snapcap/cap.png";
         String cmd_cap2=path+"pull /sdcard/snapcap/cap.png "+path+"cap.png";
         String cmd_tap;
@@ -114,6 +115,11 @@ public class DIANTAO_UI {
 
         public static final Db db=Db.use();
 
+        public static Connection connection;
+
+        private static final Map<Component, Component>  referencees = new HashMap<>();
+//        private static Map<JInternalFrame, Map<String, Component>> iFrameMap = new HashMap<>();
+
         static {
                 setting.set("host","smtp.qq.com");
                 setting.set("port","465");
@@ -123,6 +129,7 @@ public class DIANTAO_UI {
         }
         private final static MailAccount account=new MailAccount(setting);
         private String current_quick_item;
+        private AbstractAction ctrl_s_action;
 
         public static void main(String[] args) {
             DIANTAO_UI ui = new DIANTAO_UI();
@@ -170,22 +177,25 @@ public class DIANTAO_UI {
             ThreadUtil.execute(()->{
                     try {
                             sleep(1);
-                            writeStatus("db connecting...");
-                            db.getConnection();
+                            if(connection==null || connection.isClosed()){
+                                writeStatus("db connecting...");
+                                connection=db.getConnection();
+                                writeStatus("db connected ");
+
+                            }else writeStatus("db already connect");
                     } catch (SQLException e) {
                             throw new RuntimeException(e);
                     }
-                    writeStatus("db connected ");
             });
             SwingUtilities.invokeLater(()->{
                     manualPane = new JPanel();
                     iFrame = new JInternalFrame(this +"-"+intances.size(),true,true,true);
-                    iFrame.setSize(600,750);
+                    iFrame.setSize(540,750);
                     iFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
                     iFrame.addInternalFrameListener(new InternalFrameAdapter() {
                             @Override
                             public void internalFrameClosed(InternalFrameEvent e) {
-                                   onClose();
+                                   onClose(true);
                                     intances.remove(DIANTAO_UI.this);
                                     StaticLog.info("##closed,threads stop,instances:{}",intances.size());
                             }
@@ -215,7 +225,7 @@ public class DIANTAO_UI {
                                             iFrame= (JInternalFrame) ((JTextArea) e.getSource()).getRootPane().getParent();
                                             ta_plan= (JTextArea) e.getSource();
                                     }
-                                    onClose();
+                                    onClose(true);
                                     lastConfig = ta_plan.getText();
                                     iFrame.setVisible(false);
                                     try {
@@ -351,58 +361,58 @@ public class DIANTAO_UI {
                     checkBox_cis.addActionListener(e-> cis_direction=checkBox_cis.isSelected());
                     manualPane.add(checkBox_cis);
 
-                    JLabel label_count;
-                    label_count = new JLabel("次数");
-                    manualPane.add(label_count);
-                    Vector<Integer> items_count=config.items_count;
-                    comboBox_count = new JComboBox<>(items_count);
-                    comboBox_count.setMaximumRowCount(items_count.size());
-                    comboBox_count.setEditable(true);
-                    manualPane.add(comboBox_count);
+//                    JLabel label_count;
+//                    label_count = new JLabel("次数");
+//                    manualPane.add(label_count);
+//                    Vector<Integer> items_count=config.items_count;
+//                    comboBox_count = new JComboBox<>(items_count);
+//                    comboBox_count.setMaximumRowCount(items_count.size());
+//                    comboBox_count.setEditable(true);
+//                    manualPane.add(comboBox_count);
 
-                    JLabel label_time = new JLabel("时长");
-                    manualPane.add(label_time);
-                    Vector<Integer> items_time=config.items_time;
-                    comboBox_time = new JComboBox<>(items_time);
-                    comboBox_time.setMaximumRowCount(items_time.size());
-                    comboBox_time.setEditable(true);
-                    manualPane.add(comboBox_time);
+//                    JLabel label_time = new JLabel("时长");
+//                    manualPane.add(label_time);
+//                    Vector<Integer> items_time=config.items_time;
+//                    comboBox_time = new JComboBox<>(items_time);
+//                    comboBox_time.setMaximumRowCount(items_time.size());
+//                    comboBox_time.setEditable(true);
+//                    manualPane.add(comboBox_time);
 
-                    JLabel label_interval = new JLabel("间隔时间");
-                    manualPane.add(label_interval);
-                    Vector<Integer> items_interval=config.items_interval;
-                    comboBox_interval = new JComboBox<>(items_interval);
-                    comboBox_interval.setMaximumRowCount(items_interval.size());
-                    comboBox_interval.setEditable(true);
-                    manualPane.add(comboBox_interval);
+//                    JLabel label_interval = new JLabel("间隔时间");
+//                    manualPane.add(label_interval);
+//                    Vector<Integer> items_interval=config.items_interval;
+//                    comboBox_interval = new JComboBox<>(items_interval);
+//                    comboBox_interval.setMaximumRowCount(items_interval.size());
+//                    comboBox_interval.setEditable(true);
+//                    manualPane.add(comboBox_interval);
 
-                    JPanel panel_X=new JPanel();
-                    JLabel label_X = new JLabel("X");
-                    manualPane.add(label_X);
-                    textField_X = new JTextField(common_x.toString(),10);
-                    panel_X.add(label_X);
-                    panel_X.add(textField_X);
-                    JLabel label_Y = new JLabel("Y");
-                    panel_X.add(label_Y);
+//                    JPanel panel_X=new JPanel();
+//                    JLabel label_X = new JLabel("X");
+//                    manualPane.add(label_X);
+//                    textField_X = new JTextField(common_x.toString(),10);
+//                    panel_X.add(label_X);
+//                    panel_X.add(textField_X);
+//                    JLabel label_Y = new JLabel("Y");
+//                    panel_X.add(label_Y);
 
-                    items_Y = new Vector<>();
-                    items_walk = new Vector<>();
-                    int walk_base=config.walk_base;
+//                    items_Y = new Vector<>();
+//                    items_walk = new Vector<>();
+//                    int walk_base=config.walk_base;
                     items_work = new Vector<>();
-                    int work_base=config.work_base;
-                    for (int i = 0; i <10 ; i++) {
-                            items_walk.add(new ComboLabel<>(StrUtil.format("第{}排",i+1),walk_base+i*config.walk_step,i+1, T_WALK));
-                            items_work.add(new ComboLabel<>(StrUtil.format("打工第{}排",i+1),work_base+i*config.work_step,i+1, T_WORK));
-                    }
-                    items_work.add(new ComboLabel<>("溢出",10000,-1,OVERFLOW));
-                    items_Y.addAll(items_walk);
-                    items_Y.addAll(items_work);
+//                    int work_base=config.work_base;
+//                    for (int i = 0; i <10 ; i++) {
+//                            items_walk.add(new ComboLabel<>(StrUtil.format("第{}排",i+1),walk_base+i*config.walk_step,i+1, T_WALK));
+//                            items_work.add(new ComboLabel<>(StrUtil.format("打工第{}排",i+1),work_base+i*config.work_step,i+1, T_WORK));
+//                    }
+//                    items_work.add(new ComboLabel<>("溢出",10000,-1,OVERFLOW));
+//                    items_Y.addAll(items_walk);
+//                    items_Y.addAll(items_work);
 
-                    comboBox_Y = new JComboBox<>(items_Y);
-                    comboBox_Y.setEditable(true);
-                    comboBox_Y.setMaximumRowCount(items_Y.size());
-                    panel_X.add(comboBox_Y);
-                    manualPane.add(panel_X);
+//                    comboBox_Y = new JComboBox<>(items_Y);
+//                    comboBox_Y.setEditable(true);
+//                    comboBox_Y.setMaximumRowCount(items_Y.size());
+//                    panel_X.add(comboBox_Y);
+//                    manualPane.add(panel_X);
 
                     JLabel label_device = new JLabel("设备");
                     manualPane.add(label_device);
@@ -421,33 +431,62 @@ public class DIANTAO_UI {
                     JButton button_clear = new JButton("清除");
                     manualPane.add(button_clear);
 
-                    JButton button_ok=new JButton("提交");
-                    button_ok.addActionListener(e->{
-                            onClose();
-                            thread=new Thread(() -> {
-                                    begin(getSlot(),true,null);
-//                                panel_X.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
-//                                panel_X.updateUI();
+                    JButton button_save = new JButton("保存(Ctrl+S)");
+                    //回写
+                    ctrl_s_action = new AbstractAction() {
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                    JTextArea source = null;
+                                    if(e.getSource() instanceof JTextArea)
+                                            source=(JTextArea) e.getSource();
+                                    else if(e.getSource() instanceof JButton){
+                                            source = (JTextArea) referencees.get(e.getSource());
+                                    }
+                                    String text = source.getText();
+                                    List<String> textList = Arrays.stream(text.split(LF)).filter(StrUtil::isNotBlank).collect(Collectors.toList());
+                                    List<String> values = new ArrayList<>(config.quicks.values());
+                                    ArrayList<String> collect = new ArrayList<>();
+                                    boolean replace_flag = false;
+                                    for (int i = 0; i < values.size(); i++) {
+                                            String s = values.get(i);
+                                            if (s.startsWith(textList.get(0))) {
+                                                    collect.add(text);
+                                                    replace_flag = true;
+                                            } else {
+                                                    collect.add(s);
+                                            }
+                                    }
+                                    if (!replace_flag) collect.add(text);
+                                    Collections.sort(collect);
+                                    FileWriter.create(new File(config.quicks_path), StandardCharsets.UTF_8).writeLines(collect, LineSeparator.LINUX, false);
+                                    config.version += 1;
+                                    FileUtil.writeUtf8String(config.toString(), config.config_path);
+//                                    FileUtil.writeUtf8Lines(collect, config.quicks_path);
+                                    writeStatus("save quicks done");
+                                    MouseEvent mouseEvent = new MouseEvent(source, 0, 0, 0, 0, 0, 0, 0, 0, false, 0);
+                                    mouseAdapter.mouseClicked(mouseEvent);
 
-                            });
-                            thread.start();
-                            manualPane.setBackground(Color.GREEN);
+                            }
+                    };
+                    button_save.addActionListener(ctrl_s_action);
 
-
-                    });
-                    button_stop = new JButton("结束线程");
+                    button_stop = new JButton("结束线程(F2)");
                     button_stop.addActionListener(e->{
                             if(thread!=null){
                                 thread_suspend=false;
-                                onClose();
+                                onClose(false);
                                 writeStatus("threads stopped");
                                 activityNames=null;
                             }
 
                     });
 
-                    JButton button_plan = new JButton("+添加计划");
-                    ta_plan = new JTextArea(15,50);
+                    JButton button_F3 = new JButton("注释(F3)");
+                    button_F3.addActionListener(F3_ACTION);
+                    ta_plan = new JTextArea(15,55);
+                    referencees.put(button_save, ta_plan);
+                    referencees.put(button_F3, ta_plan);
+                    referencees.put(iFrame, ta_plan);
                     ta_plan.setLineWrap(true);
                     ta_plan.setText(lastConfig);
                     Font status_font=new Font("宋体",Font.TRUETYPE_FONT,15);
@@ -494,37 +533,8 @@ public class DIANTAO_UI {
                                     JOptionPane.showMessageDialog(frame, ta_plan.getText(start,end-start));
                             }
                     });*/
-                    //回写
-                    ta_plan.getKeymap().addActionForKeyStroke(KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.CTRL_MASK), new AbstractAction() {
-                            @Override
-                            public void actionPerformed(ActionEvent e) {
-                                    JTextArea source= (JTextArea) e.getSource();
-                                    String text=source.getText();
-                                    List<String> textList = Arrays.stream(text.split(LF)).filter(StrUtil::isNotBlank).collect(Collectors.toList());
-                                    List<String> values = new ArrayList<>(config.quicks.values());
-                                    ArrayList<String> collect = new ArrayList<>();
-                                    boolean replace_flag=false;
-                                    for (int i = 0; i < values.size(); i++) {
-                                            String s = values.get(i);
-                                            if (s.startsWith(textList.get(0))) {
-                                                    collect.add(text);
-                                                    replace_flag = true;
-                                            } else {
-                                                    collect.add(s);
-                                            }
-                                    }
-                                    if(!replace_flag) collect.add(text);
-                                    Collections.sort(collect);
-                                    FileWriter.create(new File(config.quicks_path), StandardCharsets.UTF_8).writeLines(collect,LineSeparator.LINUX,false);
-                                    config.version+=1;
-                                    FileUtil.writeUtf8String(config.toString(), config.config_path);
-//                                    FileUtil.writeUtf8Lines(collect, config.quicks_path);
-                                    writeStatus("save quicks done");
-                                    MouseEvent mouseEvent = new MouseEvent(source, 0, 0, 0, 0, 0, 0, 0,0,false,0);
-                                    mouseAdapter.mouseClicked(mouseEvent);
 
-                            }
-                    });
+                    ta_plan.getKeymap().addActionForKeyStroke(KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.CTRL_MASK), ctrl_s_action);
                     //更新
                     ta_plan.getKeymap().addActionForKeyStroke(KeyStroke.getKeyStroke(KeyEvent.VK_U, KeyEvent.CTRL_MASK), new AbstractAction() {
                             @Override
@@ -564,20 +574,7 @@ public class DIANTAO_UI {
                             ta_plan.setText(null);
                     });
 
-                    button_plan.addActionListener(e->{
-                            Slot slot = getSlot();
-                            ta_plan.append(slot.次数.toString()+";");
-                            ta_plan.append(slot.间隔_广告时长.toString()+";");
-                            ta_plan.append(slot.间隔_滑动.toString()+";");
-                            switch (slot.type){
-                                    case T_WALK:
-                                            ta_plan.append("#"+slot.arow+";");break;
-                                    case T_WORK:
-                                            ta_plan.append("$"+slot.arow+";");break;
-                            }
-                            ta_plan.append(slot.ex_cmds +";");
-                    });
-                    button_batch = new JButton("执行计划");
+                    button_batch = new JButton("执行计划(F1)");
                     button_batch.addActionListener(e->{
                             String[] lines = ta_plan.getText().trim().split(LF);
                             SlotGroup group=new SlotGroup();
@@ -675,7 +672,7 @@ public class DIANTAO_UI {
                                     slots.add(slot);
                             }
 
-                           onClose();
+                           onClose(false);
                             thread=new Thread(() -> {
                                     System.gc();
                                     manualPane.setBackground(Color.GREEN);
@@ -733,7 +730,7 @@ public class DIANTAO_UI {
 
                     });
                     JPanel panel_plan = new JPanel();
-                    panel_plan.add(button_plan);
+                    panel_plan.add(button_F3);
                     panel_plan.add(button_batch);
                     JPanel panel_ta = new JPanel();
                     JScrollPane ta_sc_pane = new JScrollPane(ta_plan,ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -742,7 +739,7 @@ public class DIANTAO_UI {
                     panel_ta.add(status_pane);
                     panel_ta.add(bar_pane);
                     JPanel panel_stop=new JPanel();
-                    panel_stop.add(button_ok);
+                    panel_stop.add(button_save);
                     panel_stop.add(button_stop);
                     manualPane.add(panel_stop);
                     manualPane.add(panel_plan);
@@ -758,7 +755,7 @@ public class DIANTAO_UI {
             });
 
     }
-    private void onClose() {
+    private void onClose(boolean closed) {
             if(thread!=null){
                     thread.stop();
                     manualPane.setBackground(Color.CYAN);
@@ -766,15 +763,9 @@ public class DIANTAO_UI {
             if(monitorThread!=null){
                     monitorThread.stop();
             }
-            ThreadUtil.execute(()->{
-                    try {
-                            db.getConnection().close();
-                            System.out.println("previous connection closed");
-                    } catch (SQLException e) {
-                            throw new RuntimeException(e);
-                    }
-
-            });
+            if(closed){
+                referencees.clear();
+            }
     }
     @SneakyThrows
     private int getLinePos(int lineunmber){
@@ -811,32 +802,8 @@ public class DIANTAO_UI {
             });
 
     }
-    private Slot getSlot(){
-            Slot slot = new Slot();
-            slot.次数 = (Integer) comboBox_count.getSelectedItem();
-            slot.间隔_广告时长 = (Integer) comboBox_time.getSelectedItem();
-            slot.间隔_滑动 = (Integer) comboBox_interval.getSelectedItem();
-            slot.X = Integer.parseInt(textField_X.getText());
-            Object item = comboBox_Y.getSelectedItem();
-            if(item instanceof ComboLabel){
-                    ComboLabel<Integer> combo = (ComboLabel<Integer>) item;
-                    slot.Y= combo.getValue();
-                    slot.注释= combo.getLabel();
-                    slot.arow=combo.getArow();
-                    slot.type = combo.getType();
-            }
-            else {
-                    slot.Y = Integer.parseInt(item.toString());
-                    slot.type= T_WALK;
-            }
-            return slot;
-    }
-    private void slideOneLine(){
-            String s = "700 2000 700 1795";
-            String execForStr = RuntimeUtil.execForStr(cmd_swipe + randomPoint(s));
-            if(StrUtil.isNotBlank(execForStr)) StaticLog.info("##execForStr slideOneLine:{} ", execForStr);
-    }
-    @SneakyThrows
+
+        @SneakyThrows
     public void beginBatch(SlotGroup group){
 
             List<Slot> slots=group.slots;
@@ -892,13 +859,6 @@ public class DIANTAO_UI {
                 String name = type.name();
                 switch (type) {
                         case 视频:
-//                                System.out.println("【倒数第一排】:950 2000");
-//                                System.out.println("【倒数第二排】:950 1800");
-//                                System.out.println("【第一排】:950 950 打工[950 1250]");
-//                                System.out.println("【第二排】:950 1200 打工[950 1450]");
-//                                System.out.println("【第三排】:950 1400 打工[950 1650]");
-//                                System.out.println("【第四排】:950 1600");
-//                                System.out.print("输入次数和时长以及间隔滑动时长:");
                                writeStatus("c = " +slot.次数);
 
                                 String point=slot.X+" "+ slot.Y;
@@ -1305,7 +1265,12 @@ public class DIANTAO_UI {
                         @SneakyThrows
                         @Override
                         public void actionPerformed(ActionEvent e) {
-                                JTextArea source= (JTextArea) e.getSource();
+                                JTextArea source=null;
+                                if(e.getSource() instanceof JTextArea)
+                                        source= (JTextArea) e.getSource();
+                                else if(e.getSource() instanceof JButton)
+                                        source = ((JTextArea) referencees.get(e.getSource()));
+
                                 int linenumber = source.getLineOfOffset(source.getCaretPosition());
                                 int start = source.getLineStartOffset(linenumber);
                                 int end = source.getLineEndOffset(linenumber);

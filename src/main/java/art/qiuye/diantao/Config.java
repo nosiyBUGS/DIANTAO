@@ -17,9 +17,9 @@ public class Config {
     public String adb_path;
 
     public Vector<String> devices;
-    public Vector<Integer> items_time;
-    public Vector<Integer> items_interval;
-    public Vector<Integer> items_count;
+//    public Vector<Integer> items_time;
+//    public Vector<Integer> items_interval;
+//    public Vector<Integer> items_count;
     public Integer walk_base;
     public Integer walk_step;
     public Integer work_base;

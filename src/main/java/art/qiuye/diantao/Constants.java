@@ -44,5 +44,8 @@ public class Constants {
     public static final String IDT_CMD = "[cmd]";
     public static final String IDT_REF = "["+INS_REF+"]";
 
+    public static final String KEY_TA_PLAN = "ta_plan";
+    public static final String KEY_BUTTON_SAVE = "button_save";
+
 //    public static final Pattern PATTERN_VERSION = Pattern.compile("(?<=(\"version\":\\s?))\\d+");
 }
