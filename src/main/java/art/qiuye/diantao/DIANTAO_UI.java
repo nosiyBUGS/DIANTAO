@@ -133,6 +133,8 @@ public class DIANTAO_UI {
         private AbstractAction ctrl_s_action;
         private JButton button_save;
         private JButton button_F3;
+        private JButton button_back;
+        private JButton button_forward;
 
         public static void main(String[] args) {
                 DIANTAO_UI ui = new DIANTAO_UI();
@@ -488,6 +490,7 @@ public class DIANTAO_UI {
                         button_F3 = new JButton("注释(F3)");
                         button_F3.addActionListener(F3_ACTION);
                         ta_plan = new JTextArea(15, 55);
+                        referencees.put(ta_plan, ta_plan);
                         referencees.put(button_save, ta_plan);
                         referencees.put(button_F3, ta_plan);
                         referencees.put(iFrame, ta_plan);
@@ -734,12 +737,20 @@ public class DIANTAO_UI {
                         JButton button_up = new JButton("上移(alt+shift+↑)");
 //                        referencees.put(button_up, ta_plan);
                         button_up.addActionListener(ALT_SHIFT_UP_ACTION);
+                        button_back = new JButton("后退(Ctrl+z)");
+                        referencees.put(button_back, ta_plan);
+                        button_back.addActionListener(CTRL_Z_ACTION);
+                        button_forward = new JButton("前进(Ctrl+shift+z)");
+                        referencees.put(button_forward,ta_plan);
+                        button_forward.addActionListener(CTRL_SHIFT_Z_ACTION);
                         JPanel panel_plan = new JPanel();
                         panel_plan.add(button_F3);
                         panel_plan.add(button_batch);
                         JPanel panel_shift = new JPanel();
                         panel_shift.add(button_down);
                         panel_shift.add(button_up);
+                        panel_shift.add(button_back);
+                        panel_shift.add(button_forward);
                         JPanel panel_ta = new JPanel();
                         JScrollPane ta_sc_pane = new JScrollPane(ta_plan, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
                         panel_ta.setLayout(new BoxLayout(panel_ta, BoxLayout.Y_AXIS));
@@ -777,7 +788,10 @@ public class DIANTAO_UI {
                 if (closed) {
                         referencees.remove(button_save);
                         referencees.remove(button_F3);
+                        referencees.remove(ta_plan);
                         referencees.remove(iFrame);
+                        referencees.remove(button_back);
+                        referencees.remove(button_forward);
                 }
         }
 
@@ -1280,7 +1294,8 @@ public class DIANTAO_UI {
         public static final AbstractAction CTRL_Z_ACTION = new AbstractAction() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                        PlainDocument document = ((PlainDocument) ((JTextArea) e.getSource()).getDocument());
+                        JTextArea textArea= (JTextArea) referencees.get(e.getSource());
+                        PlainDocument document = (PlainDocument) textArea.getDocument();
                         UndoManager manager = (UndoManager) document.getUndoableEditListeners()[0];
                         if (manager.canUndo()) {
                                 manager.undo();
@@ -1293,7 +1308,8 @@ public class DIANTAO_UI {
                 @SneakyThrows
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                        PlainDocument document = ((PlainDocument) ((JTextArea) e.getSource()).getDocument());
+                        JTextArea textArea= (JTextArea) referencees.get(e.getSource());
+                        PlainDocument document = (PlainDocument) textArea.getDocument();
                         UndoManager manager = (UndoManager) document.getUndoableEditListeners()[0];
                         if (manager.canRedo()) {
                                 manager.redo();
