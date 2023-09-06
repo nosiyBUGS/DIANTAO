@@ -540,9 +540,9 @@ public class DIANTAO_UI {
                                 }
                         });
                         //shift up
-                        ta_plan.getKeymap().addActionForKeyStroke(CTRL_SHIT_UP, CTRL_SHIFT_UP_ACTION);
+                        ta_plan.getKeymap().addActionForKeyStroke(ALT_SHIT_UP, ALT_SHIFT_UP_ACTION);
                         //shift down
-                        ta_plan.getKeymap().addActionForKeyStroke(CTRL_SHIT_DOWN, CTRL_SHIFT_DOWN_ACTION);
+                        ta_plan.getKeymap().addActionForKeyStroke(ALT_SHIT_DOWN, ALT_SHIFT_DOWN_ACTION);
 
                         Set<Map.Entry<String, String>> quick_entries = config.quicks.entrySet();
                         for (Map.Entry<String, String> entry : quick_entries) {
@@ -728,12 +728,12 @@ public class DIANTAO_UI {
                                 monitorThread.start();
 
                         });
-                        JButton button_down = new JButton("下移(ctrl+shift+↓)");
+                        JButton button_down = new JButton("下移(alt+shift+↓)");
 //                        referencees.put(button_down, ta_plan);
-                        button_down.addActionListener(CTRL_SHIFT_DOWN_ACTION);
-                        JButton button_up = new JButton("上移(ctrl+shift+↑)");
+                        button_down.addActionListener(ALT_SHIFT_DOWN_ACTION);
+                        JButton button_up = new JButton("上移(alt+shift+↑)");
 //                        referencees.put(button_up, ta_plan);
-                        button_up.addActionListener(CTRL_SHIFT_UP_ACTION);
+                        button_up.addActionListener(ALT_SHIFT_UP_ACTION);
                         JPanel panel_plan = new JPanel();
                         panel_plan.add(button_F3);
                         panel_plan.add(button_batch);
@@ -1357,9 +1357,9 @@ public class DIANTAO_UI {
                 }
         };
 
-        public static final KeyStroke CTRL_SHIT_DOWN = KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, KeyEvent.CTRL_MASK | KeyEvent.SHIFT_MASK);
+        public static final KeyStroke ALT_SHIT_DOWN = KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, KeyEvent.ALT_MASK | KeyEvent.SHIFT_MASK);
 
-        public static final AbstractAction CTRL_SHIFT_DOWN_ACTION = new AbstractAction() {
+        public static final AbstractAction ALT_SHIFT_DOWN_ACTION = new AbstractAction() {
                 @SneakyThrows
                 @Override
                 public void actionPerformed(ActionEvent e) {
@@ -1387,9 +1387,9 @@ public class DIANTAO_UI {
                 }
         };
 
-        public static final KeyStroke CTRL_SHIT_UP = KeyStroke.getKeyStroke(KeyEvent.VK_UP, KeyEvent.CTRL_MASK | KeyEvent.SHIFT_MASK);
+        public static final KeyStroke ALT_SHIT_UP = KeyStroke.getKeyStroke(KeyEvent.VK_UP, KeyEvent.ALT_MASK | KeyEvent.SHIFT_MASK);
 
-        public static final AbstractAction CTRL_SHIFT_UP_ACTION=new AbstractAction() {
+        public static final AbstractAction ALT_SHIFT_UP_ACTION =new AbstractAction() {
                 @SneakyThrows
                 @Override
                 public void actionPerformed(ActionEvent e) {
@@ -1412,7 +1412,7 @@ public class DIANTAO_UI {
                                 line2 = line2.replace(LF, "");
                         }
                         source.replaceRange(line1 + line2, n2_st, n1_end);
-                        source.setCaretPosition(n2_end - 1);
+                        source.setCaretPosition(n2_st);
                         source.requestFocus();
                 }
         };
