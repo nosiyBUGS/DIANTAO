@@ -618,7 +618,10 @@ public class DIANTAO_UI {
                                                 slot.type = T_CMD;
                                                 slot.次数 = Integer.parseInt(params[1]);
                                                 slot.cmds = line.substring(params[0].length() + params[1].length() + 2);
-                                                if (slot.cmds.contains(INS_J0)) j = 0;
+                                                if (slot.cmds.contains(INS_JJ)) {
+                                                        String group0 = ReUtil.getGroup0(PATTERN_JJ, slot.ex_cmds);
+                                                        j = Integer.parseInt(group0.substring(INS_JJ.length()));
+                                                }
                                         } else {
                                                 slot.次数 = Integer.parseInt(params[0]);
                                                 slot.间隔_广告时长 = parseSecond(params[1]);
@@ -628,8 +631,10 @@ public class DIANTAO_UI {
                                                 ComboLabel<Integer> item = null;
                                                 String[] sp = idt.split(" ");
                                                 if (sp.length == 1) {//relative location
-                                                        if (slot.ex_cmds != null && slot.ex_cmds.contains(INS_J0))
-                                                                j = 0;
+                                                        if (slot.ex_cmds != null && slot.ex_cmds.contains(INS_JJ)){
+                                                                String group0 = ReUtil.getGroup0(PATTERN_JJ, slot.ex_cmds);
+                                                                j = Integer.parseInt(group0.substring(INS_JJ.length()));
+                                                        }
                                                         int idx = Integer.parseInt(idt.substring(1)) + offset_arow;
                                                         slot.origin_arow = idx;
                                                         slot.arow = idx - j;

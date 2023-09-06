@@ -1,5 +1,7 @@
 package art.qiuye.diantao;
 
+import java.util.regex.Pattern;
+
 /**
  * @author hy
  * @create 2023/4/23 0023
@@ -35,7 +37,7 @@ public class Constants {
 
     public static final String INS_NO_MODIFY="nom";
     public static final String INS_REF="ref";
-    public static final String INS_J0="j0";
+    public static final String INS_JJ ="jj";
 
     public static final String TB_CONFIG="dian_config";
 
@@ -44,8 +46,8 @@ public class Constants {
     public static final String IDT_CMD = "[cmd]";
     public static final String IDT_REF = "["+INS_REF+"]";
 
-    public static final String KEY_TA_PLAN = "ta_plan";
-    public static final String KEY_BUTTON_SAVE = "button_save";
+    public static final Pattern PATTERN_JJ = Pattern.compile("jj\\d+");
+
 
 //    public static final Pattern PATTERN_VERSION = Pattern.compile("(?<=(\"version\":\\s?))\\d+");
 }
