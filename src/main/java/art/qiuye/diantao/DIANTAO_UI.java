@@ -1067,6 +1067,15 @@ public class DIANTAO_UI {
                                                 break;
                                         } else writeStatus("not support at,use atc or atb instead");
                                 }
+                        }else if(cmd.startsWith("c")){//c10,print hello
+                                String[] sp = cmd.split(",");
+                                int count= Integer.parseInt(sp[0].substring(1));
+                                String[] subCmds = Arrays.copyOfRange(sp, 1, sp.length);
+                                for (int i = 0; i < count; i++) {
+                                        execute_cmd(subCmds,null);
+                                }
+                        }else if(cmd.startsWith("print")){
+                                writeStatus(cmd.split("\\s")[1]);
                         }
                         if (!sleeped) sleep(1);//操作间隔
                 }
