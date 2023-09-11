@@ -987,7 +987,6 @@ public class DIANTAO_UI {
                                         request.form("file", outputStream.toByteArray(), "file");
                                         String body;
                                         try {
-
                                                 body = request.execute().body();
                                         } catch (IORuntimeException e) {
                                                 writeStatus(e.getMessage());
@@ -1001,9 +1000,36 @@ public class DIANTAO_UI {
                                                 outputStream.close();
                                                 break;
                                         }
-
+                                        inputStream.close();outputStream.close();
                                 }
-                        } else if (cmd.startsWith("at")) {//at 26:00
+                        } else if(cmd.startsWith("ocrt")){//ocrt 0 0 100 200 可跳槽,name
+                                int n = 10;
+                                String[] subs = cmd.substring("ocrt".length()).trim().split("\\s");
+                                int x = Integer.parseInt(subs[0]);
+                                int y = Integer.parseInt(subs[1]);
+                                int width = Integer.parseInt(subs[2]);
+                                int height = Integer.parseInt(subs[3]);
+                                HttpRequest request = HttpUtil.createPost("http://snap.ie.sogou.com/recognition")
+                                        .contentType(ContentType.MULTIPART.getValue())
+                                        .header("Origin", "se-extension://ext-1055834318")
+                                        .header("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.81 Safari/537.36 SE 2.X MetaSr 1.0");
+//                                ByteArrayInputStream inputStream = new ByteArrayInputStream(miniCap.frame());
+                                FileInputStream inputStream = new FileInputStream(System.getProperty("user.dir") + "/ocr.png");
+                                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                                BufferedImage bufferedImage = ImageIO.read(inputStream);
+                                Image cutImage = ImgUtil.cut(bufferedImage, new Rectangle(x, y, width, height));
+                                Graphics2D graphics2D = bufferedImage.createGraphics();
+                                graphics2D.setColor(Color.WHITE);
+                                graphics2D.fillRect(0,0,bufferedImage.getWidth(),bufferedImage.getHeight());
+                                graphics2D.drawImage(cutImage, x, y, width, height, Color.WHITE, null);
+                                ImageIO.write(bufferedImage, ImgUtil.IMAGE_TYPE_PNG,outputStream);
+                                request.form("file", outputStream.toByteArray(), "file");
+                                FileUtil.writeBytes(outputStream.toByteArray(), System.getProperty("user.dir") + "/out.png");
+                                String body = request.execute().body();
+                                StaticLog.info("## ocr body {} ", body);
+                                inputStream.close();outputStream.close();
+                        }
+                        else if (cmd.startsWith("at")) {//at 26:00
                                 String[] split = cmd.split("\\s");
                                 String s0 = split[0];
                                 String[] ss0 = split[1].split(":");
