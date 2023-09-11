@@ -17,6 +17,8 @@ public class Config {
     public String adb_path;
 
     public Vector<String> devices;
+
+    public String current_device;
 //    public Vector<Integer> items_time;
 //    public Vector<Integer> items_interval;
 //    public Vector<Integer> items_count;

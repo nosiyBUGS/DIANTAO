@@ -35,7 +35,6 @@ import javax.swing.undo.UndoManager;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
-import java.beans.PropertyVetoException;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
@@ -58,7 +57,6 @@ public class DIANTAO_UI {
         static Log StaticLog = LogFactory.get();
         private static Config config;
 
-        private String device;
         private String adb_path;
         private String path;
         private JCheckBox checkBox_cis;
@@ -158,7 +156,7 @@ public class DIANTAO_UI {
         }
 
         private void initDevice() {
-                path = adb_path + device;
+                path = adb_path + config.current_device;
                 cmd_tap = path + "shell input tap ";
                 cmd_press = path + "shell input keyevent ";
                 cmd_swipe = path + "shell input swipe ";
@@ -175,10 +173,10 @@ public class DIANTAO_UI {
         private void main(String dev, boolean first) {
                 if (!first) initConfig(config.config_name);
                 adb_path = config.adb_path;
-                device = dev;
+                config.current_device = dev;
                 initDevice();
                 ThreadUtil.execute(() -> {
-                        String c = RuntimeUtil.execForStr(StandardCharsets.UTF_8, adb_path + " connect " + device.trim().split("\\s+")[1]);
+                        String c = RuntimeUtil.execForStr(StandardCharsets.UTF_8, adb_path + " connect " + config.current_device.trim().split("\\s+")[1]);
                         writeStatus("##adb connect:{}", c);
                 });
                 ThreadUtil.execute(() -> {
@@ -226,6 +224,7 @@ public class DIANTAO_UI {
                         iFrame.setJMenuBar(menuBar);
                         frame.setJMenuBar(frameBar);
                         MouseAdapter mouseAdapter = new MouseAdapter() {
+                                @SneakyThrows
                                 @Override
                                 public void mouseClicked(MouseEvent e) {
                                         if (e.getSource() instanceof JTextArea) {
@@ -235,21 +234,16 @@ public class DIANTAO_UI {
                                         onClose(true);
                                         lastConfig = ta_plan.getText();
                                         iFrame.setVisible(false);
-                                        try {
-                                                iFrame.setClosed(true);
-                                        } catch (PropertyVetoException ex) {
-                                                throw new RuntimeException(ex);
-                                        }
+                                        iFrame.setClosed(true);
                                         iFrame.dispose();
-                                        main(device, false);
-
+                                        main(config.current_device, false);
                                 }
                         };
                         reload_menu.addMouseListener(mouseAdapter);
                         new_win_menu.addMouseListener(new MouseAdapter() {
                                 @Override
                                 public void mouseClicked(MouseEvent e) {
-                                        new DIANTAO_UI().main(device, false);
+                                        new DIANTAO_UI().main(config.current_device ,true);
                                 }
                         });
                         upload_menu.addMouseListener(new MouseAdapter() {
@@ -367,41 +361,6 @@ public class DIANTAO_UI {
                         checkBox_cis.addActionListener(e -> cis_direction = checkBox_cis.isSelected());
                         manualPane.add(checkBox_cis);
 
-//                    JLabel label_count;
-//                    label_count = new JLabel("次数");
-//                    manualPane.add(label_count);
-//                    Vector<Integer> items_count=config.items_count;
-//                    comboBox_count = new JComboBox<>(items_count);
-//                    comboBox_count.setMaximumRowCount(items_count.size());
-//                    comboBox_count.setEditable(true);
-//                    manualPane.add(comboBox_count);
-
-//                    JLabel label_time = new JLabel("时长");
-//                    manualPane.add(label_time);
-//                    Vector<Integer> items_time=config.items_time;
-//                    comboBox_time = new JComboBox<>(items_time);
-//                    comboBox_time.setMaximumRowCount(items_time.size());
-//                    comboBox_time.setEditable(true);
-//                    manualPane.add(comboBox_time);
-
-//                    JLabel label_interval = new JLabel("间隔时间");
-//                    manualPane.add(label_interval);
-//                    Vector<Integer> items_interval=config.items_interval;
-//                    comboBox_interval = new JComboBox<>(items_interval);
-//                    comboBox_interval.setMaximumRowCount(items_interval.size());
-//                    comboBox_interval.setEditable(true);
-//                    manualPane.add(comboBox_interval);
-
-//                    JPanel panel_X=new JPanel();
-//                    JLabel label_X = new JLabel("X");
-//                    manualPane.add(label_X);
-//                    textField_X = new JTextField(common_x.toString(),10);
-//                    panel_X.add(label_X);
-//                    panel_X.add(textField_X);
-//                    JLabel label_Y = new JLabel("Y");
-//                    panel_X.add(label_Y);
-
-//                    items_Y = new Vector<>();
                         items_walk = new Vector<>();
                         int walk_base = config.walk_base;
                         items_work = new Vector<>();
@@ -410,26 +369,23 @@ public class DIANTAO_UI {
                                 items_walk.add(new ComboLabel<>(StrUtil.format("第{}排", i + 1), walk_base + i * config.walk_step, i + 1, T_WALK));
                                 items_work.add(new ComboLabel<>(StrUtil.format("打工第{}排", i + 1), work_base + i * config.work_step, i + 1, T_WORK));
                         }
-//                    items_work.add(new ComboLabel<>("溢出",10000,-1,OVERFLOW));
-//                    items_Y.addAll(items_walk);
-//                    items_Y.addAll(items_work);
-
-//                    comboBox_Y = new JComboBox<>(items_Y);
-//                    comboBox_Y.setEditable(true);
-//                    comboBox_Y.setMaximumRowCount(items_Y.size());
-//                    panel_X.add(comboBox_Y);
-//                    manualPane.add(panel_X);
 
                         JLabel label_device = new JLabel("设备");
                         manualPane.add(label_device);
-                        if (!first && !config.devices.get(0).equals(dev))
-                                config.devices.add(0, dev);
+//                        if (!first && !config.devices.get(0).equals(dev))
+//                                config.devices.add(0, dev);
 
                         JComboBox<String> comboBox_device = new JComboBox<>(config.devices);
+                        if(!first){
+                                comboBox_device.addItem(config.current_device);
+                                comboBox_device.setSelectedIndex(comboBox_device.getItemCount()-1);
+                        }
+
+                        comboBox_device.setSelectedItem(config.current_device);
                         comboBox_device.setEditable(true);
                         manualPane.add(comboBox_device);
                         comboBox_device.addActionListener(e -> {
-                                device = ((JComboBox<String>) e.getSource()).getSelectedItem().toString();
+                                config.current_device = ((JComboBox<String>) e.getSource()).getSelectedItem().toString();
                                 initDevice();
                         });
 
@@ -858,6 +814,7 @@ public class DIANTAO_UI {
                 config.version_path = System.getProperty("user.dir") + "/exclude/versions/";
                 config.quicks_path = quicks_path;
                 config.config_path = config_path;
+                if(config.version==null)config.version=0;
                 List<String> list = FileUtil.readUtf8Lines(quicks_path).stream().filter(StrUtil::isNotBlank).collect(Collectors.toList());
                 TreeMap<String, String> map = new TreeMap<>();
                 for (int i = 0; i < list.size(); i++) {
