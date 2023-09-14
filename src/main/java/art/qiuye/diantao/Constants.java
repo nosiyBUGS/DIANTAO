@@ -38,6 +38,7 @@ public class Constants {
     public static final String INS_NO_MODIFY="nom";
     public static final String INS_REF="ref";
     public static final String INS_JJ ="jj";
+    public static final String INS_PREB ="preb";
 
     public static final String TB_CONFIG="dian_config";
 

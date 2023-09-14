@@ -44,7 +44,7 @@ public class Config {
 
     public String to;
 
-    public Integer version;
+    public int version;
     @Override
     public String toString() {
         return JSON.toJSONString(this, SerializerFeature.PrettyFormat);

@@ -83,7 +83,7 @@ public class DIANTAO_UI {
         private Thread monitorThread;
         private Vector<ComboLabel<Integer>> items_walk;
         private Vector<ComboLabel<Integer>> items_work;
-//        private Vector<ComboLabel<Vector<String>>> items_return;
+////        private Vector<ComboLabel<Vector<String>>> items_return;
 
         private int offset_arow = 0;
 
@@ -578,7 +578,7 @@ public class DIANTAO_UI {
                                                 slot.次数 = Integer.parseInt(params[1]);
                                                 slot.cmds = line.substring(params[0].length() + params[1].length() + 2);
                                                 if (slot.cmds.contains(INS_JJ)) {
-                                                        String group0 = ReUtil.getGroup0(PATTERN_JJ, slot.ex_cmds);
+                                                        String group0 = ReUtil.getGroup0(PATTERN_JJ, slot.cmds);
                                                         j = Integer.parseInt(group0.substring(INS_JJ.length()));
                                                 }
                                         } else {
@@ -613,7 +613,7 @@ public class DIANTAO_UI {
                                                 }
                                                 slot.ex_cmds = line.substring(params[0].length() + params[1].length() + params[2].length() + params[3].length() + 4);
                                                 if (slot.type.equals(T_WALK) || slot.type.equals(T_WORK)) {
-                                                        if (j > 0) {
+                                                       /* if (j > 0) {
                                                                 int k = i - 1;
                                                                 Slot pre = slots.get(k);
                                                                 while (pre.origin_arow == null)
@@ -624,7 +624,8 @@ public class DIANTAO_UI {
                                                                         slot.arow = pre.arow;
                                                                         slot.Y = pre.Y;
                                                                 }
-                                                        } else j++;
+                                                        } else j++;*/
+                                                        j++;
                                                 }
                                         }
                                         slots.add(slot);
@@ -814,7 +815,6 @@ public class DIANTAO_UI {
                 config.version_path = System.getProperty("user.dir") + "/exclude/versions/";
                 config.quicks_path = quicks_path;
                 config.config_path = config_path;
-                if(config.version==null)config.version=0;
                 List<String> list = FileUtil.readUtf8Lines(quicks_path).stream().filter(StrUtil::isNotBlank).collect(Collectors.toList());
                 TreeMap<String, String> map = new TreeMap<>();
                 for (int i = 0; i < list.size(); i++) {
@@ -860,7 +860,6 @@ public class DIANTAO_UI {
                                                 nom = slot.cmds.contains(INS_NO_MODIFY);
                                                 execute_cmd(cmds, group);
                                                 pos += slot.params[0].length() + 1;
-
                                         } else {
                                                 nom = slot.ex_cmds.contains(INS_NO_MODIFY);
                                                 tap(point);
@@ -962,7 +961,15 @@ public class DIANTAO_UI {
                                 sleep(anInt);
                                 sleeped = true;
                         } else if (cmd.startsWith("t")) {
-                                tap(cmd.substring(1));
+                                String sub = cmd.substring(1);
+                                if(sub.startsWith("#")){
+                                        int index = Integer.parseInt(sub.substring(1));
+                                        tap(common_x+" "+items_walk.get(index - 1).getValue());
+                                }else if(sub.startsWith("$")){
+                                        int index = Integer.parseInt(sub.substring(1));
+                                        tap(common_x+" "+items_work.get(index - 1).getValue());
+                                }else
+                                        tap(sub);
                         } else if (cmd.startsWith("b")) {
                                 back();
                         } else if (cmd.startsWith("h")) {
@@ -981,7 +988,9 @@ public class DIANTAO_UI {
                                 while (n-- > 0) {
                                         tap(subs[7] + " " + subs[8]);
                                         sleep(1);
-                                        ByteArrayInputStream inputStream = new ByteArrayInputStream(miniCap.frame());
+                                        byte[] bytes = miniCap.frame();
+                                        ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
+                                        FileUtil.writeBytes(bytes, System.getProperty("user.dir") + "/ocr.png");
                                         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                                         ImgUtil.cut(inputStream, outputStream, new Rectangle(x, y, width, height));
                                         request.form("file", outputStream.toByteArray(), "file");
@@ -993,7 +1002,7 @@ public class DIANTAO_UI {
                                                 body = request.execute().body();
                                                 e.printStackTrace();
                                         }
-                                        StaticLog.info("## ocr body {} ", body);
+                                        writeStatus("## ocr body {} ", body);
                                         if (body.contains(subs[4])) {//包含
                                                 tap(subs[5] + " " + subs[6]);
                                                 inputStream.close();
@@ -1102,6 +1111,7 @@ public class DIANTAO_UI {
 
         private void watchAdv(Slot s) {
                 this.sleep(s.间隔_滑动);
+                if(s.ex_cmds.contains(INS_PREB)) back();
                 int direction = 0;
                 if (s.ex_cmds != null) {
                         if (s.ex_cmds.contains(INS_SW_FROM)) {
