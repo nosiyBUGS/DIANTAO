@@ -903,6 +903,7 @@ public class DIANTAO_UI {
 
         @SneakyThrows
         private void execute_cmd(String cmds[], SlotGroup group) {
+                final Pattern pt = Pattern.compile("^[a-z]+");
                 for (String cmd : cmds) {
                         boolean sleeped = false;
                         if (cmd.startsWith("sw")) {
@@ -917,7 +918,6 @@ public class DIANTAO_UI {
                                         swipe(config.to);
                                         continue;
                                 }//swt
-                                final Pattern pt = Pattern.compile("^[a-z]+");
                                 String prefix = ReUtil.getGroup0(pt, cmd);
                                 String[] subs = cmd.substring(prefix.length()).split("\\s");
                                 String p = null;
