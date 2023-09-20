@@ -24,7 +24,6 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.parser.Feature;
-import com.sun.javafx.image.BytePixelSetter;
 import lombok.SneakyThrows;
 
 import javax.imageio.ImageIO;
@@ -531,10 +530,19 @@ public class DIANTAO_UI {
 
                         button_batch = new JButton("执行计划(F1)");
                         button_batch.addActionListener(e -> {
-                                String[] lines = ta_plan.getText().trim().split(LF);
+                                String text = ta_plan.getText().trim();
+                                List<String> groups = ReUtil.findAllGroup0(PATTERN_VAR, text);
+                                boolean rep_flag = false;
+                                for (String group : groups) {
+                                        String value = config.variables.get(group);
+                                        if(value!=null){
+                                                text = text.replaceAll(group, value);
+                                                rep_flag=true;
+                                        }
+                                }
+                                String[] lines = text.split(LF);
                                 SlotGroup group = new SlotGroup();
                                 ArrayList<String> collect = new ArrayList<>();
-                                boolean ref_flag = false;
                                 for (String line : lines) {
                                         if (line.startsWith(IDT_ACTIVITY)) {
                                                 String[] split = line.split(";");
@@ -546,7 +554,7 @@ public class DIANTAO_UI {
                                         } else if (!line.startsWith(IDT_REF))
                                                 collect.add(line);
                                         else if (line.startsWith(IDT_REF)) {
-                                                ref_flag = true;
+                                                rep_flag = true;
                                                 String[] subs = line.split(";");
                                                 String v = config.quicks.get(subs[1]);
                                                 collect.add(CMT + line);
@@ -555,7 +563,7 @@ public class DIANTAO_UI {
                                                 collect.addAll(Arrays.asList(range));
                                         }
                                 }
-                                if (ref_flag) {
+                                if (rep_flag) {
                                         ta_plan.setText(null);
                                         StringBuilder sb = new StringBuilder();
                                         for (String s : collect) {
