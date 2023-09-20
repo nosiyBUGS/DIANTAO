@@ -24,6 +24,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.parser.Feature;
+import com.sun.javafx.image.BytePixelSetter;
 import lombok.SneakyThrows;
 
 import javax.imageio.ImageIO;
@@ -133,15 +134,17 @@ public class DIANTAO_UI {
         private JButton button_F3;
         private JButton button_back;
         private JButton button_forward;
+        private static Thread.UncaughtExceptionHandler exceptionHandler = (t, e) -> {
+                if(e instanceof ThreadDeath)return;
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(null, e, "ERROR-" + config.config_name, JOptionPane.ERROR_MESSAGE);
+        };
 
         public static void main(String[] args) {
                 DIANTAO_UI ui = new DIANTAO_UI();
-
                 SwingUtilities.invokeLater(() -> {
-                        Thread.currentThread().setUncaughtExceptionHandler((t, e) -> {
-                                e.printStackTrace();
-                                JOptionPane.showMessageDialog(null, e, "ERROR-" + config.config_name, JOptionPane.ERROR_MESSAGE);
-                        });
+
+                        Thread.currentThread().setUncaughtExceptionHandler(exceptionHandler);
                         try {
                                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
                         } catch (Exception e) {
@@ -171,7 +174,7 @@ public class DIANTAO_UI {
 
         @SneakyThrows
         private void main(String dev, boolean first) {
-                if (!first) initConfig(config.config_name);
+                initConfig(config.config_name);
                 adb_path = config.adb_path;
                 config.current_device = dev;
                 initDevice();
@@ -633,12 +636,12 @@ public class DIANTAO_UI {
 
                                 onClose(false);
                                 thread = new Thread(() -> {
-                                        System.gc();
                                         manualPane.setBackground(Color.GREEN);
                                         beginBatch(group);
                                         manualPane.setBackground(Color.CYAN);
                                         StaticLog.info("## set cyan");
                                 }, "thread");
+                                thread.setUncaughtExceptionHandler(exceptionHandler);
                                 thread.start();
                                 final Pattern current_pattern = Pattern.compile("[\\w\\.]*/[\\w\\.]*");
                                 monitorThread = new Thread(() -> {
@@ -684,7 +687,7 @@ public class DIANTAO_UI {
                                                 }
                                         }
                                 }, "monitorThread");
-
+                                monitorThread.setUncaughtExceptionHandler(exceptionHandler);
                                 monitorThread.start();
 
                         });
@@ -722,7 +725,7 @@ public class DIANTAO_UI {
                         manualPane.add(panel_plan);
                         manualPane.add(panel_shift);
                         manualPane.add(panel_ta);
-                        if (first) {
+                        if (first && !frame.isVisible()) {
                                 frame.pack();
                                 frame.setSize(600, 800);
                                 frame.setLocation(600, 100);
@@ -938,7 +941,13 @@ public class DIANTAO_UI {
                                         p = StrUtil.format("{} {} {} {}", subs[0], subs[1], subs[2], subs[3]);
                                         swipe(p);
                                         continue;
-                                } else if (subs.length == 6) {
+
+                                } else if(subs.length==5){
+                                        p = StrUtil.format("{} {} {} {} {}", subs[0], subs[1], subs[2], subs[3],subs[4]);
+                                        swipe(p);
+                                        continue;
+                                }
+                                else if (subs.length == 6) {
                                         int total = Integer.parseInt(subs[4]);
                                         int t = Integer.parseInt(subs[5]);
                                         for (int i = 0; i < total / t + 1; i++) {
