@@ -50,6 +50,9 @@ public class Constants {
     public static final Pattern PATTERN_JJ = Pattern.compile("jj\\d+");
 
     public static final Pattern PATTERN_VAR = Pattern.compile("@[^,^;^\\d^:^\"]+");
+    public static final String PATTERN_VERSION_S = ("(?<=\"version\":)\\d+");
+
+
 
 
 //    public static final Pattern PATTERN_VERSION = Pattern.compile("(?<=(\"version\":\\s?))\\d+");

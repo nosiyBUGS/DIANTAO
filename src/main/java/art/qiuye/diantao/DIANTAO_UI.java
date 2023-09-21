@@ -424,8 +424,9 @@ public class DIANTAO_UI {
                                         Collections.sort(collect);
                                         FileWriter.create(new File(config.quicks_path), StandardCharsets.UTF_8).writeLines(collect, LineSeparator.LINUX, false);
                                         config.version += 1;
-                                        FileUtil.writeUtf8String(config.toString(), config.config_path);
-//                                    FileUtil.writeUtf8Lines(collect, config.quicks_path);
+                                        String s = FileUtil.readUtf8String(config.config_path);
+                                        s = s.replaceFirst(PATTERN_VERSION_S, String.valueOf(config.version));
+                                        FileUtil.writeUtf8String(s ,config.config_path);
                                         writeStatus("save quicks done");
                                         MouseEvent mouseEvent = new MouseEvent(source, 0, 0, 0, 0, 0, 0, 0, 0, false, 0);
                                         mouseAdapter.mouseClicked(mouseEvent);
@@ -494,7 +495,9 @@ public class DIANTAO_UI {
                                         origin = origin.replace(current_quick_item, source.getText());
                                         FileUtil.writeUtf8String(origin, config.quicks_path);
                                         config.version += 1;
-                                        FileUtil.writeUtf8String(config.toString(), config.config_path);
+                                        String s = FileUtil.readUtf8String(config.config_path);
+                                        s = s.replaceFirst(PATTERN_VERSION_S, String.valueOf(config.version));
+                                        FileUtil.writeUtf8String(s,config.config_path);
                                         writeStatus("update quicks done");
                                         MouseEvent mouseEvent = new MouseEvent(source, 0, 0, 0, 0, 0, 0, 0, 0, false, 0);
                                         mouseAdapter.mouseClicked(mouseEvent);
