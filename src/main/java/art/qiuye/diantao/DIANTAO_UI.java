@@ -46,7 +46,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.*;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static art.qiuye.diantao.Constants.*;
 
@@ -407,7 +406,7 @@ public class DIANTAO_UI {
                                                 source = (JTextArea) referencees.get(e.getSource());
                                         }
                                         String text = source.getText();
-                                        List<String> textList = Arrays.stream(text.split(LF)).filter(StrUtil::isNotBlank).collect(Collectors.toList());
+                                        List<String> textList = Arrays.asList(text.split(LF));
                                         List<String> values = new ArrayList<>(config.quicks.values());
                                         ArrayList<String> collect = new ArrayList<>();
                                         boolean replace_flag = false;
@@ -829,7 +828,7 @@ public class DIANTAO_UI {
                 config.version_path = System.getProperty("user.dir") + "/exclude/versions/";
                 config.quicks_path = quicks_path;
                 config.config_path = config_path;
-                List<String> list = FileUtil.readUtf8Lines(quicks_path).stream().filter(StrUtil::isNotBlank).collect(Collectors.toList());
+                List<String> list = FileUtil.readUtf8Lines(quicks_path);
                 TreeMap<String, String> map = new TreeMap<>();
                 for (int i = 0; i < list.size(); i++) {
                         String line = list.get(i);
