@@ -49,10 +49,16 @@ public class Constants {
 
     public static final Pattern PATTERN_JJ = Pattern.compile("jj\\d+");
 
-    public static final Pattern PATTERN_VAR = Pattern.compile("@[^,^;^\\d^:^\"]+");
+    public static final Pattern PATTERN_VAR = Pattern.compile("@[\\u4E00-\\u9FA5a-z]+");
     public static final String PATTERN_VERSION_S = ("(?<=\"version\":)\\d+");
 
-
+    /*
+    $$$点淘-晚间
+[act];com.taobao.live
+[cmd];1;atc 20:02;t@赚体力
+15;130;0;950 1460;t350 1300;
+10;65;7;950 1740;
+    * */
 
 
 //    public static final Pattern PATTERN_VERSION = Pattern.compile("(?<=(\"version\":\\s?))\\d+");

@@ -46,6 +46,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.*;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static art.qiuye.diantao.Constants.*;
 
@@ -533,18 +534,9 @@ public class DIANTAO_UI {
                         button_batch = new JButton("执行计划(F1)");
                         button_batch.addActionListener(e -> {
                                 String text = ta_plan.getText().trim();
-                                List<String> groups = ReUtil.findAllGroup0(PATTERN_VAR, text);
-                                boolean rep_flag = false;
-                                for (String group : groups) {
-                                        String value = config.variables.get(group);
-                                        if(value!=null){
-                                                text = text.replaceAll(group, value);
-                                                rep_flag=true;
-                                        }
-                                }
                                 String[] lines = text.split(LF);
                                 SlotGroup group = new SlotGroup();
-                                ArrayList<String> collect = new ArrayList<>();
+                                List<String> collect = new ArrayList<>();
                                 for (String line : lines) {
                                         if (line.startsWith(IDT_ACTIVITY)) {
                                                 String[] split = line.split(";");
@@ -556,7 +548,6 @@ public class DIANTAO_UI {
                                         } else if (!line.startsWith(IDT_REF))
                                                 collect.add(line);
                                         else if (line.startsWith(IDT_REF)) {
-                                                rep_flag = true;
                                                 String[] subs = line.split(";");
                                                 String v = config.quicks.get(subs[1]);
                                                 collect.add(CMT + line);
@@ -565,23 +556,30 @@ public class DIANTAO_UI {
                                                 collect.addAll(Arrays.asList(range));
                                         }
                                 }
-                                if (rep_flag) {
-                                        ta_plan.setText(null);
-                                        StringBuilder sb = new StringBuilder();
-                                        for (String s : collect) {
-                                                sb.append(s);
-                                                sb.append(LF);
+                                ta_plan.setText(null);
+                                StringBuilder sb = new StringBuilder();
+                                List<String> fluid=new ArrayList<>();
+                                for (String s : collect) {
+                                        List<String> groups = ReUtil.findAllGroup0(PATTERN_VAR, s);
+                                        for (String g : groups) {
+                                                String value = config.variables.get(g);
+                                                if(value!=null){
+                                                        s = s.replaceAll(g, value);
+                                                }
                                         }
-                                        ta_plan.append(sb.toString());
-                                        lines = collect.toArray(new String[collect.size()]);
+                                        fluid.add(s);
+                                        sb.append(s);
+                                        sb.append(LF);
                                 }
-
-                                lines = Arrays.stream(lines).filter(e1 -> !e1.contains(CMT) && !e1.contains(BSY) && !e1.contains(IDT_ACTIVITY) && StrUtil.isNotBlank(e1)).toArray(String[]::new);
-                                ArrayList<Slot> slots = new ArrayList<>(lines.length);
+                                text=sb.toString();
+                                ta_plan.setText(text);
+                                collect.clear();
+                                collect = fluid.stream().filter(e1 -> !e1.contains(CMT) && !e1.contains(BSY) && !e1.contains(IDT_ACTIVITY) && StrUtil.isNotBlank(e1)).collect(Collectors.toList());
+                                ArrayList<Slot> slots = new ArrayList<>(collect.size());
                                 group.slots = slots;
                                 int j = 0;
-                                for (int i = 0; i < lines.length; i++) {
-                                        String line = lines[i];
+                                for (int i = 0; i < collect.size(); i++) {
+                                        String line = collect.get(i);
                                         String[] params = line.split(";", -1);
                                         Slot slot = new Slot();
                                         slot.index = i;
@@ -626,18 +624,6 @@ public class DIANTAO_UI {
                                                 }
                                                 slot.ex_cmds = line.substring(params[0].length() + params[1].length() + params[2].length() + params[3].length() + 4);
                                                 if (slot.type.equals(T_WALK) || slot.type.equals(T_WORK)) {
-                                                       /* if (j > 0) {
-                                                                int k = i - 1;
-                                                                Slot pre = slots.get(k);
-                                                                while (pre.origin_arow == null)
-                                                                        pre = slots.get(--k);//略过非#
-                                                                if (!pre.origin_arow.equals(slot.origin_arow)) {
-                                                                        j++;
-                                                                } else {//拷贝上一份 j不回退
-                                                                        slot.arow = pre.arow;
-                                                                        slot.Y = pre.Y;
-                                                                }
-                                                        } else j++;*/
                                                         j++;
                                                 }
                                         }
@@ -983,10 +969,10 @@ public class DIANTAO_UI {
                                 String sub = cmd.substring(1);
                                 if(sub.startsWith("#")){
                                         int index = Integer.parseInt(sub.substring(1));
-                                        tap(common_x+" "+items_walk.get(index - 1).getValue());
+                                        tap(common_x+" "+items_walk.get(index - 1+offset_arow).getValue());
                                 }else if(sub.startsWith("$")){
                                         int index = Integer.parseInt(sub.substring(1));
-                                        tap(common_x+" "+items_work.get(index - 1).getValue());
+                                        tap(common_x+" "+items_work.get(index - 1+offset_arow).getValue());
                                 }else
                                         tap(sub);
                         } else if (cmd.startsWith("b")) {
