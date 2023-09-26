@@ -406,7 +406,7 @@ public class DIANTAO_UI {
                                         else if (e.getSource() instanceof JButton) {
                                                 source = (JTextArea) referencees.get(e.getSource());
                                         }
-                                        String text = source.getText();
+                                        String text = source.getText().trim();
                                         List<String> textList = Arrays.asList(text.split(LF));
                                         List<String> values = new ArrayList<>(config.quicks.values());
                                         ArrayList<String> collect = new ArrayList<>();
@@ -757,14 +757,17 @@ public class DIANTAO_UI {
 //            while (!ta_plan.getText(j++, 1).equals(LF));//no need to pass first line
                 int last_length = 0;
                 while (lineunmber-- >= 0) {
-                        int k = ta_plan.getLineOfOffset(j);
-                        int start = ta_plan.getLineStartOffset(k);
-                        int end = ta_plan.getLineEndOffset(k);
-                        last_length = end - start;
-                        String line = ta_plan.getText(start, last_length);
+                        String line=null;
+                        while (StrUtil.isBlank(line)){
+                                int k = ta_plan.getLineOfOffset(j);
+                                int start = ta_plan.getLineStartOffset(k);
+                                int end = ta_plan.getLineEndOffset(k);
+                                last_length = end - start;
+                                line = ta_plan.getText(start, last_length);
+                                j = end;
+                        }
                         if (line.startsWith(CMT) || line.startsWith(BSY) || line.startsWith(IDT_ACTIVITY))
                                 lineunmber++;
-                        j = end;
                 }
                 return j - last_length;
         }
@@ -891,10 +894,10 @@ public class DIANTAO_UI {
 
         @SneakyThrows
         private void execute_cmd(String cmds[], SlotGroup group) {
-                final Pattern pt = Pattern.compile("^[a-z]+");
                 for (String cmd : cmds) {
                         boolean sleeped = false;
-                        if (cmd.startsWith("sw")) {
+                        String code=ReUtil.getGroup0(PATTERN_OP_CODE,cmd);
+                        if (code.startsWith("sw")) {
                                 if (cmd.equals(INS_SW_FROM)) {
                                         swipe(config.from);
                                         continue;
@@ -906,8 +909,7 @@ public class DIANTAO_UI {
                                         swipe(config.to);
                                         continue;
                                 }//swt
-                                String prefix = ReUtil.getGroup0(pt, cmd);
-                                String[] subs = cmd.substring(prefix.length()).split("\\s");
+                                String[] subs = cmd.substring(code.length()).split("\\s");
                                 String p = null;
                                 boolean reverse_flag = false;
                                 if (cmd.startsWith(INS_SW_FROM))
@@ -920,8 +922,10 @@ public class DIANTAO_UI {
                                         writeStatus("combine sw not supported");
                                         return;
                                 }
-
-                                if (subs.length == 2) {//sw65 7
+                                if(subs.length==1){
+                                     swipe(p+" "+subs[0]);
+                                }
+                                else if (subs.length == 2) {//sw65 7
                                         int total = Integer.parseInt(subs[0]);
                                         int t = Integer.parseInt(subs[1]);
                                         for (int i = 0; i < total / t + 1; i++) {
@@ -933,6 +937,7 @@ public class DIANTAO_UI {
                                                 sleep(t);
                                                 swipe(p);
                                         }
+                                        continue;
                                 } else if (subs.length == 4) {
                                         p = StrUtil.format("{} {} {} {}", subs[0], subs[1], subs[2], subs[3]);
                                         swipe(p);
@@ -959,13 +964,13 @@ public class DIANTAO_UI {
 
                                         }
                                 }
-                        } else if (cmd.startsWith("s")) {
+                        } else if (code.startsWith("s")) {
                                 int anInt = parseSecond(cmd.substring(1));
                                 if (group != null)
                                         group.totalTime += anInt;
                                 sleep(anInt);
                                 sleeped = true;
-                        } else if (cmd.startsWith("t")) {
+                        } else if (code.equals("t")) {
                                 String sub = cmd.substring(1);
                                 if(sub.startsWith("#")){
                                         int index = Integer.parseInt(sub.substring(1));
@@ -975,11 +980,11 @@ public class DIANTAO_UI {
                                         tap(common_x+" "+items_work.get(index - 1+offset_arow).getValue());
                                 }else
                                         tap(sub);
-                        } else if (cmd.startsWith("b")) {
+                        } else if (code.equals("b")) {
                                 back();
-                        } else if (cmd.startsWith("h")) {
+                        } else if (code.equals("h")) {
                                 home();
-                        } else if (cmd.startsWith("if")) {//if0 0 100 200 看直播领钻石
+                        } else if (code.equals("if")) {//if0 0 100 200 看直播领钻石
                                 int n = 10;
                                 String[] subs = cmd.substring(2).split("\\s");
                                 int x = Integer.parseInt(subs[0]);
@@ -1016,7 +1021,7 @@ public class DIANTAO_UI {
                                         }
                                         inputStream.close();outputStream.close();
                                 }
-                        } else if(cmd.startsWith("ocrt")){//ocrt 0 0 100 200 可跳槽,name
+                        } else if(code.equals("ocrt")){//ocrt 0 0 100 200 可跳槽,name
                                 int n = 10;
                                 String[] subs = cmd.substring("ocrt".length()).trim().split("\\s");
                                 int x = Integer.parseInt(subs[0]);
@@ -1043,7 +1048,7 @@ public class DIANTAO_UI {
                                 StaticLog.info("## ocr body {} ", body);
                                 inputStream.close();outputStream.close();
                         }
-                        else if (cmd.startsWith("at")) {//at 26:00
+                        else if (code.equals("at")) {//at 26:00
                                 String[] split = cmd.split("\\s");
                                 String s0 = split[0];
                                 String[] ss0 = split[1].split(":");
@@ -1064,14 +1069,28 @@ public class DIANTAO_UI {
                                                 break;
                                         } else writeStatus("not support at,use atc or atb instead");
                                 }
-                        }else if(cmd.startsWith("c")){//c10,print hello
+                        }else if (code.equals("bf")) {//bf 21:00
+                                String[] split = cmd.split("\\s");
+                                String[] ss0 = split[1].split(":");
+                                int t0h = Integer.parseInt(ss0[0]);
+                                int t0m = Integer.parseInt(ss0[1]);
+                                int t0 = t0h * 3600 + t0m * 60;
+                                int now = LocalTime.now().toSecondOfDay();
+                                if (now < t0) {
+                                        writeStatus("now within {},continue cmd", split[1]);
+                                } else {
+                                        writeStatus("now exceed {},break cmd", split[1]);
+                                        break;
+                                }
+
+                        }else if(code.equals("c")){//c10,print hello
                                 String[] sp = cmd.split(",");
                                 int count= Integer.parseInt(sp[0].substring(1));
                                 String[] subCmds = Arrays.copyOfRange(sp, 1, sp.length);
                                 for (int i = 0; i < count; i++) {
                                         execute_cmd(subCmds,null);
                                 }
-                        }else if(cmd.startsWith("print")){
+                        }else if(code.equals("print")){
                                 writeStatus(cmd.split("\\s")[1]);
                         }
                         if (!sleeped) sleep(1);//操作间隔

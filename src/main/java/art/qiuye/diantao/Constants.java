@@ -50,7 +50,9 @@ public class Constants {
     public static final Pattern PATTERN_JJ = Pattern.compile("jj\\d+");
 
     public static final Pattern PATTERN_VAR = Pattern.compile("@[\\u4E00-\\u9FA5a-z]+");
+    public static final Pattern PATTERN_OP_CODE = Pattern.compile("^[a-z]+");
     public static final String PATTERN_VERSION_S = ("(?<=\"version\":)\\d+");
+
 
     /*
     $$$点淘-晚间

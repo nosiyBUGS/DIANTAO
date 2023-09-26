@@ -1,10 +1,14 @@
 package art.qiuye.diantao;
 
+import cn.hutool.core.util.ReUtil;
 import cn.hutool.log.Log;
 import cn.hutool.log.LogFactory;
 import cn.hutool.log.StaticLog;
 
 import java.sql.SQLException;
+import java.util.List;
+
+import static art.qiuye.diantao.Constants.PATTERN_VAR;
 
 public class DIANTAO {
     public static final Log log= LogFactory.get();
@@ -27,17 +31,13 @@ public class DIANTAO {
 
 //        Entity config = Db.use().get(new Entity("config"));
 //        StaticLog.info("##config {} ", config);
-        String[] a = new String[]{"a", "b", "c"};
-        String[] b = new String[]{"A", "B", "C"};
-        for (int i = 0; i < a.length; i++) {
-            String s = a[i];
-            if(s.equals("b")){
-                a=b;
-                StaticLog.info("##a {} ", a);
-            }
-            System.out.println(s);
-
-        }
+        String c = "$$$点淘-凌晨\n" +
+                "###[act];TaoLiveHomeActivity;c_sleep\n" +
+                "[cmd];1;atc 2:02;t@app;s8\n" +
+                "[cmd];1;c3,t@首页直播,s3;t@元宝中心;s3;b;t元宝中心;s3;\n" +
+                "\n";
+        List<String> group0 = ReUtil.findAllGroup0(PATTERN_VAR, c);
+        StaticLog.info("##group0 {} ", group0);
     }
 
 
