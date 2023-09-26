@@ -595,7 +595,14 @@ public class DIANTAO_UI {
                                         } else {
                                                 slot.次数 = Integer.parseInt(params[0]);
                                                 slot.间隔_广告时长 = parseSecond(params[1]);
-                                                slot.间隔_滑动 = Integer.parseInt(params[2]);
+                                                String[] d = params[2].split("\\s");
+                                                if(d.length==1)
+                                                        slot.间隔_滑动 = Integer.parseInt(params[2]);
+                                                else {
+                                                        slot.间隔_滑动 = Integer.parseInt(d[0]);
+                                                        slot.duration += d[1];
+                                                }
+
                                                 group.totalTime += slot.间隔_滑动;
                                                 String idt = params[3];
                                                 ComboLabel<Integer> item = null;
@@ -1158,14 +1165,14 @@ public class DIANTAO_UI {
                                         else
                                                 this.swipe(config.to);
                                 } else if (direction == 1)
-                                        swipe(config.from);
+                                        swipe(config.from+s.duration);
                                 else if (direction == 2)
-                                        swipe(config.to);
+                                        swipe(config.to+s.duration);
                                 else if (direction == 3)
                                         if (i % 2 == 0)
-                                                this.swipe(config.from);
+                                                this.swipe(config.from+s.duration);
                                         else
-                                                this.swipe(config.to);
+                                                this.swipe(config.to+s.duration);
 
                                 this.sleep(s.间隔_滑动);
 

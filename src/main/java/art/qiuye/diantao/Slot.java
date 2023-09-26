@@ -32,6 +32,8 @@ public class Slot {
      public String cmds;
      public Integer origin_arow;
 
+     public String duration = " ";
+
      public int index=0;
 
      public String[] params;
