@@ -904,7 +904,8 @@ public class DIANTAO_UI {
                 for (String cmd : cmds) {
                         boolean sleeped = false;
                         String code=ReUtil.getGroup0(PATTERN_OP_CODE,cmd);
-                        if (code.startsWith("sw")) {
+                        if(code==null)continue;
+                        else if (code.startsWith("sw")) {
                                 if (cmd.equals(INS_SW_FROM)) {
                                         swipe(config.from);
                                         continue;
@@ -971,7 +972,7 @@ public class DIANTAO_UI {
 
                                         }
                                 }
-                        } else if (code.startsWith("s")) {
+                        } else if (code.equals("s")) {
                                 int anInt = parseSecond(cmd.substring(1));
                                 if (group != null)
                                         group.totalTime += anInt;
@@ -1055,7 +1056,7 @@ public class DIANTAO_UI {
                                 StaticLog.info("## ocr body {} ", body);
                                 inputStream.close();outputStream.close();
                         }
-                        else if (code.equals("at")) {//at 26:00
+                        else if (code.startsWith("at")) {//at 26:00
                                 String[] split = cmd.split("\\s");
                                 String s0 = split[0];
                                 String[] ss0 = split[1].split(":");
