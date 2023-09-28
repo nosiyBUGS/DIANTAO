@@ -138,6 +138,7 @@ public class DIANTAO_UI {
                 e.printStackTrace();
                 JOptionPane.showMessageDialog(null, e, "ERROR-" + config.config_name, JOptionPane.ERROR_MESSAGE);
         };
+        private JPopupMenu popupMenu;
 
         public static void main(String[] args) {
                 DIANTAO_UI ui = new DIANTAO_UI();
@@ -400,12 +401,7 @@ public class DIANTAO_UI {
                         ctrl_s_action = new AbstractAction() {
                                 @Override
                                 public void actionPerformed(ActionEvent e) {
-                                        JTextArea source = null;
-                                        if (e.getSource() instanceof JTextArea)
-                                                source = (JTextArea) e.getSource();
-                                        else if (e.getSource() instanceof JButton) {
-                                                source = (JTextArea) referencees.get(e.getSource());
-                                        }
+                                        JTextArea source = getTextArea(e);
                                         String text = source.getText().trim();
                                         List<String> textList = Arrays.asList(text.split(LF));
                                         List<String> values = new ArrayList<>(config.quicks.values());
@@ -449,10 +445,23 @@ public class DIANTAO_UI {
                         button_F3 = new JButton("注释(F3)");
                         button_F3.addActionListener(F3_ACTION);
                         ta_plan = new JTextArea(15, 55);
+                        popupMenu = new JPopupMenu();
+                        JMenuItem delete_item = new JMenuItem("删除当前行");
+                        delete_item.addActionListener(CTRL_Y_ACTION);
+                        JMenuItem increase_item = new JMenuItem("次数+1(CTRL+↑)");
+                        increase_item.addActionListener(CTRL_UP_ACTION);
+                        JMenuItem decrease_item = new JMenuItem("次数-1(CTRL+↓)");
+                        decrease_item.addActionListener(CTRL_DOWN_ACTION);
+                        popupMenu.add(delete_item);
+                        popupMenu.add(increase_item);
+                        popupMenu.add(decrease_item);
+                        ta_plan.setComponentPopupMenu(popupMenu);
+
                         referencees.put(ta_plan, ta_plan);
                         referencees.put(button_save, ta_plan);
                         referencees.put(button_F3, ta_plan);
                         referencees.put(iFrame, ta_plan);
+                        referencees.put(popupMenu, ta_plan);
                         ta_plan.setLineWrap(true);
                         ta_plan.setText(lastConfig);
                         Font status_font = new Font("宋体", Font.TRUETYPE_FONT, 15);
@@ -507,6 +516,13 @@ public class DIANTAO_UI {
                         ta_plan.getKeymap().addActionForKeyStroke(ALT_SHIT_UP, ALT_SHIFT_UP_ACTION);
                         //shift down
                         ta_plan.getKeymap().addActionForKeyStroke(ALT_SHIT_DOWN, ALT_SHIFT_DOWN_ACTION);
+
+                        ta_plan.getKeymap().addActionForKeyStroke(CTRL_UP, CTRL_UP_ACTION);
+                        ta_plan.getKeymap().addActionForKeyStroke(CTRL_DOWN, CTRL_DOWN_ACTION);
+
+
+
+
 
                         Set<Map.Entry<String, String>> quick_entries = config.quicks.entrySet();
                         for (Map.Entry<String, String> entry : quick_entries) {
@@ -755,6 +771,7 @@ public class DIANTAO_UI {
                         referencees.remove(iFrame);
                         referencees.remove(button_back);
                         referencees.remove(button_forward);
+                        referencees.remove(popupMenu);
                 }
         }
 
@@ -1279,7 +1296,16 @@ public class DIANTAO_UI {
 //                StaticLog.info("##ocr {} ", resp);
                 return null;
         }
-
+        public static JTextArea getTextArea(ActionEvent e){
+                Component source = (Component) e.getSource();
+                JTextArea area=null;
+                if(source instanceof JMenuItem)
+                        area= (JTextArea) referencees.get(source.getParent());
+                else if (source instanceof JButton)
+                        area = ((JTextArea) referencees.get(source));
+                else area= (JTextArea) e.getSource();
+                return area;
+        }
         public boolean tapText(String t) {
                 JSONArray array = JSON.parseObject(ocr()).getJSONArray("result");
                 JSONObject json = null;
@@ -1328,7 +1354,7 @@ public class DIANTAO_UI {
         public static final AbstractAction CTRL_Z_ACTION = new AbstractAction() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                        JTextArea textArea= (JTextArea) referencees.get(e.getSource());
+                        JTextArea textArea = getTextArea(e);
                         PlainDocument document = (PlainDocument) textArea.getDocument();
                         UndoManager manager = (UndoManager) document.getUndoableEditListeners()[0];
                         if (manager.canUndo()) {
@@ -1342,7 +1368,7 @@ public class DIANTAO_UI {
                 @SneakyThrows
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                        JTextArea textArea= (JTextArea) referencees.get(e.getSource());
+                        JTextArea textArea = getTextArea(e);
                         PlainDocument document = (PlainDocument) textArea.getDocument();
                         UndoManager manager = (UndoManager) document.getUndoableEditListeners()[0];
                         if (manager.canRedo()) {
@@ -1355,12 +1381,7 @@ public class DIANTAO_UI {
                 @SneakyThrows
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                        JTextArea source = null;
-                        if (e.getSource() instanceof JTextArea)
-                                source = (JTextArea) e.getSource();
-                        else if (e.getSource() instanceof JButton)
-                                source = ((JTextArea) referencees.get(e.getSource()));
-
+                        JTextArea source = getTextArea(e);
                         int linenumber = source.getLineOfOffset(source.getCaretPosition());
                         int start = source.getLineStartOffset(linenumber);
                         int end = source.getLineEndOffset(linenumber);
@@ -1379,7 +1400,7 @@ public class DIANTAO_UI {
                 @SneakyThrows
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                        JTextArea source = (JTextArea) e.getSource();
+                        JTextArea source = getTextArea(e);
                         int linenumber = source.getLineOfOffset(source.getCaretPosition());
                         int start = source.getLineStartOffset(linenumber);
                         int end = source.getLineEndOffset(linenumber);
@@ -1398,12 +1419,11 @@ public class DIANTAO_UI {
                 @SneakyThrows
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                        JTextArea source = (JTextArea) e.getSource();
-                        int linenumber = source.getLineOfOffset(source.getCaretPosition());
-                        int start = source.getLineStartOffset(linenumber);
-                        int end = source.getLineEndOffset(linenumber);
-//                                    String line = source.getText(start, end - start);
-                        source.replaceRange("", start, end);
+                        JTextArea area = getTextArea(e);
+                        int linenumber = area.getLineOfOffset(area.getCaretPosition());
+                        int start = area.getLineStartOffset(linenumber);
+                        int end = area.getLineEndOffset(linenumber);
+                        area.replaceRange("", start, end);
                 }
         };
 
@@ -1413,12 +1433,7 @@ public class DIANTAO_UI {
                 @SneakyThrows
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                        JTextArea source = null;
-                        if (e.getSource() instanceof JTextArea)
-                                source = (JTextArea) e.getSource();
-                        else if (e.getSource() instanceof JButton)
-                                source = ((JTextArea) referencees.get(e.getSource()));
-
+                        JTextArea source = getTextArea(e);
                         int n1 = source.getLineOfOffset(source.getCaretPosition());//当前行
                         if (n1 == source.getLineCount() - 1) return;
                         int n1_st = source.getLineStartOffset(n1);
@@ -1443,12 +1458,7 @@ public class DIANTAO_UI {
                 @SneakyThrows
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                        JTextArea source = null;
-                        if (e.getSource() instanceof JTextArea)
-                                source = (JTextArea) e.getSource();
-                        else if (e.getSource() instanceof JButton)
-                                source = ((JTextArea) referencees.get(e.getSource()));
-
+                        JTextArea source = getTextArea(e);
                         int n1 = source.getLineOfOffset(source.getCaretPosition());//当前行
                         if (n1 == 0) return;
                         int n1_st = source.getLineStartOffset(n1);
@@ -1464,6 +1474,56 @@ public class DIANTAO_UI {
                         source.replaceRange(line1 + line2, n2_st, n1_end);
                         source.setCaretPosition(n2_st);
                         source.requestFocus();
+                }
+        };
+
+        public static final KeyStroke CTRL_UP = KeyStroke.getKeyStroke(KeyEvent.VK_UP, KeyEvent.CTRL_MASK);
+
+        public static final AbstractAction CTRL_UP_ACTION=new AbstractAction() {
+                @SneakyThrows
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                        JTextArea area = getTextArea(e);
+                        int linenumber = area.getLineOfOffset(area.getCaretPosition());
+                        int start = area.getLineStartOffset(linenumber);
+                        int end = area.getLineEndOffset(linenumber);
+                        String line = area.getText(start, end - start);
+                        if(StrUtil.isBlank(line))return;
+                        int count;
+                        if(line.startsWith(IDT_CMD)){
+                                String s = line.split(";")[1];
+                                count = Integer.parseInt(s);
+                                area.replaceRange(String.valueOf(count+1),start+IDT_CMD.length()+1,start+IDT_CMD.length()+1+s.length());
+                        }else {
+                                String s = line.split(";")[0];
+                                count = Integer.parseInt(s);
+                                area.replaceRange(String.valueOf(count+1),start,start+s.length());
+                        }
+
+                }
+        };
+        public static final KeyStroke CTRL_DOWN = KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, KeyEvent.CTRL_MASK);
+        public static final AbstractAction CTRL_DOWN_ACTION=new AbstractAction() {
+                @SneakyThrows
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                        JTextArea area=getTextArea(e);
+                        int linenumber = area.getLineOfOffset(area.getCaretPosition());
+                        int start = area.getLineStartOffset(linenumber);
+                        int end = area.getLineEndOffset(linenumber);
+                        String line = area.getText(start, end - start);
+                        if(StrUtil.isBlank(line))return;
+                        int count;
+                        if(line.startsWith(IDT_CMD)){
+                                String s = line.split(";")[1];
+                                count = Integer.parseInt(s);
+                                area.replaceRange(String.valueOf(count-1),start+IDT_CMD.length()+1,start+IDT_CMD.length()+1+s.length());
+                        }else {
+                                String s = line.split(";")[0];
+                                count = Integer.parseInt(s);
+                                area.replaceRange(String.valueOf(count-1),start,start+s.length());
+                        }
+
                 }
         };
 }
