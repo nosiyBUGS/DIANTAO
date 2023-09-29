@@ -30,7 +30,6 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.event.InternalFrameAdapter;
 import javax.swing.event.InternalFrameEvent;
-import javax.swing.text.PlainDocument;
 import javax.swing.undo.UndoManager;
 import java.awt.*;
 import java.awt.event.*;
@@ -48,6 +47,7 @@ import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static art.qiuye.diantao.ActionKeys.*;
 import static art.qiuye.diantao.Constants.*;
 
 public class DIANTAO_UI {
@@ -108,8 +108,6 @@ public class DIANTAO_UI {
         private JInternalFrame iFrame;
         private JPanel manualPane;
 
-        private static final String LF = LineSeparator.LINUX.getValue();
-        private static final String CR_LF = LineSeparator.LINUX.getValue();
 
         public static final Db db = Db.use();
 
@@ -139,6 +137,7 @@ public class DIANTAO_UI {
                 JOptionPane.showMessageDialog(null, e, "ERROR-" + config.config_name, JOptionPane.ERROR_MESSAGE);
         };
         private JPopupMenu popupMenu;
+        private AbstractAction ctrl_u_action;
 
         public static void main(String[] args) {
                 DIANTAO_UI ui = new DIANTAO_UI();
@@ -446,15 +445,47 @@ public class DIANTAO_UI {
                         button_F3.addActionListener(F3_ACTION);
                         ta_plan = new JTextArea(15, 55);
                         popupMenu = new JPopupMenu();
-                        JMenuItem delete_item = new JMenuItem("删除当前行");
-                        delete_item.addActionListener(CTRL_Y_ACTION);
-                        JMenuItem increase_item = new JMenuItem("次数+1(CTRL+↑)");
-                        increase_item.addActionListener(CTRL_UP_ACTION);
-                        JMenuItem decrease_item = new JMenuItem("次数-1(CTRL+↓)");
+                        JMenuItem delete_one_line = new JMenuItem("删除当前行");
+                        delete_one_line.addActionListener(CTRL_Y_ACTION);
+
+                        JMenuItem decrease_item = new JMenuItem("次数-1(Ctrl+↓)");
                         decrease_item.addActionListener(CTRL_DOWN_ACTION);
-                        popupMenu.add(delete_item);
-                        popupMenu.add(increase_item);
+
+                        JMenuItem increase_item = new JMenuItem("次数+1(Ctrl+↑)");
+                        increase_item.addActionListener(CTRL_UP_ACTION);
+
+                        JMenuItem update_item = new JMenuItem("更新(Ctrl+U)");
+                        update_item.addActionListener(ctrl_u_action);
+
+                        JMenuItem shift_up_item = new JMenuItem("上移");
+                        shift_up_item.addActionListener(ALT_SHIFT_UP_ACTION);
+
+                        JMenuItem shift_down_item = new JMenuItem("下移");
+                        shift_down_item.addActionListener(ALT_SHIFT_DOWN_ACTION);
+
+                        JMenuItem delete_item = new JMenuItem("删除");
+                        delete_item.addActionListener(DELETE_ITEM_ACTION);
+
+                        JMenuItem cut_item = new JMenuItem("剪切");
+                        cut_item.addActionListener(CUT_ITEM_ACTION);
+
+                        JMenuItem copy_item = new JMenuItem("复制");
+                        copy_item.addActionListener(COPY_ITEM_ACTION);
+
+                        JMenuItem paste_item = new JMenuItem("粘贴");
+                        paste_item.addActionListener(PASTE_ITEM_ACTION );
+
+                        popupMenu.add(delete_one_line);
                         popupMenu.add(decrease_item);
+                        popupMenu.add(increase_item);
+                        popupMenu.add(update_item);
+                        popupMenu.add(shift_up_item);
+                        popupMenu.add(shift_down_item);
+                        popupMenu.add(delete_item);
+                        popupMenu.add(cut_item);
+                        popupMenu.add(copy_item);
+                        popupMenu.add(paste_item);
+
                         ta_plan.setComponentPopupMenu(popupMenu);
 
                         referencees.put(ta_plan, ta_plan);
@@ -496,7 +527,7 @@ public class DIANTAO_UI {
 
                         ta_plan.getKeymap().addActionForKeyStroke(KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.CTRL_MASK), ctrl_s_action);
                         //更新
-                        ta_plan.getKeymap().addActionForKeyStroke(KeyStroke.getKeyStroke(KeyEvent.VK_U, KeyEvent.CTRL_MASK), new AbstractAction() {
+                        ctrl_u_action = new AbstractAction() {
                                 @Override
                                 public void actionPerformed(ActionEvent e) {
                                         JTextArea source = (JTextArea) e.getSource();
@@ -506,12 +537,13 @@ public class DIANTAO_UI {
                                         config.version += 1;
                                         String s = FileUtil.readUtf8String(config.config_path);
                                         s = s.replaceFirst(PATTERN_VERSION_S, String.valueOf(config.version));
-                                        FileUtil.writeUtf8String(s,config.config_path);
+                                        FileUtil.writeUtf8String(s, config.config_path);
                                         writeStatus("update quicks done");
                                         MouseEvent mouseEvent = new MouseEvent(source, 0, 0, 0, 0, 0, 0, 0, 0, false, 0);
                                         mouseAdapter.mouseClicked(mouseEvent);
                                 }
-                        });
+                        };
+                        ta_plan.getKeymap().addActionForKeyStroke(KeyStroke.getKeyStroke(KeyEvent.VK_U, KeyEvent.CTRL_MASK), ctrl_u_action);
                         //shift up
                         ta_plan.getKeymap().addActionForKeyStroke(ALT_SHIT_UP, ALT_SHIFT_UP_ACTION);
                         //shift down
@@ -711,10 +743,8 @@ public class DIANTAO_UI {
 
                         });
                         JButton button_down = new JButton("下移(alt+shift+↓)");
-//                        referencees.put(button_down, ta_plan);
                         button_down.addActionListener(ALT_SHIFT_DOWN_ACTION);
                         JButton button_up = new JButton("上移(alt+shift+↑)");
-//                        referencees.put(button_up, ta_plan);
                         button_up.addActionListener(ALT_SHIFT_UP_ACTION);
                         button_back = new JButton("后退(Ctrl+z)");
                         referencees.put(button_back, ta_plan);
@@ -1348,182 +1378,4 @@ public class DIANTAO_UI {
                 }
                 return ArrayUtil.join(xys, " ");
         }
-
-        /*********************action varibles**************/
-        public static final KeyStroke CTRL_Z = KeyStroke.getKeyStroke(KeyEvent.VK_Z, KeyEvent.CTRL_MASK);
-        public static final AbstractAction CTRL_Z_ACTION = new AbstractAction() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                        JTextArea textArea = getTextArea(e);
-                        PlainDocument document = (PlainDocument) textArea.getDocument();
-                        UndoManager manager = (UndoManager) document.getUndoableEditListeners()[0];
-                        if (manager.canUndo()) {
-                                manager.undo();
-                        }
-                }
-        };
-
-        public static final KeyStroke CTRL_SHIFT_Z = KeyStroke.getKeyStroke(KeyEvent.VK_Z, KeyEvent.CTRL_MASK | KeyEvent.SHIFT_MASK);
-        public static final AbstractAction CTRL_SHIFT_Z_ACTION = new AbstractAction() {
-                @SneakyThrows
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                        JTextArea textArea = getTextArea(e);
-                        PlainDocument document = (PlainDocument) textArea.getDocument();
-                        UndoManager manager = (UndoManager) document.getUndoableEditListeners()[0];
-                        if (manager.canRedo()) {
-                                manager.redo();
-                        }
-                }
-        };
-        public static final KeyStroke F3 = KeyStroke.getKeyStroke("F3");
-        public static final AbstractAction F3_ACTION = new AbstractAction() {
-                @SneakyThrows
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                        JTextArea source = getTextArea(e);
-                        int linenumber = source.getLineOfOffset(source.getCaretPosition());
-                        int start = source.getLineStartOffset(linenumber);
-                        int end = source.getLineEndOffset(linenumber);
-                        String line = source.getText(start, end - start);
-                        if (!line.startsWith(BSY)) {
-                                if (line.startsWith(CMT))
-                                        source.replaceRange("", start, start + CMT.length());
-                                else source.insert(CMT, start);
-                        }
-                        if (source.getCaretPosition() < source.getText().length())
-                                source.setCaretPosition(end + CMT.length());
-                }
-        };
-        public static final KeyStroke CTRL_D = KeyStroke.getKeyStroke(KeyEvent.VK_D, KeyEvent.CTRL_MASK);
-        public static final AbstractAction CTRL_D_ACTION = new AbstractAction() {
-                @SneakyThrows
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                        JTextArea source = getTextArea(e);
-                        int linenumber = source.getLineOfOffset(source.getCaretPosition());
-                        int start = source.getLineStartOffset(linenumber);
-                        int end = source.getLineEndOffset(linenumber);
-                        String line = source.getText(start, end - start);
-                        if (StrUtil.isNotBlank(line)) {
-                                if (linenumber == source.getLineCount() - 1)//the last line
-                                        source.insert(LF + line, end);
-                                else
-                                        source.insert(line, end);
-                        }
-                }
-        };
-
-        public static final KeyStroke CTRL_Y = KeyStroke.getKeyStroke(KeyEvent.VK_Y, KeyEvent.CTRL_MASK);
-        public static final AbstractAction CTRL_Y_ACTION = new AbstractAction() {
-                @SneakyThrows
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                        JTextArea area = getTextArea(e);
-                        int linenumber = area.getLineOfOffset(area.getCaretPosition());
-                        int start = area.getLineStartOffset(linenumber);
-                        int end = area.getLineEndOffset(linenumber);
-                        area.replaceRange("", start, end);
-                }
-        };
-
-        public static final KeyStroke ALT_SHIT_DOWN = KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, KeyEvent.ALT_MASK | KeyEvent.SHIFT_MASK);
-
-        public static final AbstractAction ALT_SHIFT_DOWN_ACTION = new AbstractAction() {
-                @SneakyThrows
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                        JTextArea source = getTextArea(e);
-                        int n1 = source.getLineOfOffset(source.getCaretPosition());//当前行
-                        if (n1 == source.getLineCount() - 1) return;
-                        int n1_st = source.getLineStartOffset(n1);
-                        int n1_end = source.getLineEndOffset(n1);
-                        String line1 = source.getText(n1_st, n1_end - n1_st);//include \n
-                        int n2_st = n1_end;
-                        int n2_end = source.getLineEndOffset(n1 + 1);
-                        String line2 = source.getText(n2_st, n2_end - n2_st);
-                        if (n1 == source.getLineCount() - 2) {//倒数第二行
-                                line2 += "\n";
-                                line1 = line1.replace(LF, "");
-                        }
-                        source.replaceRange(line2 + line1, n1_st, n2_end);
-                        source.setCaretPosition(n1_st + line2.length());
-                        source.requestFocus();
-                }
-        };
-
-        public static final KeyStroke ALT_SHIT_UP = KeyStroke.getKeyStroke(KeyEvent.VK_UP, KeyEvent.ALT_MASK | KeyEvent.SHIFT_MASK);
-
-        public static final AbstractAction ALT_SHIFT_UP_ACTION =new AbstractAction() {
-                @SneakyThrows
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                        JTextArea source = getTextArea(e);
-                        int n1 = source.getLineOfOffset(source.getCaretPosition());//当前行
-                        if (n1 == 0) return;
-                        int n1_st = source.getLineStartOffset(n1);
-                        int n1_end = source.getLineEndOffset(n1);
-                        String line1 = source.getText(n1_st, n1_end - n1_st);//include \n
-                        int n2_end = n1_st;
-                        int n2_st = source.getLineStartOffset(n1 - 1);
-                        String line2 = source.getText(n2_st, n2_end - n2_st);
-                        if (n1 == source.getLineCount() - 1) {//倒数第二行
-                                line1 += "\n";
-                                line2 = line2.replace(LF, "");
-                        }
-                        source.replaceRange(line1 + line2, n2_st, n1_end);
-                        source.setCaretPosition(n2_st);
-                        source.requestFocus();
-                }
-        };
-
-        public static final KeyStroke CTRL_UP = KeyStroke.getKeyStroke(KeyEvent.VK_UP, KeyEvent.CTRL_MASK);
-
-        public static final AbstractAction CTRL_UP_ACTION=new AbstractAction() {
-                @SneakyThrows
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                        JTextArea area = getTextArea(e);
-                        int linenumber = area.getLineOfOffset(area.getCaretPosition());
-                        int start = area.getLineStartOffset(linenumber);
-                        int end = area.getLineEndOffset(linenumber);
-                        String line = area.getText(start, end - start);
-                        if(StrUtil.isBlank(line))return;
-                        int count;
-                        if(line.startsWith(IDT_CMD)){
-                                String s = line.split(";")[1];
-                                count = Integer.parseInt(s);
-                                area.replaceRange(String.valueOf(count+1),start+IDT_CMD.length()+1,start+IDT_CMD.length()+1+s.length());
-                        }else {
-                                String s = line.split(";")[0];
-                                count = Integer.parseInt(s);
-                                area.replaceRange(String.valueOf(count+1),start,start+s.length());
-                        }
-
-                }
-        };
-        public static final KeyStroke CTRL_DOWN = KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, KeyEvent.CTRL_MASK);
-        public static final AbstractAction CTRL_DOWN_ACTION=new AbstractAction() {
-                @SneakyThrows
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                        JTextArea area=getTextArea(e);
-                        int linenumber = area.getLineOfOffset(area.getCaretPosition());
-                        int start = area.getLineStartOffset(linenumber);
-                        int end = area.getLineEndOffset(linenumber);
-                        String line = area.getText(start, end - start);
-                        if(StrUtil.isBlank(line))return;
-                        int count;
-                        if(line.startsWith(IDT_CMD)){
-                                String s = line.split(";")[1];
-                                count = Integer.parseInt(s);
-                                area.replaceRange(String.valueOf(count-1),start+IDT_CMD.length()+1,start+IDT_CMD.length()+1+s.length());
-                        }else {
-                                String s = line.split(";")[0];
-                                count = Integer.parseInt(s);
-                                area.replaceRange(String.valueOf(count-1),start,start+s.length());
-                        }
-
-                }
-        };
 }

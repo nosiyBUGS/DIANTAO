@@ -1,5 +1,7 @@
 package art.qiuye.diantao;
 
+import cn.hutool.core.io.file.LineSeparator;
+
 import java.util.regex.Pattern;
 
 /**
@@ -53,15 +55,7 @@ public class Constants {
     public static final Pattern PATTERN_OP_CODE = Pattern.compile("^[a-z]+");
     public static final String PATTERN_VERSION_S = ("(?<=\"version\":)\\d+");
 
+    public static final String LF = LineSeparator.LINUX.getValue();
+    public static final String CR_LF = LineSeparator.LINUX.getValue();
 
-    /*
-    $$$点淘-晚间
-[act];com.taobao.live
-[cmd];1;atc 20:02;t@赚体力
-15;130;0;950 1460;t350 1300;
-10;65;7;950 1740;
-    * */
-
-
-//    public static final Pattern PATTERN_VERSION = Pattern.compile("(?<=(\"version\":\\s?))\\d+");
 }
