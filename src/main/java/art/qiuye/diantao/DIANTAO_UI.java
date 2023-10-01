@@ -60,8 +60,8 @@ public class DIANTAO_UI {
         private String path;
         private JCheckBox checkBox_cis;
 
-        private String cmd_start = path + "shell am start -n com.alibaba.android.rimet/com.alibaba.android.rimet.biz.LaunchHomeActivity";
-        private String cmd_stop = path + "shell am force-stop com.alibaba.android.rimet";
+        private String cmd_start;
+        private String cmd_kill;
         //        private JComboBox<Integer> comboBox_count;
 //        private JComboBox<Integer> comboBox_time;
 //        private JComboBox<Integer> comboBox_interval;
@@ -163,6 +163,8 @@ public class DIANTAO_UI {
                 cmd_swipe = path + "shell input swipe ";
                 cmd_cap = path + "exec-out screencap -p ";
                 cmd_current = path + "shell dumpsys activity activities | grep mResumedActivity";
+                cmd_start=path + "shell am start -n ";
+                cmd_kill =path + "shell am force-stop ";
         }
 
         private void main(String confName) {
@@ -1165,7 +1167,12 @@ public class DIANTAO_UI {
                                 for (int i = 0; i < count; i++) {
                                         execute_cmd(subCmds,null);
                                 }
-                        }else if(code.equals("print")){
+                        }else if(code.equals("start")){
+                                start(cmd.substring(code.length()));
+                        }else if(code.equals("kill")){
+                                kill(cmd.substring(code.length()));
+                        }
+                        else if(code.equals("print")){
                                 writeStatus(cmd.split("\\s")[1]);
                         }
                         if (!sleeped) sleep(1);//操作间隔
@@ -1264,9 +1271,20 @@ public class DIANTAO_UI {
         void tap(String p) {
                 sleep(2);
                 String cmd = cmd_tap + randomPoint(p);
-//        StaticLog.info("##tap cmd {} ", cmd);
                 String execForStr = RuntimeUtil.execForStr(cmd);
                 if (StrUtil.isNotBlank(execForStr)) writeStatus(StrUtil.format("##execForStr tap:{} ", execForStr));
+        }
+
+        void start(String name) {
+                String cmd = cmd_start+name;
+                String execForStr = RuntimeUtil.execForStr(cmd);
+                if (StrUtil.isNotBlank(execForStr)) writeStatus(StrUtil.format("##execForStr start:{} ", execForStr));
+        }
+
+        void kill(String name) {
+                String cmd = cmd_kill +name;
+                String execForStr = RuntimeUtil.execForStr(cmd);
+                if (StrUtil.isNotBlank(execForStr)) writeStatus(StrUtil.format("##execForStr kill:{} ", execForStr));
         }
 
         void swipe(String s) {
