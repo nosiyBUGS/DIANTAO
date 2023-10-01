@@ -421,7 +421,6 @@ public class DIANTAO_UI {
                                         String s = FileUtil.readUtf8String(config.config_path);
                                         s = s.replaceFirst(PATTERN_VERSION_S, String.valueOf(config.version));
                                         FileUtil.writeUtf8String(s ,config.config_path);
-                                        writeStatus("save quicks done");
                                         MouseEvent mouseEvent = new MouseEvent(source, 0, 0, 0, 0, 0, 0, 0, 0, false, 0);
                                         mouseAdapter.mouseClicked(mouseEvent);
 
@@ -580,34 +579,30 @@ public class DIANTAO_UI {
 
                         button_batch = new JButton("执行计划(F1)");
                         button_batch.addActionListener(e -> {
-                                String text = ta_plan.getText().trim();
-                                String[] lines = text.split(LF);
+                                String text = ta_plan.getText();
                                 SlotGroup group = new SlotGroup();
+
+                                String act = ReUtil.getGroup0(PATTENR_ACTIVITY, text);
+                                if(act!=null){
+                                        String[] split = act.split(";");
+                                        group.activityNames = split[1].split(",");//[act];name1,name2
+                                        activityNames = group.activityNames;
+                                        if (split.length == 3 && split[2].equals(C_SLEEP))
+                                                group.c_sleep = true;
+                                }
+
+                                String[] lines = text.split(LF);
                                 List<String> collect = new ArrayList<>();
                                 for (String line : lines) {
-                                        if (line.startsWith(IDT_ACTIVITY)) {
-                                                String[] split = line.split(";");
-                                                group.activityNames = split[1].split(",");//[act];name1,name2
-                                                activityNames = group.activityNames;
-                                                if (split.length == 3 && split[2].equals(C_SLEEP))
-                                                        group.c_sleep = true;
-                                                collect.add(line);
-                                        } else if (!line.startsWith(IDT_REF))
-                                                collect.add(line);
-                                        else if (line.startsWith(IDT_REF)) {
-                                                String[] subs = line.split(";");
-                                                String v = config.quicks.get(subs[1]);
-                                                collect.add(CMT + line);
-                                                String[] split = v.split(LF);
-                                                String[] range = Arrays.copyOfRange(split, 1, split.length);
-                                                collect.addAll(Arrays.asList(range));
-                                        }
+                                        collect.add(line);
                                 }
+                                collect = nestRef(collect, 0);
                                 ta_plan.setText(null);
                                 StringBuilder sb = new StringBuilder();
                                 List<String> fluid=new ArrayList<>();
+
                                 for (String s : collect) {
-                                        List<String> groups = ReUtil.findAllGroup0(PATTERN_VAR, s);
+                                        List<String> groups = ReUtil.findAllGroup0(PATTERN_VARIABLES, s);
                                         for (String g : groups) {
                                                 String value = config.variables.get(g);
                                                 if(value!=null){
@@ -621,6 +616,8 @@ public class DIANTAO_UI {
                                 text=sb.toString();
                                 ta_plan.setText(text);
                                 collect.clear();
+
+                                //begin generate slot
                                 collect = fluid.stream().filter(e1 -> !e1.contains(CMT) && !e1.contains(BSY) && !e1.contains(IDT_ACTIVITY) && StrUtil.isNotBlank(e1)).collect(Collectors.toList());
                                 ArrayList<Slot> slots = new ArrayList<>(collect.size());
                                 group.slots = slots;
@@ -783,6 +780,31 @@ public class DIANTAO_UI {
 
                 });
 
+        }
+
+        private List<String> nestRef(List<String> collect,int level){
+                List<String> temp = new ArrayList<>();
+                boolean nest_flag=false;
+                for (String line : collect) {
+                        if (line.startsWith(IDT_REF)) {
+                                String[] subs = line.split(";");
+                                String v = config.quicks.get(subs[1]);
+                                nest_flag = line.startsWith(IDT_REF);
+                                String pad = "\n";
+                                for (int i = 0; i < level; i++) pad += "\t";
+                                temp.add(pad+CMT + line);
+                                String[] split = v.split(LF);
+                                String[] range = Arrays.copyOfRange(split, 1, split.length);
+
+                                temp.addAll(Arrays.asList(range));
+                        }else if(!line.startsWith(IDT_ACTIVITY))
+                                temp.add(line);
+                }
+                if(collect instanceof ArrayList)collect.clear();
+                if(nest_flag){
+                       return nestRef(temp,level+1);
+                }
+                else return temp;
         }
 
         private void onClose(boolean closed) {
