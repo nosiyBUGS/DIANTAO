@@ -56,7 +56,6 @@ public class DIANTAO_UI {
 
         static Log StaticLog = LogFactory.get();
         private static Config config;
-
         private String adb_path;
         private String path;
         private JCheckBox checkBox_cis;
@@ -884,7 +883,7 @@ public class DIANTAO_UI {
                                                 break;
                                         sb.append(list.get(j)).append(LF);
                                 }
-                                map.put(line.substring(BSY.length()), sb.toString());
+                                map.put(line.substring(BSY.length()), sb.toString().trim());
                                 i = j - 1;
                         }
                 }
@@ -1040,6 +1039,7 @@ public class DIANTAO_UI {
                         } else if (code.equals("h")) {
                                 home();
                         } else if (code.equals("if")) {//if0 0 100 200 看直播领钻石
+//                                ### adb -s 192.168.1.20 shell LD_LIBRARY_PATH=/data/local/tmp /data/local/tmp/minicap -P 1080x1920@1080x1920/0
                                 int n = 10;
                                 String[] subs = cmd.substring(2).split("\\s");
                                 int x = Integer.parseInt(subs[0]);
@@ -1052,7 +1052,7 @@ public class DIANTAO_UI {
                                         .header("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.81 Safari/537.36 SE 2.X MetaSr 1.0");
                                 while (n-- > 0) {
                                         tap(subs[7] + " " + subs[8]);
-                                        sleep(1);
+                                        sleep(0.5);
                                         byte[] bytes = miniCap.frame();
                                         ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
                                         FileUtil.writeBytes(bytes, System.getProperty("user.dir") + "/ocr.png");
@@ -1070,8 +1070,6 @@ public class DIANTAO_UI {
                                         writeStatus("## ocr body {} ", body);
                                         if (body.contains(subs[4])) {//包含
                                                 tap(subs[5] + " " + subs[6]);
-                                                inputStream.close();
-                                                outputStream.close();
                                                 break;
                                         }
                                         inputStream.close();outputStream.close();
@@ -1269,9 +1267,9 @@ public class DIANTAO_UI {
                 RuntimeUtil.execForStr(cmd_press + " KEYCODE_HOME");
         }
 
-        void sleep(int i) {
+        void sleep(double d) {
                 long begin = System.currentTimeMillis();
-                int millis = i * 1000;
+                long millis = (long) (d * 1000);
                 try {
                         Thread.sleep(millis);
                 } catch (InterruptedException e) {
@@ -1285,7 +1283,6 @@ public class DIANTAO_UI {
                         } else throw new IllegalStateException("millos<=cost:" + millis + ":" + cost);
                 }
         }
-
         public boolean horizontal() {//0 2 false 竖屏;1 3 true 横屏
                 String cmd = path + "adb shell dumpsys input | grep SurfaceOrientation";
                 String s = RuntimeUtil.execForStr(cmd).trim().substring(20);
