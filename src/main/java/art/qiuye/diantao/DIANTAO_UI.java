@@ -587,9 +587,9 @@ public class DIANTAO_UI {
                                 String act = ReUtil.getGroup0(PATTENR_ACTIVITY_STR, text);
                                 if(act!=null){
                                         String[] split = act.split(";");
-                                        group.activityNames = split[1].split(",");//[act];name1,name2
+                                        group.activityNames = split[0].split(",");//[act];name1,name2
                                         activityNames = group.activityNames;
-                                        if (split.length == 3 && split[2].equals(C_SLEEP))
+                                        if (split.length == 2 && split[1].equals(C_SLEEP))
                                                 group.c_sleep = true;
                                 }
 
