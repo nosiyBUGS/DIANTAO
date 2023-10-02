@@ -57,7 +57,7 @@ public class Constants {
 
     public static final Pattern PATTENR_REF_IDT = Pattern.compile("^\\[" + INS_REF + "\\]");
 
-    public static final String PATTENR_ACTIVITY_STR = "(?<=\\n\\[act\\];)[\\w\\d,]+";
+    public static final String PATTENR_ACTIVITY_STR = "(?<=\\n\\[act\\];)[\\w\\d,;_]+";
 
 
 
