@@ -584,7 +584,7 @@ public class DIANTAO_UI {
                                 String text = ta_plan.getText();
                                 SlotGroup group = new SlotGroup();
 
-                                String act = ReUtil.getGroup0(PATTENR_ACTIVITY, text);
+                                String act = ReUtil.getGroup0(PATTENR_ACTIVITY_STR, text);
                                 if(act!=null){
                                         String[] split = act.split(";");
                                         group.activityNames = split[1].split(",");//[act];name1,name2
@@ -799,7 +799,7 @@ public class DIANTAO_UI {
                                 String[] range = Arrays.copyOfRange(split, 1, split.length);
 
                                 temp.addAll(Arrays.asList(range));
-                        }else if(!line.startsWith(IDT_ACTIVITY))
+                        }else if(!line.startsWith(IDT_ACTIVITY) || level==0)
                                 temp.add(line);
                 }
                 if(collect instanceof ArrayList)collect.clear();
