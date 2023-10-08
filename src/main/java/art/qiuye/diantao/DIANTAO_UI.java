@@ -17,6 +17,7 @@ import cn.hutool.extra.mail.MailUtil;
 import cn.hutool.http.ContentType;
 import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpUtil;
+import cn.hutool.json.JSONUtil;
 import cn.hutool.log.Log;
 import cn.hutool.log.LogFactory;
 import cn.hutool.setting.Setting;
@@ -221,6 +222,8 @@ public class DIANTAO_UI {
                         JMenu reload_menu = new JMenu("重载配置");
                         JMenu upload_menu = new JMenu("上传配置");
                         JMenu down_menu = new JMenu("下载配置");
+                        JMenu common_menu = new JMenu("公共配置");
+                        JMenu variable_menu = new JMenu("编辑变量");
                         JMenuBar frameBar = new JMenuBar();
                         JMenu new_win_menu = new JMenu("新窗口");
                         frameBar.add(new_win_menu);
@@ -325,6 +328,8 @@ public class DIANTAO_UI {
                         menuBar.add(reload_menu);
                         menuBar.add(upload_menu);
                         menuBar.add(down_menu);
+                        menuBar.add(common_menu);
+                        menuBar.add(variable_menu);
 
 
                         iFrame.addInternalFrameListener(new InternalFrameAdapter() {
@@ -575,6 +580,47 @@ public class DIANTAO_UI {
                                 });
                                 quick_menu.add(item);
                         }
+
+                        Set<Map.Entry<String, String>> common_entries = config.commons.entrySet();
+                        for (Map.Entry<String, String> entry : common_entries) {
+                                JMenuItem item = new JMenuItem(entry.getKey());
+                                item.addActionListener(e -> {
+                                                ta_plan.setText(entry.getValue());
+                                                current_quick_item = null;
+                                                activityNames = null;
+                                                offset_arow = 0;
+                                });
+                                common_menu.add(item);
+                        }
+
+                        variable_menu.addMouseListener(new MouseAdapter() {
+
+                                @Override
+                                public void mouseClicked(MouseEvent e) {
+                                        JDialog dialog = new JDialog(frame);
+                                        dialog.setLayout(new FlowLayout());
+                                        JTextArea area = new JTextArea(JSON.toJSONString(config.variables, true));
+                                        dialog.add(area);
+                                        dialog.setSize(300,500);
+                                        dialog.setLocation(frame.getLocation());
+                                        JButton save = new JButton("保存");
+                                        save.addActionListener(ev->{
+                                                String s = FileUtil.readUtf8String(config.config_path);
+//                                                String group0 = ReUtil.getGroup0(PATTERN_VARIABLES_SAVE, s);
+//                                                writeStatus(group0);
+                                                Map<String,String> variables= JSONUtil.toBean(area.getText(), HashMap.class);
+                                                String pretty = JSON.toJSONString(variables, true);
+                                                s=ReUtil.replaceAll(s, PATTERN_VARIABLES_SAVE, pretty);
+
+                                                FileUtil.writeUtf8String(s, config.config_path);
+                                                config.variables = variables;
+                                                writeStatus("variables saved");
+                                        });
+                                        save.setSize(10,10);
+                                        dialog.add(save);
+                                        dialog.setVisible(true);
+                                }
+                        });
                         button_clear.addActionListener(e -> {
                                 ta_plan.setText(null);
                         });
@@ -788,17 +834,16 @@ public class DIANTAO_UI {
                 List<String> temp = new ArrayList<>();
                 boolean nest_flag=false;
                 for (String line : collect) {
-                        if (line.startsWith(IDT_REF)) {
+                        TreeMap<String,String> map=null;
+                        if(line.startsWith(IDT_REF_COMMON))map=config.commons;
+                        else if(line.startsWith(IDT_REF)) map = config.quicks;
+                        if (map!=null) {
+                                nest_flag = true;
                                 String[] subs = line.split(";");
-                                String v = config.quicks.get(subs[1]);
-                                nest_flag = line.startsWith(IDT_REF);
-                                String pad = "\n";
-                                for (int i = 0; i < level; i++) pad += "\t";
-                                temp.add(pad+CMT + line);
+                                String v = map.get(subs[1]);
                                 String[] split = v.split(LF);
-                                String[] range = Arrays.copyOfRange(split, 1, split.length);
-
-                                temp.addAll(Arrays.asList(range));
+                                for (int i = 1; i < split.length; i++)
+                                        temp.add(split[i]);
                         }else if(!line.startsWith(IDT_ACTIVITY) || level==0)
                                 temp.add(line);
                 }
@@ -855,8 +900,9 @@ public class DIANTAO_UI {
                 });
         }
 
-        private void writeStatus(String text, Object... arguments) {
-                writeStatus(StrUtil.format(text, arguments), true);
+        private void writeStatus(Object text, Object... arguments) {
+                if(text==null) text = "null";
+                writeStatus(StrUtil.format(text.toString(), arguments), true);
         }
 
         private void writeStatus(String text, boolean writeConsole) {
@@ -894,7 +940,16 @@ public class DIANTAO_UI {
                 config.version_path = System.getProperty("user.dir") + "/exclude/versions/";
                 config.quicks_path = quicks_path;
                 config.config_path = config_path;
-                List<String> list = FileUtil.readUtf8Lines(quicks_path);
+
+                config.quicks = readQuciks(quicks_path);
+                config.commons = readQuciks(config.commons_path);
+
+                config.config_name = confName;
+                miniCap = new MiniCap(config);
+        }
+
+        private TreeMap<String, String> readQuciks(String path){
+                List<String> list = FileUtil.readUtf8Lines(path);
                 TreeMap<String, String> map = new TreeMap<>();
                 for (int i = 0; i < list.size(); i++) {
                         String line = list.get(i);
@@ -911,11 +966,9 @@ public class DIANTAO_UI {
                                 i = j - 1;
                         }
                 }
-                config.quicks = map;
-                config.config_name = confName;
-                miniCap = new MiniCap(config);
+                list.clear();
+                return map;
         }
-
         @SneakyThrows
         public void begin(Slot slot, boolean notify, SlotGroup group) {
                 initSlot(slot);

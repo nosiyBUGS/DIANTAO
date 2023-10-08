@@ -31,6 +31,9 @@ public class Config {
     @JSONField(serialize = false)
     public TreeMap<String,String> quicks;
 
+    @JSONField(serialize = false)
+    public TreeMap<String,String> commons;
+
     public Boolean random_point;
 
     public String config_name;
@@ -38,6 +41,8 @@ public class Config {
     public String config_path;
 
     public String version_path;
+
+    public static final String commons_path=System.getProperty("user.dir") + "/exclude/commons.txt";
 
 
     public String from;
