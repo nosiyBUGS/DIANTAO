@@ -53,7 +53,7 @@ public class Constants {
     public static final Pattern PATTERN_VARIABLES_SAVE = Pattern.compile("(?<=variables\\\":\\s)\\{.+?\\}",Pattern.DOTALL);
     public static final Pattern PATTERN_OP_CODE = Pattern.compile("^[a-z]+");
     public static final String PATTERN_VERSION_S = ("(?<=\"version\":)\\d+");
-    public static final String PATTENR_ACTIVITY_STR = "(?<=\\n\\[act\\];)[\\w\\d,;_]+";
+    public static final String PATTENR_ACTIVITY_STR = "(?<=\\n\\[act\\];)[\\w\\d,;_\\.]+";
 
 
 
