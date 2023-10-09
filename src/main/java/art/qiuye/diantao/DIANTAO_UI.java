@@ -733,6 +733,7 @@ public class DIANTAO_UI {
                                 thread = new Thread(() -> {
                                         manualPane.setBackground(Color.GREEN);
                                         beginBatch(group);
+                                        monitorThread.stop();
                                         manualPane.setBackground(Color.CYAN);
                                 }, "thread");
                                 thread.setUncaughtExceptionHandler(exceptionHandler);
@@ -926,7 +927,6 @@ public class DIANTAO_UI {
                                 e.printStackTrace();
                         }
                 }
-                onClose(false);
                 Process process = RuntimeUtil.exec(StrUtil.format("mshta vbscript:msgbox(\"{}任务完成\",64,\"消息\")(window.close)", config.config_name));
 
 
