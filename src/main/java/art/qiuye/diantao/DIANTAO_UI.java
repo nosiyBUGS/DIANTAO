@@ -650,13 +650,7 @@ public class DIANTAO_UI {
                                 List<String> fluid=new ArrayList<>();
 
                                 for (String s : collect) {
-                                        List<String> groups = ReUtil.findAllGroup0(PATTERN_VARIABLES, s);
-                                        for (String g : groups) {
-                                                String value = config.variables.get(g);
-                                                if(value!=null){
-                                                        s = s.replaceAll(g, value);
-                                                }
-                                        }
+                                        s = nestVariable(s);
                                         fluid.add(s);
                                         sb.append(s);
                                         sb.append(LF);
@@ -829,7 +823,21 @@ public class DIANTAO_UI {
                 });
 
         }
-
+        private String nestVariable(String s){
+                List<String> groups = ReUtil.findAllGroup0(PATTERN_VARIABLES, s);
+                int limit=5;
+                while (!groups.isEmpty() && limit-->0){
+                        StaticLog.info("##limit {} ", limit);
+                        for (String g : groups) {
+                                String value = config.variables.get(g);
+                                if(value!=null){
+                                        s = s.replaceAll(g, value);
+                                }else writeStatus("not found value for variable {}",g);
+                        }
+                        groups= ReUtil.findAllGroup0(PATTERN_VARIABLES, s);
+                }
+                return s;
+        }
         private List<String> nestRef(List<String> collect,int level){
                 List<String> temp = new ArrayList<>();
                 boolean nest_flag=false;
