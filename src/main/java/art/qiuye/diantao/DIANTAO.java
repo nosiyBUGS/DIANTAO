@@ -1,13 +1,10 @@
 package art.qiuye.diantao;
 
-import cn.hutool.core.io.FileUtil;
-import cn.hutool.core.util.ReUtil;
 import cn.hutool.log.Log;
 import cn.hutool.log.LogFactory;
 
 import java.sql.SQLException;
-
-import static art.qiuye.diantao.Constants.PATTERN_VARIABLES_SAVE;
+import java.util.Arrays;
 
 public class DIANTAO {
     public static final Log log= LogFactory.get();
@@ -30,9 +27,12 @@ public class DIANTAO {
 
 //        Entity config = Db.use().get(new Entity("config"));
 //        StaticLog.info("##config {} ", config);
-        String s = FileUtil.readUtf8String("G:\\idea_projects\\DIANTAO\\exclude\\config-vivo.json");
-        String group0 = ReUtil.getGroup0(PATTERN_VARIABLES_SAVE, s);
-        System.out.println(group0);
+        String[] ss={"a","b","c"};
+        for (int i = 0; i < ss.length; i++) {
+            String s = ss[i];
+            if(s.equals("c")) ss[i] = "1";
+        }
+        System.out.println(Arrays.toString(ss));
 
     }
 

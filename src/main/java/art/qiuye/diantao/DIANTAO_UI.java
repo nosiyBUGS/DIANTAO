@@ -827,9 +827,17 @@ public class DIANTAO_UI {
                 List<String> groups = ReUtil.findAllGroup0(PATTERN_VARIABLES, s);
                 int limit=5;
                 while (!groups.isEmpty() && limit-->0){
-                        StaticLog.info("##limit {} ", limit);
                         for (String g : groups) {
-                                String value = config.variables.get(g);
+                                int b_index=g.indexOf('(');
+                                String value;
+                                if(b_index>0){
+                                        value=config.variables.get(g.substring(0,b_index));
+                                    String[] bk_values = ReUtil.getGroup0(PATTERN_BRACKET, g).split(",");
+                                        for (String bkValue : bk_values)
+                                                value = value.replaceFirst("\\$\\$", bkValue);
+                                        g=g.replaceFirst("\\(","\\\\(");
+                                        g=g.replaceFirst("\\)","\\\\)");
+                                }else value = config.variables.get(g);
                                 if(value!=null){
                                         s = s.replaceAll(g, value);
                                 }else writeStatus("not found value for variable {}",g);

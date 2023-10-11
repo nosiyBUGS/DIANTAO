@@ -49,11 +49,13 @@ public class Constants {
     public static final String IDT_REF = "[ref]";
     public static final String IDT_REF_COMMON = "[refc]";
     public static final Pattern PATTERN_JJ = Pattern.compile("jj\\d+");
-    public static final Pattern PATTERN_VARIABLES = Pattern.compile("@[\\u4E00-\\u9FA5a-z]+");
+    public static final Pattern PATTERN_VARIABLES = Pattern.compile("@[\\u4E00-\\u9FA5a-z\\d\\(\\),]+");
     public static final Pattern PATTERN_VARIABLES_SAVE = Pattern.compile("(?<=variables\\\":\\s)\\{.+?\\}",Pattern.DOTALL);
     public static final Pattern PATTERN_OP_CODE = Pattern.compile("^[a-z]+");
     public static final String PATTERN_VERSION_S = ("(?<=\"version\":)\\d+");
     public static final String PATTENR_ACTIVITY_STR = "(?<=\\n\\[act\\];)[\\w\\d,;_\\.]+";
+
+    public static final Pattern PATTERN_BRACKET = Pattern.compile("(?<=\\()([\\d,]+?)(?=\\))");
 
 
 
