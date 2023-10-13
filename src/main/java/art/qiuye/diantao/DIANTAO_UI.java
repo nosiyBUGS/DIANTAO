@@ -25,6 +25,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.parser.Feature;
+import com.alibaba.fastjson.serializer.SerializerFeature;
 import lombok.SneakyThrows;
 
 import javax.imageio.ImageIO;
@@ -515,22 +516,23 @@ public class DIANTAO_UI {
 
                         Font font = new Font("宋体", Font.TRUETYPE_FONT, 18);
                         UndoManager undoManager = new UndoManager();
+
                         ta_plan.getDocument().addUndoableEditListener(undoManager);
                         ta_plan.setFont(font);
                         //undo
-                        ta_plan.getKeymap().addActionForKeyStroke(CTRL_Z, CTRL_Z_ACTION);
+                        inputMap(ta_plan,CTRL_Z, CTRL_Z_ACTION);
                         //redo
-                        ta_plan.getKeymap().addActionForKeyStroke(CTRL_SHIFT_Z, CTRL_SHIFT_Z_ACTION);
+                        inputMap(ta_plan,CTRL_SHIFT_Z, CTRL_SHIFT_Z_ACTION);
                         // comment/uncomment line
-                        ta_plan.getKeymap().addActionForKeyStroke(F3, F3_ACTION);
+                        inputMap(ta_plan,F3, F3_ACTION);
 
                         //duplicate current line
-                        ta_plan.getKeymap().addActionForKeyStroke(CTRL_D, CTRL_D_ACTION);
+                        inputMap(ta_plan,CTRL_D, CTRL_D_ACTION);
 
                         //remove current line
-                        ta_plan.getKeymap().addActionForKeyStroke(CTRL_Y, CTRL_Y_ACTION);
+                        inputMap(ta_plan,CTRL_Y, CTRL_Y_ACTION);
 
-                        ta_plan.getKeymap().addActionForKeyStroke(KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.CTRL_MASK), ctrl_s_action);
+                        inputMap(ta_plan,KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.CTRL_MASK), ctrl_s_action);
                         //更新
                         ctrl_u_action = new AbstractAction() {
                                 @Override
@@ -548,14 +550,15 @@ public class DIANTAO_UI {
                                         mouseAdapter.mouseClicked(mouseEvent);
                                 }
                         };
-                        ta_plan.getKeymap().addActionForKeyStroke(KeyStroke.getKeyStroke(KeyEvent.VK_U, KeyEvent.CTRL_MASK), ctrl_u_action);
+                        inputMap(ta_plan,KeyStroke.getKeyStroke(KeyEvent.VK_U, KeyEvent.CTRL_MASK), ctrl_u_action);
                         //shift up
-                        ta_plan.getKeymap().addActionForKeyStroke(ALT_SHIT_UP, ALT_SHIFT_UP_ACTION);
-                        //shift down
-                        ta_plan.getKeymap().addActionForKeyStroke(ALT_SHIT_DOWN, ALT_SHIFT_DOWN_ACTION);
+                        inputMap(ta_plan,ALT_SHIT_UP, ALT_SHIFT_UP_ACTION);
 
-                        ta_plan.getKeymap().addActionForKeyStroke(CTRL_UP, CTRL_UP_ACTION);
-                        ta_plan.getKeymap().addActionForKeyStroke(CTRL_DOWN, CTRL_DOWN_ACTION);
+                        //shift down
+                        inputMap(ta_plan,ALT_SHIT_DOWN,ALT_SHIFT_DOWN_ACTION);
+
+                        inputMap(ta_plan,CTRL_UP, CTRL_UP_ACTION);
+                        inputMap(ta_plan,CTRL_DOWN, CTRL_DOWN_ACTION);
 
 
 
@@ -600,16 +603,20 @@ public class DIANTAO_UI {
                                         JDialog dialog = new JDialog(frame);
                                         dialog.setLayout(new FlowLayout());
                                         JTextArea area = new JTextArea(JSON.toJSONString(config.variables, true));
+                                        inputMap(area,ALT_SHIT_UP, ALT_SHIFT_UP_ACTION);
+                                        inputMap(area,ALT_SHIT_DOWN,ALT_SHIFT_DOWN_ACTION);
+                                        inputMap(area,CTRL_Z, CTRL_Z_ACTION);
+                                        inputMap(area,CTRL_SHIFT_Z, CTRL_SHIFT_Z_ACTION);
+                                        inputMap(area,CTRL_D, CTRL_D_ACTION);
+                                        inputMap(area,CTRL_Y, CTRL_Y_ACTION);
                                         dialog.add(area);
                                         dialog.setSize(300,500);
                                         dialog.setLocation(frame.getLocation());
                                         JButton save = new JButton("保存");
                                         save.addActionListener(ev->{
                                                 String s = FileUtil.readUtf8String(config.config_path);
-//                                                String group0 = ReUtil.getGroup0(PATTERN_VARIABLES_SAVE, s);
-//                                                writeStatus(group0);
-                                                Map<String,String> variables= JSONUtil.toBean(area.getText(), HashMap.class);
-                                                String pretty = JSON.toJSONString(variables, true);
+                                                TreeMap<String, String> variables = JSONUtil.toBean(area.getText(), TreeMap.class);
+                                                String pretty = JSON.toJSONString(variables, SerializerFeature.PrettyFormat);
                                                 s=ReUtil.replaceAll(s, PATTERN_VARIABLES_SAVE, pretty);
 
                                                 FileUtil.writeUtf8String(s, config.config_path);
@@ -822,6 +829,11 @@ public class DIANTAO_UI {
 
                 });
 
+        }
+
+        private static void inputMap(JComponent component,KeyStroke stroke,Action action){
+                component.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(stroke,stroke);
+                component.getActionMap().put(stroke,action);
         }
         private String nestVariable(String s){
                 List<String> groups = ReUtil.findAllGroup0(PATTERN_VARIABLES, s);
