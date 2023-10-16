@@ -8,7 +8,6 @@ import cn.hutool.core.util.RuntimeUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.log.Log;
 import cn.hutool.log.LogFactory;
-import cn.hutool.log.StaticLog;
 import lombok.SneakyThrows;
 
 import java.net.InetSocketAddress;
@@ -47,6 +46,8 @@ public class MiniCap {
         this.forwardPort= Integer.parseInt(s.substring(s.length() - 4));
     }
     private boolean initial;
+
+    private Process process;
     private boolean init(){
         String s=null;
         s=RuntimeUtil.execForStr(StrUtil.format("{}{}shell ls {}/minicap",adb_path,device,push_dir));
@@ -68,8 +69,8 @@ public class MiniCap {
             ThreadUtil.execute(()->{
                 String ld = StrUtil.format(adb_path + "{}shell LD_LIBRARY_PATH={} {}/minicap -P 1080x1920@1080x1920/0", device, push_dir, push_dir);
                 StaticLog.info("##ld {}",ld);
-                String s1=RuntimeUtil.execForStr(ld);
-                StaticLog.info("##ld {} \n {} \n {}", ld,s1,"minicap process exited");
+                process=RuntimeUtil.exec(ld);
+                StaticLog.info("##ld {} \n {} \n {}", ld,IoUtil.read(process.getInputStream()),"minicap process exited");
                 initial=false;
             });
         }
@@ -78,6 +79,9 @@ public class MiniCap {
         s=RuntimeUtil.execForStr(forward);
         StaticLog.info("##minicap forward {}\n {}", s,forward);
         return true;
+    }
+    public void stop(){
+        if(process!=null)process.destroy();
     }
     @SneakyThrows
     public byte[] frame()  {

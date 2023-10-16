@@ -51,6 +51,7 @@ import java.util.stream.Collectors;
 
 import static art.qiuye.diantao.ActionKeys.*;
 import static art.qiuye.diantao.Constants.*;
+import static cn.hutool.core.util.StrUtil.isNotBlank;
 
 public class DIANTAO_UI {
 
@@ -652,7 +653,6 @@ public class DIANTAO_UI {
                                         collect.add(line);
                                 }
                                 collect = nestRef(collect, 0);
-                                ta_plan.setText(null);
                                 StringBuilder sb = new StringBuilder();
                                 List<String> fluid=new ArrayList<>();
 
@@ -735,6 +735,7 @@ public class DIANTAO_UI {
                                         manualPane.setBackground(Color.GREEN);
                                         beginBatch(group);
                                         monitorThread.stop();
+                                        miniCap.stop();
                                         manualPane.setBackground(Color.CYAN);
                                 }, "thread");
                                 thread.setUncaughtExceptionHandler(exceptionHandler);
@@ -835,6 +836,8 @@ public class DIANTAO_UI {
                 component.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(stroke,stroke);
                 component.getActionMap().put(stroke,action);
         }
+
+        private String msg = "";
         private String nestVariable(String s){
                 List<String> groups = ReUtil.findAllGroup0(PATTERN_VARIABLES, s);
                 int limit=5;
@@ -852,9 +855,15 @@ public class DIANTAO_UI {
                                 }else value = config.variables.get(g);
                                 if(value!=null){
                                         s = s.replaceAll(g, value);
-                                }else writeStatus("not found value for variable {}",g);
+                                }else {
+                                        msg+=StrUtil.format("not found value for variable {}\n",g);
+                                }
                         }
                         groups= ReUtil.findAllGroup0(PATTERN_VARIABLES, s);
+                }
+                if(isNotBlank(msg)){
+                        JOptionPane.showMessageDialog(iFrame,msg);
+                        msg = "";
                 }
                 return s;
         }
@@ -899,6 +908,7 @@ public class DIANTAO_UI {
                         referencees.remove(button_forward);
                         referencees.remove(popupMenu);
                 }
+                miniCap.stop();
         }
 
         @SneakyThrows
