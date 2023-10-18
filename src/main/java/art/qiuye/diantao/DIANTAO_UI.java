@@ -604,14 +604,19 @@ public class DIANTAO_UI {
                                         JDialog dialog = new JDialog(frame);
                                         dialog.setLayout(new FlowLayout());
                                         JTextArea area = new JTextArea(JSON.toJSONString(config.variables, true));
+                                        area.getDocument().addUndoableEditListener(new UndoManager());
+                                        area.setColumns(37);
+                                        area.setRows(23);
+
                                         inputMap(area,ALT_SHIT_UP, ALT_SHIFT_UP_ACTION);
                                         inputMap(area,ALT_SHIT_DOWN,ALT_SHIFT_DOWN_ACTION);
                                         inputMap(area,CTRL_Z, CTRL_Z_ACTION);
                                         inputMap(area,CTRL_SHIFT_Z, CTRL_SHIFT_Z_ACTION);
                                         inputMap(area,CTRL_D, CTRL_D_ACTION);
                                         inputMap(area,CTRL_Y, CTRL_Y_ACTION);
-                                        dialog.add(area);
-                                        dialog.setSize(300,500);
+                                        JScrollPane scrollPane = new JScrollPane(area);
+                                        dialog.add(scrollPane);
+                                        dialog.setSize(350,500);
                                         dialog.setLocation(frame.getLocation());
                                         JButton save = new JButton("保存");
                                         save.addActionListener(ev->{
@@ -907,6 +912,7 @@ public class DIANTAO_UI {
                         referencees.remove(button_back);
                         referencees.remove(button_forward);
                         referencees.remove(popupMenu);
+                        iFrame.removeAll();
                 }
                 miniCap.stop();
         }
