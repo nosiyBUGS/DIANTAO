@@ -65,12 +65,6 @@ public class DIANTAO_UI {
 
         private String cmd_start;
         private String cmd_kill;
-        //        private JComboBox<Integer> comboBox_count;
-//        private JComboBox<Integer> comboBox_time;
-//        private JComboBox<Integer> comboBox_interval;
-//        private JTextField textField_X;
-//        private JComboBox<ComboLabel<Integer>> comboBox_Y;
-//        private Vector<ComboLabel<Integer>> items_Y;
         String cmd_cap1 = path + "shell screencap  -p /sdcard/snapcap/cap.png";
         String cmd_cap2 = path + "pull /sdcard/snapcap/cap.png " + path + "cap.png";
         String cmd_tap;
@@ -105,8 +99,6 @@ public class DIANTAO_UI {
         private JTextArea status_bar;
         private static JFrame frame;
         private static JDesktopPane desktopPane;
-
-        private static final List<DIANTAO_UI> intances = new ArrayList<>();
         private JInternalFrame iFrame;
         private JPanel manualPane;
 
@@ -128,6 +120,8 @@ public class DIANTAO_UI {
 
         private final static MailAccount account = new MailAccount(setting);
         private String current_quick_item;
+
+        private int source;//0 quick; 1 common
         private AbstractAction ctrl_s_action;
         private JButton button_save;
         private JButton button_F3;
@@ -152,7 +146,7 @@ public class DIANTAO_UI {
                                 throw new RuntimeException(e);
                         }
                         frame = new JFrame();
-                        frame.setTitle(args[0] + "-操作-" + frame.hashCode());
+                        frame.setTitle(args[0] + "-" + frame.hashCode());
                         desktopPane = new JDesktopPane();
 
                 });
@@ -200,21 +194,15 @@ public class DIANTAO_UI {
                 });
                 SwingUtilities.invokeLater(() -> {
                         manualPane = new JPanel();
-                        iFrame = new JInternalFrame(this + "-" + intances.size(), true, true, true);
+                        iFrame = new JInternalFrame(this.toString(), true, true, true);
                         iFrame.setSize(540, 750);
                         iFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
                         iFrame.addInternalFrameListener(new InternalFrameAdapter() {
                                 @Override
                                 public void internalFrameClosed(InternalFrameEvent e) {
                                         onClose(true);
-                                        intances.remove(DIANTAO_UI.this);
-                                        StaticLog.info("##closed,threads stop,instances:{}", intances.size());
                                 }
                         });
-                        if (!intances.isEmpty()) {
-                                iFrame.setLocation(100, 0);
-                        }
-                        intances.add(this);
                         desktopPane.add(iFrame);
                         iFrame.add(manualPane);
                         iFrame.setVisible(true);
@@ -411,7 +399,18 @@ public class DIANTAO_UI {
                                         JTextArea source = getTextArea(e);
                                         String text = source.getText().trim();
                                         List<String> textList = Arrays.asList(text.split(LF));
-                                        List<String> values = new ArrayList<>(config.quicks.values());
+                                        int s_source=DIANTAO_UI.this.source;
+                                        Collection<String> qv=null;
+                                        String path=null;
+                                        if(s_source==0){
+                                                qv=config.quicks.values();
+                                                path=config.quicks_path;
+                                        }
+                                        else if(s_source==1) {
+                                                qv = config.commons.values();
+                                                path=config.commons_path;
+                                        }
+                                        List<String> values = new ArrayList<>(qv);
                                         ArrayList<String> collect = new ArrayList<>();
                                         boolean replace_flag = false;
                                         for (int i = 0; i < values.size(); i++) {
@@ -425,7 +424,7 @@ public class DIANTAO_UI {
                                         }
                                         if (!replace_flag) collect.add(text);
                                         Collections.sort(collect);
-                                        FileWriter.create(new File(config.quicks_path), StandardCharsets.UTF_8).writeLines(collect, LineSeparator.LINUX, false);
+                                        FileWriter.create(new File(path), StandardCharsets.UTF_8).writeLines(collect, LineSeparator.LINUX, false);
                                         config.version += 1;
                                         String s = FileUtil.readUtf8String(config.config_path);
                                         s = s.replaceFirst(PATTERN_VERSION_S, String.valueOf(config.version));
@@ -570,15 +569,19 @@ public class DIANTAO_UI {
                                 JMenuItem item = new JMenuItem(entry.getKey());
                                 item.addActionListener(e -> {
                                         if (e.getModifiers() == KeyEvent.BUTTON3_MASK) {
-                                                quick_menu.remove(item);
-                                                config.quicks.remove(item.getActionCommand());
-                                                FileWriter.create(new File(config.quicks_path), StandardCharsets.UTF_8).writeLines(config.quicks.values(), LineSeparator.LINUX, false);
-                                                writeStatus("##item removed:" + e.getActionCommand());
+                                                int option = JOptionPane.showInternalConfirmDialog(iFrame, "移除选项?"+item.getText());
+                                                if(option==JOptionPane.YES_OPTION){
+                                                        quick_menu.remove(item);
+                                                        config.quicks.remove(item.getActionCommand());
+                                                        FileWriter.create(new File(config.quicks_path), StandardCharsets.UTF_8).writeLines(config.quicks.values(), LineSeparator.LINUX, false);
+                                                        writeStatus("##item removed:" + e.getActionCommand());
+                                                }
                                         } else {
                                                 ta_plan.setText(entry.getValue());
                                                 current_quick_item = entry.getValue();
                                                 activityNames = null;
                                                 offset_arow = 0;
+                                                source=0;
                                         }
 
                                 });
@@ -589,10 +592,21 @@ public class DIANTAO_UI {
                         for (Map.Entry<String, String> entry : common_entries) {
                                 JMenuItem item = new JMenuItem(entry.getKey());
                                 item.addActionListener(e -> {
+                                        if (e.getModifiers() == KeyEvent.BUTTON3_MASK) {
+                                                int option = JOptionPane.showInternalConfirmDialog(iFrame, "移除公共选项?"+item.getText());
+                                                if(option==JOptionPane.YES_OPTION){
+                                                        common_menu.remove(item);
+                                                        config.commons.remove(item.getActionCommand());
+                                                        FileWriter.create(new File(config.commons_path), StandardCharsets.UTF_8).writeLines(config.commons.values(), LineSeparator.LINUX, false);
+                                                        writeStatus("## common item removed:" + e.getActionCommand());
+                                                }
+                                        }else {
                                                 ta_plan.setText(entry.getValue());
                                                 current_quick_item = null;
                                                 activityNames = null;
                                                 offset_arow = 0;
+                                                source=1;
+                                        }
                                 });
                                 common_menu.add(item);
                         }
