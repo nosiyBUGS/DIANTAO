@@ -66,7 +66,7 @@ public class MiniCap {
         String exist = StrUtil.format(adb_path + "{}shell ps -u shell", device);
         s=RuntimeUtil.execForStr(exist);
         StaticLog.info("##exist {} \n {}", exist,s);
-        if(!s.contains("minicap")){
+       /* if(!s.contains("minicap")){
             ThreadUtil.execute(()->{
                 String ld = StrUtil.format(adb_path + "{}shell LD_LIBRARY_PATH={} {}/minicap -P 1080x1920@1080x1920/0", device, push_dir, push_dir);
                 StaticLog.info("##ld {}",ld);
@@ -78,7 +78,7 @@ public class MiniCap {
         ThreadUtil.sleep(3 * 1000);
         String forward = StrUtil.format(adb_path + "{}forward tcp:{} localabstract:minicap", device, forwardPort);
         s=RuntimeUtil.execForStr(forward);
-        StaticLog.info("##minicap forward {}\n {}", s,forward);
+        StaticLog.info("##minicap forward {}\n {}", s,forward);*/
         return true;
     }
     public void stop(){
@@ -86,9 +86,18 @@ public class MiniCap {
     }
 
     public byte[] frame(){
-        Process exec = RuntimeUtil.exec(StrUtil.format(adb_path+"{}exec-out LD_LIBRARY_PATH=/data/local/tmp /data/local/tmp/minicap -P 1080x1920@1080x1920/0 -s",device));
+        if(!initial){initial=init();}
+        String caps = StrUtil.format(adb_path + "{}exec-out LD_LIBRARY_PATH=/data/local/tmp /data/local/tmp/minicap -P 1080x1920@1080x1920/0 -s", device);
+//        StaticLog.info("##caps {}",caps);
+        Process exec = RuntimeUtil.exec(caps);
         byte[] bytes = IoUtil.readBytes(exec.getInputStream(), true);
-        return Arrays.copyOfRange(bytes,759,bytes.length);
+        int from=0;
+        for (int i = 0; i < bytes.length; i++) {
+            if(bytes[i] == (byte) 0xFF && bytes[i+1] == (byte) 0xD8){
+                from=i;break;
+            }
+        }
+        return Arrays.copyOfRange(bytes,from,bytes.length);
     }
 
     @SneakyThrows

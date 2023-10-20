@@ -931,7 +931,6 @@ public class DIANTAO_UI {
                         referencees.remove(button_forward);
                         referencees.remove(popupMenu);
                         iFrame.removeAll();
-                        miniCap.stop();
                 }
         }
 
@@ -1194,7 +1193,7 @@ public class DIANTAO_UI {
                                         sleep(0.5);
                                         byte[] bytes = miniCap.frame();
                                         ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
-                                        FileUtil.writeBytes(bytes, System.getProperty("user.dir") + "/ocr.png");
+//                                        FileUtil.writeBytes(bytes, System.getProperty("user.dir") + "/ocr.png");
                                         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                                         ImgUtil.cut(inputStream, outputStream, new Rectangle(x, y, width, height));
                                         request.form("file", outputStream.toByteArray(), "file");
