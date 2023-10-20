@@ -234,6 +234,7 @@ public class MiniCap {
             chunk.compact();
         }
         stream.close();
+        this.stop();
         return frame;
         }
 //    }

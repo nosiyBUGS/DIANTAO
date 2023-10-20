@@ -42,6 +42,8 @@ public class Config {
     public String version_path;
 
     public static final String commons_path=System.getProperty("user.dir") + "/exclude/commons.txt";
+    public static final String exclude_path=System.getProperty("user.dir") + "/exclude/";
+    public static final String screen_path=exclude_path + "screen/";
 
 
     public String from;

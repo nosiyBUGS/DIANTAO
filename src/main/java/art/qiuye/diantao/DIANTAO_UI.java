@@ -42,6 +42,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -56,6 +57,8 @@ import static cn.hutool.core.util.StrUtil.isNotBlank;
 public class DIANTAO_UI {
 
         private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");
+
+        private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd-hh-mm-ss");
 
         static Log StaticLog = LogFactory.get();
         private static Config config;
@@ -1235,6 +1238,10 @@ public class DIANTAO_UI {
                                 String body = request.execute().body();
                                 StaticLog.info("## ocr body {} ", body);
                                 inputStream.close();outputStream.close();
+                        }else if(code.equals("screen")){
+                                String screen_path = Config.screen_path + "screen-"  +LocalDateTime.now().format(DATE_TIME_FORMATTER)+ ".png";
+                                writeStatus("screenshot:{}",screen_path);
+                                FileUtil.writeBytes(miniCap.frame(), screen_path);
                         }
                         else if (code.startsWith("at")) {//at 26:00
                                 String[] split = cmd.split("\\s");
