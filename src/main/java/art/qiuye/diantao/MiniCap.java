@@ -14,6 +14,7 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.SocketChannel;
+import java.util.Arrays;
 
 /**
  * @author hy
@@ -83,8 +84,15 @@ public class MiniCap {
     public void stop(){
         if(process!=null)process.destroy();
     }
+
+    public byte[] frame(){
+        Process exec = RuntimeUtil.exec(StrUtil.format(adb_path+"{}exec-out LD_LIBRARY_PATH=/data/local/tmp /data/local/tmp/minicap -P 1080x1920@1080x1920/0 -s",device));
+        byte[] bytes = IoUtil.readBytes(exec.getInputStream(), true);
+        return Arrays.copyOfRange(bytes,759,bytes.length);
+    }
+
     @SneakyThrows
-    public byte[] frame()  {
+    public byte[] stream()  {
         if(!initial){initial=init();}
         ByteBuffer chunk = ByteBuffer.allocate(65536).order(ByteOrder.LITTLE_ENDIAN);
         int readBannerBytes = 0;
@@ -234,7 +242,6 @@ public class MiniCap {
             chunk.compact();
         }
         stream.close();
-        this.stop();
         return frame;
         }
 //    }

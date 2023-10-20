@@ -1,9 +1,11 @@
 package art.qiuye.diantao;
 
 import art.qiuye.diantao.db.DianConfig;
+import cn.hutool.core.date.StopWatch;
 import cn.hutool.core.img.ImgUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.IORuntimeException;
+import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.io.file.FileWriter;
 import cn.hutool.core.io.file.LineSeparator;
 import cn.hutool.core.lang.Pair;
@@ -757,7 +759,6 @@ public class DIANTAO_UI {
                                         manualPane.setBackground(Color.GREEN);
                                         beginBatch(group);
                                         monitorThread.stop();
-                                        miniCap.stop();
                                         manualPane.setBackground(Color.CYAN);
                                 }, "thread");
                                 thread.setUncaughtExceptionHandler(exceptionHandler);
@@ -930,8 +931,8 @@ public class DIANTAO_UI {
                         referencees.remove(button_forward);
                         referencees.remove(popupMenu);
                         iFrame.removeAll();
+                        miniCap.stop();
                 }
-                miniCap.stop();
         }
 
         @SneakyThrows
@@ -1239,9 +1240,13 @@ public class DIANTAO_UI {
                                 StaticLog.info("## ocr body {} ", body);
                                 inputStream.close();outputStream.close();
                         }else if(code.equals("screen")){
-                                String screen_path = Config.screen_path + "screen-"  +LocalDateTime.now().format(DATE_TIME_FORMATTER)+ ".png";
+                                String screen_path = Config.screen_path + config.config_name+"-"  +LocalDateTime.now().format(DATE_TIME_FORMATTER)+ ".png";
                                 writeStatus("screenshot:{}",screen_path);
-                                FileUtil.writeBytes(miniCap.frame(), screen_path);
+                                StopWatch stopWatch = new StopWatch();
+                                stopWatch.start();
+                                FileUtil.writeBytes(miniCap.frame(),screen_path);
+                                stopWatch.stop();
+                                writeStatus("stopWatch:{}ms",stopWatch.getTotalTimeMillis());
                         }
                         else if (code.startsWith("at")) {//at 26:00
                                 String[] split = cmd.split("\\s");
