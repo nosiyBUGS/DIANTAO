@@ -1,6 +1,7 @@
 package art.qiuye.diantao;
 
 import art.qiuye.diantao.db.DianConfig;
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.date.StopWatch;
 import cn.hutool.core.img.ImgUtil;
 import cn.hutool.core.io.FileUtil;
@@ -139,6 +140,7 @@ public class DIANTAO_UI {
         };
         private JPopupMenu popupMenu;
         private AbstractAction ctrl_u_action;
+        private Slot g_slot=new Slot();
 
         public static void main(String[] args) {
                 DIANTAO_UI ui = new DIANTAO_UI();
@@ -151,7 +153,7 @@ public class DIANTAO_UI {
                                 throw new RuntimeException(e);
                         }
                         frame = new JFrame();
-                        frame.setTitle(args[0] + "-" + frame.hashCode());
+                        frame.setTitle(args[0]);
                         desktopPane = new JDesktopPane();
 
                 });
@@ -770,25 +772,47 @@ public class DIANTAO_UI {
                                                 String current = ReUtil.getGroup0(current_pattern, pre);
                                                 if (current == null) current = pre;
                                                 writeBar("{}\nthread:{}\nsuspend:{}\ncurrent:{}\nactNames:{}", LocalTime.now().format(TIME_FORMATTER), thread.getState(), thread_suspend, current, activityNames);
+                                                //com.taobao.live/com.alibaba.wireless.security.open.middletier.fc.ui.ContainerActivity
+                                                //fixme
+                                                if(current.contains("com.alibaba.wireless.security")){
+                                                        switch (config.config_name){
+                                                                case "11st":
+                                                                        swipe("140 1314 950 1340");
+                                                                        break;
+                                                                case "oppo":
+                                                                        swipe("110 1260 950 1280");
+                                                                        break;
+                                                                case "meizu":
+                                                                        swipe("120 1380 930 1390");
+                                                                        break;
+                                                                case "TTT":
+                                                                        back();
+                                                                        break;
+                                                                default:back();
+                                                        }
+                                                                g_slot.pauseOfCompensate=true;
+                                                                if(g_slot.间隔_滑动==0){
+                                                                        g_slot.compensate=4;
+                                                                }else g_slot.compensate=1;
+                                                                        thread.interrupt();
+
+                                                }
+
                                                 if (activityNames != null) {
-//                                                    StaticLog.info("##current {} ", current);
                                                         boolean contain = false;
                                                         for (String activityName : activityNames) {
-//                                                            StaticLog.info("##activityName {} ", activityName);
                                                                 if (current.contains(activityName)) {
                                                                         contain = true;
                                                                         break;
-                                                                } else {
-//                                                                 StaticLog.info("##activityName {} ,contain {}", activityName,contain);
                                                                 }
                                                         }
                                                         if (!contain) {
-//                                                            StaticLog.info("##activityNames {} ", activityNames);
-//                                                            StaticLog.info("##contain {} ", contain);
                                                                 if (!thread_suspend) {
                                                                         if (!group.c_sleep && thread.getState().equals(Thread.State.TIMED_WAITING)) {
                                                                                 writeStatus("active thread interrupt");
+                                                                                g_slot.pauseOfCompensate=false;
                                                                                 thread.interrupt();
+
                                                                         } else {
                                                                                 writeStatus("active thread suspend");
                                                                                 thread.suspend();
@@ -979,8 +1003,9 @@ public class DIANTAO_UI {
         public void beginBatch(SlotGroup group) {
 
                 List<Slot> slots = group.slots;
-                for (Slot slot : slots)
+                for (Slot slot : slots){
                         begin(slot, false, group);
+                }
                 if (slots.size() > 1 || group.totalTime > 100) {
                         try {
                                 MailUtil.send(account, "1281886693@qq.com", config.config_name + ":" + current_quick_item + ":任务完成:", JSON.toJSONString(slots), true);
@@ -1039,16 +1064,13 @@ public class DIANTAO_UI {
                 switch (type) {
                         case 视频:
                                 writeStatus("c = " + slot.次数);
-
                                 String point = slot.X + " " + slot.Y;
-//                                writeStatus("point = " + point);
-//                                writeStatus("arow = " + slot.arow);
                                 String[] cmds = null;
                                 if (slot.cmds != null)
                                         cmds = slot.cmds.split(";");
                                 while (slot.次数-- > 0) {
                                         int pos = getLinePos(slot.index);
-                                        boolean nom = false;
+                                        boolean nom;
                                         if (slot.type.equals(T_CMD)) {
                                                 nom = slot.cmds.contains(INS_NO_MODIFY);
                                                 execute_cmd(cmds, group);
@@ -1056,7 +1078,8 @@ public class DIANTAO_UI {
                                         } else {
                                                 nom = slot.ex_cmds.contains(INS_NO_MODIFY);
                                                 tap(point);
-                                                watchAdv(slot);
+                                                g_slot=slot;
+                                                watchAdv(g_slot);
                                         }
                                         if (!nom) {
                                                 int finalPos = pos;
@@ -1077,7 +1100,7 @@ public class DIANTAO_UI {
                                                 }
 
                                         }
-                                        Process process = RuntimeUtil.exec("mshta vbscript:msgbox(\"视频任务完成\",64,\"消息\")(window.close)");
+                                        RuntimeUtil.exec("mshta vbscript:msgbox(\"视频任务完成\",64,\"消息\")(window.close)");
                                 }
                                 break;
                 }
@@ -1372,7 +1395,6 @@ public class DIANTAO_UI {
                                                 this.swipe(config.to+s.duration);
 
                                 this.sleep(s.间隔_滑动);
-
                         }
                 } else
                         this.sleep(s.间隔_广告时长);
@@ -1435,16 +1457,24 @@ public class DIANTAO_UI {
                 try {
                         Thread.sleep(millis);
                 } catch (InterruptedException e) {
-                        long cost = System.currentTimeMillis() - begin;
-                        if (millis > cost) {
+                        int cost_ms = (int) (System.currentTimeMillis() - begin);
+                        //fixme
+                        if(g_slot.pauseOfCompensate){
+                                g_slot.pauseOfCompensate=false;
+                                int d1 = (int)d - cost_ms / 1000 + g_slot.compensate;
+                                g_slot.compensate=0;
+                                writeStatus("interrupt, continue g_slot sleep {}",d1);
+                                sleep(d1);
+                        }else if (millis > cost_ms) {
                                 writeStatus("thread suspend");
                                 thread_suspend = true;
                                 thread.suspend();
-                                writeStatus("thread resume,left:" + ((millis - cost) / 1000));
-                                sleep((int) ((millis - cost) / 1000 + 1));
-                        } else throw new IllegalStateException("millos<=cost:" + millis + ":" + cost);
+                                writeStatus("thread resume,left:" + ((millis - cost_ms) / 1000));
+                                sleep((int) ((millis - cost_ms) / 1000 + 1));
+                        } else throw new IllegalStateException("millos<=cost_ms:" + millis + ":" + cost_ms);
                 }
         }
+
         public boolean horizontal() {//0 2 false 竖屏;1 3 true 横屏
                 String cmd = path + "adb shell dumpsys input | grep SurfaceOrientation";
                 String s = RuntimeUtil.execForStr(cmd).trim().substring(20);

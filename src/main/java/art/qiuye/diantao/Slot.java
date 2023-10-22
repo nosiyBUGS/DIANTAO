@@ -37,4 +37,8 @@ public class Slot {
      public int index=0;
 
      public String[] params;
+
+     public boolean pauseOfCompensate;//1 interrupt by act,2 interrupt by compensate
+
+     public int compensate;
 }
