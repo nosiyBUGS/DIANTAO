@@ -2,19 +2,13 @@ package art.qiuye.diantao;
 
 
 public class Slot {
-     public Integer 间隔_广告时长;
-     public String 关闭广告_横屏;
-     public String 关闭广告_竖屏 ;
+     public Integer total_duration;
 
-     public int 抽奖中=0;
+     public int interval;
 
-     public String PRE_奖励确定=null;
-     public String 奖励确定 ;
-     public Integer 间隔_广告间隔 ;
+     public int time_slot=4;
 
-     public Integer 间隔_滑动=0;
-
-     public Integer 次数;
+     public Integer count;
 
      public Integer X;
      public  Integer Y;
@@ -22,8 +16,6 @@ public class Slot {
      public Integer arow;
 
      public String type;
-     public String 注释;
-
      public String ex_cmds;
      public String cmds;
      public Integer origin_arow;

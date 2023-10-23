@@ -460,10 +460,10 @@ public class DIANTAO_UI {
                         JMenuItem delete_one_line = new JMenuItem("删除当前行");
                         delete_one_line.addActionListener(CTRL_Y_ACTION);
 
-                        JMenuItem decrease_item = new JMenuItem("次数-1(Ctrl+↓)");
+                        JMenuItem decrease_item = new JMenuItem("count-1(Ctrl+↓)");
                         decrease_item.addActionListener(CTRL_DOWN_ACTION);
 
-                        JMenuItem increase_item = new JMenuItem("次数+1(Ctrl+↑)");
+                        JMenuItem increase_item = new JMenuItem("count+1(Ctrl+↑)");
                         increase_item.addActionListener(CTRL_UP_ACTION);
 
                         JMenuItem update_item = new JMenuItem("更新(Ctrl+U)");
@@ -704,24 +704,24 @@ public class DIANTAO_UI {
                                         slot.params = params;
                                         if (params[0].startsWith(IDT_CMD)) {
                                                 slot.type = T_CMD;
-                                                slot.次数 = Integer.parseInt(params[1]);
+                                                slot.count = Integer.parseInt(params[1]);
                                                 slot.cmds = line.substring(params[0].length() + params[1].length() + 2);
                                                 if (slot.cmds.contains(INS_JJ)) {
                                                         String group0 = ReUtil.getGroup0(PATTERN_JJ, slot.cmds);
                                                         j = Integer.parseInt(group0.substring(INS_JJ.length()));
                                                 }
                                         } else {
-                                                slot.次数 = Integer.parseInt(params[0]);
-                                                slot.间隔_广告时长 = parseSecond(params[1]);
+                                                slot.count = Integer.parseInt(params[0]);
+                                                slot.total_duration = parseSecond(params[1]);
                                                 String[] d = params[2].split("\\s");
                                                 if(d.length==1)
-                                                        slot.间隔_滑动 = Integer.parseInt(params[2]);
+                                                        slot.interval = Integer.parseInt(params[2]);
                                                 else {
-                                                        slot.间隔_滑动 = Integer.parseInt(d[0]);
+                                                        slot.interval = Integer.parseInt(d[0]);
                                                         slot.duration += d[1];
                                                 }
 
-                                                group.totalTime += slot.间隔_滑动;
+                                                group.totalTime += slot.interval;
                                                 String idt = params[3];
                                                 ComboLabel<Integer> item = null;
                                                 String[] sp = idt.split(" ");
@@ -789,7 +789,7 @@ public class DIANTAO_UI {
                                                                         break;
                                                                 default:back();
                                                         }
-                                                                if(g_slot.间隔_滑动==0){
+                                                                if(g_slot.interval ==0){
                                                                         compensate=4;
                                                                 }else compensate=1;
                                                                 thread.interrupt();
@@ -1055,18 +1055,17 @@ public class DIANTAO_UI {
         }
         @SneakyThrows
         public void begin(Slot slot, boolean notify, SlotGroup group) {
-                initSlot(slot);
                 types = new Types[]{Types.视频, Types.孵化};
                 Types type = types[0];
                 String name = type.name();
                 switch (type) {
                         case 视频:
-                                writeStatus("c = " + slot.次数);
+                                writeStatus("c = " + slot.count);
                                 String point = slot.X + " " + slot.Y;
                                 String[] cmds = null;
                                 if (slot.cmds != null)
                                         cmds = slot.cmds.split(";");
-                                while (slot.次数-- > 0) {
+                                while (slot.count-- > 0) {
                                         int pos = getLinePos(slot.index);
                                         boolean nom;
                                         if (slot.type.equals(T_CMD)) {
@@ -1082,14 +1081,14 @@ public class DIANTAO_UI {
                                         if (!nom) {
                                                 int finalPos = pos;
                                                 SwingUtilities.invokeAndWait(() -> {
-                                                        ta_plan.replaceRange(slot.次数 + "", finalPos, finalPos + String.valueOf(slot.次数 + 1).length());
+                                                        ta_plan.replaceRange(slot.count + "", finalPos, finalPos + String.valueOf(slot.count + 1).length());
                                                 });
                                         }
-                                        writeStatus(StrUtil.format("{} c={}", name, slot.次数));
+                                        writeStatus(StrUtil.format("{} c={}", name, slot.count));
                                 }
                                 writeStatus(StrUtil.format("{}任务完成", name));
                                 if (notify) {
-                                        if (slot.次数 > 1) {
+                                        if (slot.count > 1) {
                                                 try {
                                                         MailUtil.send(account, "1281886693@qq.com", config.config_name + "任务完成:", JSON.toJSONString(slot), true);
 
@@ -1353,13 +1352,8 @@ public class DIANTAO_UI {
                 return anInt;
         }
 
-        private void initSlot(Slot s) {
-                s.关闭广告_竖屏 = Commons.关闭广告_竖屏;
-                s.间隔_广告间隔 = Commons.间隔_广告间隔;
-        }
-
         private void watchAdv(Slot s) {
-                this.sleep(s.间隔_滑动);
+                this.sleep(s.interval);
                 if(s.ex_cmds.contains(INS_PREB)) back();
                 int direction = 0;
                 if (s.ex_cmds != null) {
@@ -1374,8 +1368,8 @@ public class DIANTAO_UI {
                                 direction = 3;
                         }
                 }
-                if (s.间隔_滑动 > 0) {
-                        int times = s.间隔_广告时长 / s.间隔_滑动;
+                if (s.interval > 0) {
+                        int times = s.total_duration / s.interval;
                         for (int i = 0; i < times + 1; i++) {
                                 if (direction == 0) {
                                         if (cis_direction || i % 2 == 0)
@@ -1392,23 +1386,16 @@ public class DIANTAO_UI {
                                         else
                                                 this.swipe(config.to+s.duration);
 
-                                this.sleep(s.间隔_滑动);
+                                this.sleep(s.interval);
                         }
                 } else
-                        this.sleep(s.间隔_广告时长);
+                        this.sleep(s.total_duration);
                 this.back();
                 if (StrUtil.isNotBlank(s.ex_cmds)) {
                         execute_cmd(s.ex_cmds.split(";"), null);
                 }
-                this.sleep(s.间隔_广告间隔);
+                this.sleep(s.time_slot);
         }
-
-        class Commons {
-                public static final String 关闭广告_竖屏 = "998 164";//981 176
-                public static final int 间隔_广告间隔 = 5;
-
-        }
-
 
         void tap(String p) {
                 sleep(2);
