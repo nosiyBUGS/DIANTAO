@@ -24,10 +24,6 @@ public class Slot {
      public String type;
      public String 注释;
 
-//     public String ret;
-
-//     public String back_point;
-
      public String ex_cmds;
      public String cmds;
      public Integer origin_arow;
@@ -38,7 +34,5 @@ public class Slot {
 
      public String[] params;
 
-     public boolean pauseOfCompensate;//1 interrupt by act,2 interrupt by compensate
 
-     public int compensate;
 }

@@ -1,12 +1,10 @@
 package art.qiuye.diantao;
 
 import art.qiuye.diantao.db.DianConfig;
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.date.StopWatch;
 import cn.hutool.core.img.ImgUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.IORuntimeException;
-import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.io.file.FileWriter;
 import cn.hutool.core.io.file.LineSeparator;
 import cn.hutool.core.lang.Pair;
@@ -85,7 +83,6 @@ public class DIANTAO_UI {
         private Thread monitorThread;
         private Vector<ComboLabel<Integer>> items_walk;
         private Vector<ComboLabel<Integer>> items_work;
-////        private Vector<ComboLabel<Vector<String>>> items_return;
 
         private int offset_arow = 0;
 
@@ -114,7 +111,9 @@ public class DIANTAO_UI {
         public static Connection connection;
 
         private static final Map<Component, Component> referencees = new HashMap<>();
-//        private static Map<JInternalFrame, Map<String, Component>> iFrameMap = new HashMap<>();
+
+        private int compensate;
+
 
         static {
                 setting.set("host", "smtp.qq.com");
@@ -790,11 +789,10 @@ public class DIANTAO_UI {
                                                                         break;
                                                                 default:back();
                                                         }
-                                                                g_slot.pauseOfCompensate=true;
                                                                 if(g_slot.间隔_滑动==0){
-                                                                        g_slot.compensate=4;
-                                                                }else g_slot.compensate=1;
-                                                                        thread.interrupt();
+                                                                        compensate=4;
+                                                                }else compensate=1;
+                                                                thread.interrupt();
 
                                                 }
 
@@ -810,7 +808,7 @@ public class DIANTAO_UI {
                                                                 if (!thread_suspend) {
                                                                         if (!group.c_sleep && thread.getState().equals(Thread.State.TIMED_WAITING)) {
                                                                                 writeStatus("active thread interrupt");
-                                                                                g_slot.pauseOfCompensate=false;
+                                                                                compensate=0;
                                                                                 thread.interrupt();
 
                                                                         } else {
@@ -1459,10 +1457,9 @@ public class DIANTAO_UI {
                 } catch (InterruptedException e) {
                         int cost_ms = (int) (System.currentTimeMillis() - begin);
                         //fixme
-                        if(g_slot.pauseOfCompensate){
-                                g_slot.pauseOfCompensate=false;
-                                int d1 = (int)d - cost_ms / 1000 + g_slot.compensate;
-                                g_slot.compensate=0;
+                        if(compensate>0){
+                                int d1 = (int)d - cost_ms / 1000 + compensate;
+                                compensate=0;
                                 writeStatus("interrupt, continue g_slot sleep {}",d1);
                                 sleep(d1);
                         }else if (millis > cost_ms) {
