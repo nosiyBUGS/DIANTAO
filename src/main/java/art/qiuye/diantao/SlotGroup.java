@@ -12,5 +12,5 @@ public class SlotGroup {
 
     public boolean c_sleep;//direct whther interrupt sleep,otherwise call suspend
 
-    public int totalTime;
+    public double totalTime;
 }
