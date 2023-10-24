@@ -47,7 +47,7 @@ public class Constants {
 
     public static final String IDT_CMD = "[cmd]";
     public static final String IDT_REF = "[ref]";
-    public static final String IDT_REF_COMMON = "[refc]";
+    public static final String IDT_REF_COMMON = "[reg]";
     public static final Pattern PATTERN_JJ = Pattern.compile("jj\\d+");
     public static final Pattern PATTERN_VARIABLES = Pattern.compile("@[\\u4E00-\\u9FA5a-z\\d]+(\\(([\\d,]+?)\\))?");
     public static final Pattern PATTERN_VARIABLES_SAVE = Pattern.compile("(?<=variables\\\":)\\s?\\{.+?\\}",Pattern.DOTALL);

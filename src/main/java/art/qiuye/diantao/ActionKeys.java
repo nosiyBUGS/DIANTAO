@@ -227,4 +227,12 @@ public class ActionKeys {
             area.paste();
         }
     };
+    public static final AbstractAction HEADER_ITEM_ACTION=new AbstractAction() {
+        @SneakyThrows
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            JTextArea area = getTextArea(e);
+            area.append("[cmd];1;");
+        }
+    };
 }

@@ -220,6 +220,7 @@ public class DIANTAO_UI {
                         JMenu down_menu = new JMenu("下载配置");
                         JMenu common_menu = new JMenu("公共配置");
                         JMenu variable_menu = new JMenu("编辑变量");
+                        JMenu source_menu = new JMenu("source");
                         JMenuBar frameBar = new JMenuBar();
                         JMenu new_win_menu = new JMenu("新窗口");
                         frameBar.add(new_win_menu);
@@ -319,6 +320,19 @@ public class DIANTAO_UI {
                                 offset_buttonGroup.add(b);
                                 offset_menu.add(b);
                         }
+
+                        ButtonGroup souce_buttonGroup = new ButtonGroup();
+                        ItemListener sourceItemlistener = e -> {
+                                String text = ((JRadioButtonMenuItem) e.getItem()).getText();
+                                this.source = Integer.parseInt(text);
+                        };
+                        for (int i = 0; i <= 1; i++) {
+                                JRadioButtonMenuItem b = new JRadioButtonMenuItem(String.valueOf(i));
+                                b.addItemListener(sourceItemlistener);
+                                souce_buttonGroup.add(b);
+                                source_menu.add(b);
+                        }
+
                         menuBar.add(quick_menu);
                         menuBar.add(offset_menu);
                         menuBar.add(reload_menu);
@@ -326,6 +340,7 @@ public class DIANTAO_UI {
                         menuBar.add(down_menu);
                         menuBar.add(common_menu);
                         menuBar.add(variable_menu);
+                        menuBar.add(source_menu);
 
 
                         iFrame.addInternalFrameListener(new InternalFrameAdapter() {
@@ -460,6 +475,9 @@ public class DIANTAO_UI {
                         JMenuItem delete_one_line = new JMenuItem("删除当前行");
                         delete_one_line.addActionListener(CTRL_Y_ACTION);
 
+                        JMenuItem delete_item = new JMenuItem("删除");
+                        delete_item.addActionListener(DELETE_ITEM_ACTION);
+
                         JMenuItem decrease_item = new JMenuItem("count-1(Ctrl+↓)");
                         decrease_item.addActionListener(CTRL_DOWN_ACTION);
 
@@ -475,9 +493,6 @@ public class DIANTAO_UI {
                         JMenuItem shift_down_item = new JMenuItem("下移");
                         shift_down_item.addActionListener(ALT_SHIFT_DOWN_ACTION);
 
-                        JMenuItem delete_item = new JMenuItem("删除");
-                        delete_item.addActionListener(DELETE_ITEM_ACTION);
-
                         JMenuItem cut_item = new JMenuItem("剪切");
                         cut_item.addActionListener(CUT_ITEM_ACTION);
 
@@ -487,16 +502,20 @@ public class DIANTAO_UI {
                         JMenuItem paste_item = new JMenuItem("粘贴");
                         paste_item.addActionListener(PASTE_ITEM_ACTION );
 
+                        JMenuItem header_item = new JMenuItem("header");
+                        header_item.addActionListener(HEADER_ITEM_ACTION);
+
                         popupMenu.add(delete_one_line);
+                        popupMenu.add(delete_item);
                         popupMenu.add(decrease_item);
                         popupMenu.add(increase_item);
                         popupMenu.add(update_item);
                         popupMenu.add(shift_up_item);
                         popupMenu.add(shift_down_item);
-                        popupMenu.add(delete_item);
                         popupMenu.add(cut_item);
                         popupMenu.add(copy_item);
                         popupMenu.add(paste_item);
+                        popupMenu.add(header_item);
 
                         ta_plan.setComponentPopupMenu(popupMenu);
 
@@ -605,14 +624,18 @@ public class DIANTAO_UI {
                                                         config.commons.remove(item.getActionCommand());
                                                         FileWriter.create(new File(config.commons_path), StandardCharsets.UTF_8).writeLines(config.commons.values(), LineSeparator.LINUX, false);
                                                         writeStatus("## common item removed:" + e.getActionCommand());
+                                                        return;
                                                 }
-                                        }else {
+                                        }else if (e.getModifiers() == KeyEvent.BUTTON2_MASK) {
+                                                ta_plan.append(LF+entry.getValue());
+                                        }
+                                        else {
                                                 ta_plan.setText(entry.getValue());
+                                        }
                                                 current_quick_item = null;
                                                 activityNames = null;
                                                 offset_arow = 0;
                                                 source=1;
-                                        }
                                 });
                                 common_menu.add(item);
                         }
@@ -1262,7 +1285,7 @@ public class DIANTAO_UI {
                                 StaticLog.info("## ocr body {} ", body);
                                 inputStream.close();outputStream.close();
                         }else if(code.equals("screen")){
-                                String screen_path = Config.screen_path + config.config_name+"-"  +LocalDateTime.now().format(DATE_TIME_FORMATTER)+ ".png";
+                                String screen_path = Config.screen_path + config.config_name+"-"  +LocalDateTime.now().format(DATE_TIME_FORMATTER)+ ".jpg";
                                 writeStatus("screenshot:{}",screen_path);
                                 StopWatch stopWatch = new StopWatch();
                                 stopWatch.start();
