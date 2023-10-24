@@ -1177,10 +1177,13 @@ public class DIANTAO_UI {
                                         }
                                 }
                         } else if (code.equals("s")) {
-                                int anInt = parseSecond(cmd.substring(1));
+                                double d;
+                                if(code.contains(".")) d = Double.parseDouble(code);
+                                else
+                                        d = parseSecond(cmd.substring(1));
                                 if (group != null)
-                                        group.totalTime += anInt;
-                                sleep(anInt);
+                                        group.totalTime += d;
+                                sleep(d);
                                 sleeped = true;
                         } else if (code.equals("t")) {
                                 String sub = cmd.substring(1);
