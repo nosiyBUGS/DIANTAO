@@ -72,7 +72,7 @@ public class DIANTAO_UI {
         String cmd_cap1 = path + "shell screencap  -p /sdcard/snapcap/cap.png";
         String cmd_cap2 = path + "pull /sdcard/snapcap/cap.png " + path + "cap.png";
         String cmd_tap;
-        String cmd_press;
+        String cmd_keyevent;
         String cmd_swipe;
 
         String cmd_current;
@@ -162,7 +162,7 @@ public class DIANTAO_UI {
         private void initDevice() {
                 path = adb_path + config.current_device;
                 cmd_tap = path + "shell input tap ";
-                cmd_press = path + "shell input keyevent ";
+                cmd_keyevent = path + "shell input keyevent ";
                 cmd_swipe = path + "shell input swipe ";
                 cmd_cap = path + "exec-out screencap -p ";
                 cmd_current = path + "shell dumpsys activity activities | grep mResumedActivity";
@@ -791,7 +791,7 @@ public class DIANTAO_UI {
                                                         }
                                                                 if(g_slot.interval ==0){
                                                                         compensate=4;
-                                                                }else compensate=1;
+                                                                }else compensate=2;
                                                                 thread.interrupt();
 
                                                 }
@@ -1195,7 +1195,9 @@ public class DIANTAO_UI {
                         } else if (code.equals("b")) {
                                 back();
                         } else if (code.equals("h")) {
-                                home();
+                                keyeven("KEYCODE_HOME");
+                        } else if (code.equals("recent")) {
+                                keyeven("KEYCODE_APP_SWITCH");
                         } else if (code.equals("if")) {//if0 0 100 200 看直播领钻石
 //                                ### adb -s 192.168.1.20 shell LD_LIBRARY_PATH=/data/local/tmp /data/local/tmp/minicap -P 1080x1920@1080x1920/0
                                 int n = 10;
@@ -1427,13 +1429,12 @@ public class DIANTAO_UI {
         }
 
         void back() {
-                sleep(2);
-                RuntimeUtil.execForStr(cmd_press + " KEYCODE_BACK");
+                keyeven(cmd_keyevent + "KEYCODE_BACK");
         }
 
-        void home() {
+        void keyeven(String key){
                 sleep(2);
-                RuntimeUtil.execForStr(cmd_press + " KEYCODE_HOME");
+                RuntimeUtil.execForStr(cmd_keyevent + key);
         }
 
         void sleep(double d) {
