@@ -7,6 +7,9 @@ import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.IORuntimeException;
 import cn.hutool.core.io.file.FileWriter;
 import cn.hutool.core.io.file.LineSeparator;
+import cn.hutool.core.io.watch.SimpleWatcher;
+import cn.hutool.core.io.watch.WatchMonitor;
+import cn.hutool.core.io.watch.watchers.DelayWatcher;
 import cn.hutool.core.lang.Pair;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.*;
@@ -30,6 +33,7 @@ import com.alibaba.fastjson.serializer.SerializerFeature;
 import lombok.SneakyThrows;
 
 import javax.imageio.ImageIO;
+import javax.swing.Timer;
 import javax.swing.*;
 import javax.swing.event.InternalFrameAdapter;
 import javax.swing.event.InternalFrameEvent;
@@ -39,6 +43,8 @@ import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.WatchEvent;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -110,7 +116,7 @@ public class DIANTAO_UI {
 
         public static Connection connection;
 
-        private static final Map<Component, Component> referencees = new HashMap<>();
+        private static final Map<Object, Component> referencees = new HashMap<>();
 
         private int compensate;
 
@@ -126,7 +132,7 @@ public class DIANTAO_UI {
         private final static MailAccount account = new MailAccount(setting);
         private String current_quick_item;
 
-        private int source;//0 quick; 1 common
+        private int source=1;//1 quick; 2 common
         private AbstractAction ctrl_s_action;
         private JButton button_save;
         private JButton button_F3;
@@ -140,6 +146,10 @@ public class DIANTAO_UI {
         private JPopupMenu popupMenu;
         private AbstractAction ctrl_u_action;
         private Slot g_slot=new Slot();
+        private JButton button_count_inc;
+        private JButton button_count_dec;
+        private JMenu quick_menu;
+        private JMenu common_menu;
 
         public static void main(String[] args) {
                 DIANTAO_UI ui = new DIANTAO_UI();
@@ -213,12 +223,12 @@ public class DIANTAO_UI {
                         iFrame.add(manualPane);
                         iFrame.setVisible(true);
                         JMenuBar menuBar = new JMenuBar();
-                        JMenu quick_menu = new JMenu("快捷操作");
+                        quick_menu = new JMenu("快捷操作");
                         JMenu offset_menu = new JMenu("偏移");
                         JMenu reload_menu = new JMenu("重载配置");
                         JMenu upload_menu = new JMenu("上传配置");
                         JMenu down_menu = new JMenu("下载配置");
-                        JMenu common_menu = new JMenu("公共配置");
+                        common_menu = new JMenu("公共配置");
                         JMenu variable_menu = new JMenu("编辑变量");
                         JMenu source_menu = new JMenu("source");
                         JMenuBar frameBar = new JMenuBar();
@@ -326,7 +336,7 @@ public class DIANTAO_UI {
                                 String text = ((JRadioButtonMenuItem) e.getItem()).getText();
                                 this.source = Integer.parseInt(text);
                         };
-                        for (int i = 0; i <= 1; i++) {
+                        for (int i = 1; i <= 2; i++) {
                                 JRadioButtonMenuItem b = new JRadioButtonMenuItem(String.valueOf(i));
                                 b.addItemListener(sourceItemlistener);
                                 souce_buttonGroup.add(b);
@@ -423,11 +433,11 @@ public class DIANTAO_UI {
                                         int s_source=DIANTAO_UI.this.source;
                                         Collection<String> qv=null;
                                         String path=null;
-                                        if(s_source==0){
+                                        if(s_source==1){
                                                 qv=config.quicks.values();
                                                 path=config.quicks_path;
                                         }
-                                        else if(s_source==1) {
+                                        else if(s_source==2) {
                                                 qv = config.commons.values();
                                                 path=config.commons_path;
                                         }
@@ -450,9 +460,10 @@ public class DIANTAO_UI {
                                         String s = FileUtil.readUtf8String(config.config_path);
                                         s = s.replaceFirst(PATTERN_VERSION_S, String.valueOf(config.version));
                                         FileUtil.writeUtf8String(s ,config.config_path);
-                                        MouseEvent mouseEvent = new MouseEvent(source, 0, 0, 0, 0, 0, 0, 0, 0, false, 0);
-                                        mouseAdapter.mouseClicked(mouseEvent);
-
+                                        config.quicks = readQuciks(config.quicks_path);
+                                        config.commons = readQuciks(Config.commons_path);
+                                        loadMenuItem(DIANTAO_UI.this.source);
+                                        writeStatus("配置已保存,souce:{}",DIANTAO_UI.this.source);
                                 }
                         };
                         button_save.addActionListener(ctrl_s_action);
@@ -485,12 +496,11 @@ public class DIANTAO_UI {
                         increase_item.addActionListener(CTRL_UP_ACTION);
 
                         JMenuItem update_item = new JMenuItem("更新(Ctrl+U)");
-                        update_item.addActionListener(ctrl_u_action);
 
-                        JMenuItem shift_up_item = new JMenuItem("上移");
+                        JMenuItem shift_up_item = new JMenuItem("上移(alt+shift+↑)");
                         shift_up_item.addActionListener(ALT_SHIFT_UP_ACTION);
 
-                        JMenuItem shift_down_item = new JMenuItem("下移");
+                        JMenuItem shift_down_item = new JMenuItem("下移(alt+shift+↓)");
                         shift_down_item.addActionListener(ALT_SHIFT_DOWN_ACTION);
 
                         JMenuItem cut_item = new JMenuItem("剪切");
@@ -562,19 +572,32 @@ public class DIANTAO_UI {
                         ctrl_u_action = new AbstractAction() {
                                 @Override
                                 public void actionPerformed(ActionEvent e) {
-                                        JTextArea source = (JTextArea) e.getSource();
-                                        String origin = FileUtil.readUtf8String(config.quicks_path);
+                                        JTextArea source = getTextArea(e);
+                                        int s_source=DIANTAO_UI.this.source;
+                                        String path=null;
+                                        switch (s_source){
+                                                case 1:
+                                                        path=config.quicks_path;
+                                                        break;
+                                                case 2:
+                                                        path = Config.commons_path;
+                                                        break;
+                                        }
+                                        String origin = FileUtil.readUtf8String(path);
                                         origin = origin.replace(current_quick_item, source.getText());
-                                        FileUtil.writeUtf8String(origin, config.quicks_path);
+                                        FileUtil.writeUtf8String(origin, path);
                                         config.version += 1;
                                         String s = FileUtil.readUtf8String(config.config_path);
                                         s = s.replaceFirst(PATTERN_VERSION_S, String.valueOf(config.version));
                                         FileUtil.writeUtf8String(s, config.config_path);
-                                        writeStatus("update quicks done");
-                                        MouseEvent mouseEvent = new MouseEvent(source, 0, 0, 0, 0, 0, 0, 0, 0, false, 0);
-                                        mouseAdapter.mouseClicked(mouseEvent);
+                                        config.quicks = readQuciks(config.quicks_path);
+                                        config.commons = readQuciks(Config.commons_path);
+                                        loadMenuItem(DIANTAO_UI.this.source);
+                                        writeStatus("配置已更新,souce:{}",DIANTAO_UI.this.source);
                                 }
                         };
+                        update_item.addActionListener(ctrl_u_action);
+
                         inputMap(ta_plan,KeyStroke.getKeyStroke(KeyEvent.VK_U, KeyEvent.CTRL_MASK), ctrl_u_action);
                         //shift up
                         inputMap(ta_plan,ALT_SHIT_UP, ALT_SHIFT_UP_ACTION);
@@ -585,60 +608,9 @@ public class DIANTAO_UI {
                         inputMap(ta_plan,CTRL_UP, CTRL_UP_ACTION);
                         inputMap(ta_plan,CTRL_DOWN, CTRL_DOWN_ACTION);
 
+                        loadMenuItem(1);
+                        loadMenuItem(2);
 
-
-
-
-                        Set<Map.Entry<String, String>> quick_entries = config.quicks.entrySet();
-                        for (Map.Entry<String, String> entry : quick_entries) {
-                                JMenuItem item = new JMenuItem(entry.getKey());
-                                item.addActionListener(e -> {
-                                        if (e.getModifiers() == KeyEvent.BUTTON3_MASK) {
-                                                int option = JOptionPane.showInternalConfirmDialog(iFrame, "移除选项?"+item.getText());
-                                                if(option==JOptionPane.YES_OPTION){
-                                                        quick_menu.remove(item);
-                                                        config.quicks.remove(item.getActionCommand());
-                                                        FileWriter.create(new File(config.quicks_path), StandardCharsets.UTF_8).writeLines(config.quicks.values(), LineSeparator.LINUX, false);
-                                                        writeStatus("##item removed:" + e.getActionCommand());
-                                                }
-                                        } else {
-                                                ta_plan.setText(entry.getValue());
-                                                current_quick_item = entry.getValue();
-                                                activityNames = null;
-                                                offset_arow = 0;
-                                                source=0;
-                                        }
-
-                                });
-                                quick_menu.add(item);
-                        }
-
-                        Set<Map.Entry<String, String>> common_entries = config.commons.entrySet();
-                        for (Map.Entry<String, String> entry : common_entries) {
-                                JMenuItem item = new JMenuItem(entry.getKey());
-                                item.addActionListener(e -> {
-                                        if (e.getModifiers() == KeyEvent.BUTTON3_MASK) {
-                                                int option = JOptionPane.showInternalConfirmDialog(iFrame, "移除公共选项?"+item.getText());
-                                                if(option==JOptionPane.YES_OPTION){
-                                                        common_menu.remove(item);
-                                                        config.commons.remove(item.getActionCommand());
-                                                        FileWriter.create(new File(config.commons_path), StandardCharsets.UTF_8).writeLines(config.commons.values(), LineSeparator.LINUX, false);
-                                                        writeStatus("## common item removed:" + e.getActionCommand());
-                                                        return;
-                                                }
-                                        }else if (e.getModifiers() == KeyEvent.BUTTON2_MASK) {
-                                                ta_plan.append(LF+entry.getValue());
-                                        }
-                                        else {
-                                                ta_plan.setText(entry.getValue());
-                                        }
-                                                current_quick_item = null;
-                                                activityNames = null;
-                                                offset_arow = 0;
-                                                source=1;
-                                });
-                                common_menu.add(item);
-                        }
 
                         variable_menu.addMouseListener(new MouseAdapter() {
 
@@ -856,10 +828,38 @@ public class DIANTAO_UI {
                                 monitorThread.start();
 
                         });
-                        JButton button_down = new JButton("下移(alt+shift+↓)");
-                        button_down.addActionListener(ALT_SHIFT_DOWN_ACTION);
-                        JButton button_up = new JButton("上移(alt+shift+↑)");
-                        button_up.addActionListener(ALT_SHIFT_UP_ACTION);
+                        button_count_inc = new JButton("count+");
+                        referencees.put(button_count_inc, ta_plan);
+                        button_count_inc.addMouseListener(new MouseAdapter() {
+                                private Timer timer= new Timer(100, CTRL_UP_ACTION);
+                                @Override
+                                public void mousePressed(MouseEvent e) {
+                                        referencees.put(timer, ta_plan);
+                                        timer.start();
+                                }
+
+                                @Override
+                                public void mouseReleased(MouseEvent e) {
+                                        timer.stop();
+                                        referencees.remove(timer);
+                                }
+                        });
+                        button_count_dec = new JButton("count-");
+                        referencees.put(button_count_dec, ta_plan);
+                        button_count_dec.addMouseListener(new MouseAdapter() {
+                                private Timer timer= new Timer(100, CTRL_DOWN_ACTION);
+                                @Override
+                                public void mousePressed(MouseEvent e) {
+                                        referencees.put(timer, ta_plan);
+                                        timer.start();
+                                }
+
+                                @Override
+                                public void mouseReleased(MouseEvent e) {
+                                        timer.stop();
+                                        referencees.remove(timer);
+                                }
+                        });
                         button_back = new JButton("后退(Ctrl+z)");
                         referencees.put(button_back, ta_plan);
                         button_back.addActionListener(CTRL_Z_ACTION);
@@ -870,8 +870,8 @@ public class DIANTAO_UI {
                         panel_plan.add(button_F3);
                         panel_plan.add(button_batch);
                         JPanel panel_shift = new JPanel();
-                        panel_shift.add(button_down);
-                        panel_shift.add(button_up);
+                        panel_shift.add(button_count_inc);
+                        panel_shift.add(button_count_dec);
                         panel_shift.add(button_back);
                         panel_shift.add(button_forward);
                         JPanel panel_ta = new JPanel();
@@ -972,6 +972,8 @@ public class DIANTAO_UI {
                         referencees.remove(button_F3);
                         referencees.remove(ta_plan);
                         referencees.remove(iFrame);
+                        referencees.remove(button_count_inc);
+                        referencees.remove(button_count_dec);
                         referencees.remove(button_back);
                         referencees.remove(button_forward);
                         referencees.remove(popupMenu);
@@ -1038,7 +1040,20 @@ public class DIANTAO_UI {
 
 
         }
+        static WatchMonitor watchMonitor = WatchMonitor.create(Config.commons_path, 1, WatchMonitor.ENTRY_MODIFY);
+        static {
+                SimpleWatcher watcher = new SimpleWatcher() {
+                        int count = 0;
 
+                        @Override
+                        public void onModify(WatchEvent<?> event, Path currentPath) {
+                                StaticLog.info("file modify {}", count++);
+                        }
+                };
+                DelayWatcher delayWatcher = new DelayWatcher(watcher, 1000);
+                watchMonitor.setWatcher(delayWatcher);
+//                        watchMonitor.start();
+        }
         @SneakyThrows
         private void initConfig(String confName) {
                 this.config = JSONObject.parseObject(FileUtil.getInputStream(System.getProperty("user.dir") + "/exclude/config-" + confName + ".json"), Config.class, Feature.OrderedField);
@@ -1047,9 +1062,8 @@ public class DIANTAO_UI {
                 config.version_path = System.getProperty("user.dir") + "/exclude/versions/";
                 config.quicks_path = quicks_path;
                 config.config_path = config_path;
-
                 config.quicks = readQuciks(quicks_path);
-                config.commons = readQuciks(config.commons_path);
+                config.commons = readQuciks(Config.commons_path);
 
                 config.config_name = confName;
                 miniCap = new MiniCap(config);
@@ -1075,6 +1089,50 @@ public class DIANTAO_UI {
                 }
                 list.clear();
                 return map;
+        }
+        private void loadMenuItem(int type){//1 quicks menun;2 common_menun
+                Map<String,String> map=null;
+                JMenu menu=null;
+                String path=null;
+                switch (type){
+                        case 1:map=config.quicks;
+                                menu=quick_menu;
+                                path=config.quicks_path;
+                                break;
+                        case 2:map=config.commons;
+                                menu=common_menu;
+                                path= Config.commons_path;
+                                break;
+                }
+                menu.removeAll();
+                for (Map.Entry<String, String> entry : map.entrySet()) {
+                        JMenuItem item = new JMenuItem(entry.getKey());
+                        String finalPath = path;
+                        JMenu finalMenu = menu;
+                        Map<String, String> finalMap = map;
+                        item.addActionListener(e -> {
+                                if (e.getModifiers() == KeyEvent.BUTTON3_MASK) {
+                                        int option = JOptionPane.showInternalConfirmDialog(iFrame, "移除选项?"+item.getText()+" source:"+source);
+                                        if(option==JOptionPane.YES_OPTION){
+                                                finalMenu.remove(item);
+                                                finalMap.remove(item.getActionCommand());
+                                                FileWriter.create(new File(finalPath), StandardCharsets.UTF_8).writeLines(finalMap.values(), LineSeparator.LINUX, false);
+                                                writeStatus("##item removed:{},source:{}" ,e.getActionCommand(),source);
+                                                return;
+                                        }
+                                }else if (e.getModifiers() == KeyEvent.BUTTON2_MASK) {
+                                        ta_plan.append(LF+entry.getValue());
+                                }
+                                else {
+                                        ta_plan.setText(entry.getValue());
+                                }
+                                current_quick_item=entry.getValue();
+                                activityNames = null;
+                                offset_arow = 0;
+                                source=type;
+                        });
+                        menu.add(item);
+                }
         }
         @SneakyThrows
         public void begin(Slot slot, boolean notify, SlotGroup group) {
@@ -1527,11 +1585,11 @@ public class DIANTAO_UI {
                 return null;
         }
         public static JTextArea getTextArea(ActionEvent e){
-                Component source = (Component) e.getSource();
+                Object source = e.getSource();
                 JTextArea area=null;
                 if(source instanceof JMenuItem)
-                        area= (JTextArea) referencees.get(source.getParent());
-                else if (source instanceof JButton)
+                        area= (JTextArea) referencees.get(((Component)source).getParent());
+                else if (source instanceof JButton || source instanceof javax.swing.Timer)
                         area = ((JTextArea) referencees.get(source));
                 else area= (JTextArea) e.getSource();
                 return area;
