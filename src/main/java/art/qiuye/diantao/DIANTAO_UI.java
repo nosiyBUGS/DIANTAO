@@ -119,7 +119,7 @@ public class DIANTAO_UI {
         private static final Map<Object, Component> referencees = new HashMap<>();
 
         private int compensate;
-
+        private static final Map<String, String> security_swf = new HashMap<>(3);
 
         static {
                 setting.set("host", "smtp.qq.com");
@@ -127,6 +127,9 @@ public class DIANTAO_UI {
                 setting.set("sslEnable", "true");
                 setting.set("from", "1281886693@qq.com");
                 setting.set("pass", "tqblyhamaeqxijaj");
+                security_swf.put("11st","140 1314 950 1340");
+                security_swf.put("oppo","110 1260 950 1280");
+                security_swf.put("meizu","120 1380 930 1390");
         }
 
         private final static MailAccount account = new MailAccount(setting);
@@ -761,6 +764,7 @@ public class DIANTAO_UI {
                                 thread.start();
                                 final Pattern current_pattern = Pattern.compile("[\\w\\.]*/[\\w\\.]*");
                                 monitorThread = new Thread(() -> {
+                                        int swipe_count=3;
                                         while (true) {
                                                 String pre = RuntimeUtil.execForStr(cmd_current);
                                                 String current = ReUtil.getGroup0(current_pattern, pre);
@@ -769,24 +773,22 @@ public class DIANTAO_UI {
                                                 //com.taobao.live/com.alibaba.wireless.security.open.middletier.fc.ui.ContainerActivity
                                                 //fixme
                                                 if(current.contains("com.alibaba.wireless.security")){
-                                                        switch (config.config_name){
-                                                                case "11st":
-                                                                        swipe("140 1314 950 1340");
-                                                                        break;
-                                                                case "oppo":
-                                                                        swipe("110 1260 950 1280");
-                                                                        break;
-                                                                case "meizu":
-                                                                        swipe("120 1380 930 1390");
-                                                                        break;
-                                                                case "TTT":
+                                                        compensate=0;
+                                                        String cod=security_swf.get(config.config_name);
+                                                        if(cod!=null){
+                                                                if(swipe_count<=0){
+                                                                        swipe_count=3;
                                                                         back();
-                                                                        break;
-                                                                default:back();
-                                                        }
+                                                                }else {
+                                                                        swipe_count--;
+                                                                        compensate+=2;
+                                                                        sleep(2);
+                                                                        swipe(cod);
+                                                                }
+                                                        }else back();
                                                                 if(g_slot.interval ==0){
-                                                                        compensate=4;
-                                                                }else compensate=2;
+                                                                        compensate+=4;
+                                                                }else compensate+=2;
                                                                 thread.interrupt();
 
                                                 }
@@ -1517,7 +1519,7 @@ public class DIANTAO_UI {
         }
 
         void keyeven(String key){
-                sleep(2);
+                sleep(1);
                 RuntimeUtil.execForStr(cmd_keyevent + key);
         }
 
