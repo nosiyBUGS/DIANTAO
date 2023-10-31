@@ -832,6 +832,7 @@ public class DIANTAO_UI {
                         });
                         button_count_inc = new JButton("count+");
                         referencees.put(button_count_inc, ta_plan);
+                        button_count_inc.addActionListener(CTRL_UP_ACTION);
                         button_count_inc.addMouseListener(new MouseAdapter() {
                                 private Timer timer= new Timer(100, CTRL_UP_ACTION);
                                 @Override
@@ -848,6 +849,7 @@ public class DIANTAO_UI {
                         });
                         button_count_dec = new JButton("count-");
                         referencees.put(button_count_dec, ta_plan);
+                        button_count_dec.addActionListener(CTRL_DOWN_ACTION);
                         button_count_dec.addMouseListener(new MouseAdapter() {
                                 private Timer timer= new Timer(100, CTRL_DOWN_ACTION);
                                 @Override
