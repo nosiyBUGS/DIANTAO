@@ -18,11 +18,6 @@ import static art.qiuye.diantao.DIANTAO_UI.getTextArea;
  * @create 2023/9/29 0029
  */
 public class ActionKeys {
-    public static final String BUTTON1 = "1";
-    public static final String BUTTON2 = "2";
-    public static final String BUTTON3 = "3";
-    public static final String BUTTON4 = "4";
-    public static final String BUTTON5 = "5";
     public static final KeyStroke CTRL_Z = KeyStroke.getKeyStroke(KeyEvent.VK_Z, KeyEvent.CTRL_MASK);
     public static final AbstractAction CTRL_Z_ACTION = new AbstractAction() {
         @Override
