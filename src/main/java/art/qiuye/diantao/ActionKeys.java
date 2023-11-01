@@ -17,6 +17,11 @@ import static art.qiuye.diantao.DIANTAO_UI.getTextArea;
  * @create 2023/9/29 0029
  */
 public class ActionKeys {
+    public static final String BUTTON1 = "1";
+    public static final String BUTTON2 = "2";
+    public static final String BUTTON3 = "3";
+    public static final String BUTTON4 = "4";
+    public static final String BUTTON5 = "5";
     public static final KeyStroke CTRL_Z = KeyStroke.getKeyStroke(KeyEvent.VK_Z, KeyEvent.CTRL_MASK);
     public static final AbstractAction CTRL_Z_ACTION = new AbstractAction() {
         @Override
@@ -162,7 +167,20 @@ public class ActionKeys {
                 count = Integer.parseInt(s);
                 area.replaceRange(String.valueOf(count+1),start+IDT_CMD.length()+1,start+IDT_CMD.length()+1+s.length());
             }else {
-                String s = line.split(";")[0];
+                String[] split = line.split(";");
+                String s = null;
+                switch (e.getActionCommand()){
+                    case BUTTON1:s=split[0];break;//count
+                    case BUTTON2:s=split[1];start+=split[0].length()+1;break;//total time
+                    case BUTTON3:s=split[2];start+=split[0].length()+1+split[1].length()+1;break;//interval
+                    case BUTTON4:
+                        s=split[3];
+                        if(s.startsWith("$") || s.startsWith("#")){
+                            start+=split[0].length()+1+split[1].length()+1+split[2].length()+1+1;
+                            s = s.substring(1);
+                        }else return;
+                        break;//$1
+                }
                 count = Integer.parseInt(s);
                 area.replaceRange(String.valueOf(count+1),start,start+s.length());
             }
@@ -171,6 +189,7 @@ public class ActionKeys {
     };
     public static final KeyStroke CTRL_DOWN = KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, KeyEvent.CTRL_MASK);
     public static final AbstractAction CTRL_DOWN_ACTION=new AbstractAction() {
+
         @SneakyThrows
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -186,14 +205,26 @@ public class ActionKeys {
                 count = Integer.parseInt(s);
                 area.replaceRange(String.valueOf(count-1),start+IDT_CMD.length()+1,start+IDT_CMD.length()+1+s.length());
             }else {
-                String s = line.split(";")[0];
+                String[] split = line.split(";");
+                String s = null;
+                switch (e.getActionCommand()){
+                    case BUTTON1:s=split[0];break;//count
+                    case BUTTON2:s=split[1];start+=split[0].length()+1;break;//total time
+                    case BUTTON3:s=split[2];start+=split[0].length()+1+split[1].length()+1;break;//interval
+                    case BUTTON4:
+                        s=split[3];
+                        if(s.startsWith("$") || s.startsWith("#")){
+                            start+=split[0].length()+1+split[1].length()+1+split[2].length()+1+1;
+                            s = s.substring(1);
+                        }else return;
+                        break;//$1
+                }
                 count = Integer.parseInt(s);
                 area.replaceRange(String.valueOf(count-1),start,start+s.length());
             }
 
         }
     };
-
     public static final AbstractAction DELETE_ITEM_ACTION=new AbstractAction() {
         @SneakyThrows
         @Override
