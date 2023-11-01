@@ -158,6 +158,8 @@ public class DIANTAO_UI {
         private JMenu quick_menu;
         private JMenu common_menu;
 
+        private static List<DIANTAO_UI> intances = new ArrayList<>();
+
         public static void main(String[] args) {
                 DIANTAO_UI ui = new DIANTAO_UI();
                 SwingUtilities.invokeLater(() -> {
@@ -190,10 +192,25 @@ public class DIANTAO_UI {
         private void main(String confName) {
                 initConfig(confName);
                 main(config.devices.get(0), true);
+
+                watchMonitor=WatchMonitor.create(Config.commons_path,WatchMonitor.ENTRY_MODIFY);
+                SimpleWatcher watcher = new SimpleWatcher() {
+                        @Override
+                        public void onModify(WatchEvent<?> event, Path currentPath) {
+                                for (DIANTAO_UI intance : intances) {
+                                        intance.updateMenu(2);
+                                }
+                        }
+                };
+                DelayWatcher delayWatcher = new DelayWatcher(watcher, 1000);
+                watchMonitor.setWatcher(delayWatcher);
+                watchMonitor.start();
+                writeStatus("watchMonitor started");
         }
 
         @SneakyThrows
         private void main(String dev, boolean first) {
+                intances.add(this);
                 initConfig(config.config_name);
                 adb_path = config.adb_path;
                 config.current_device = dev;
@@ -467,10 +484,7 @@ public class DIANTAO_UI {
                                         String s = FileUtil.readUtf8String(config.config_path);
                                         s = s.replaceFirst(PATTERN_VERSION_S, String.valueOf(config.version));
                                         FileUtil.writeUtf8String(s ,config.config_path);
-                                        config.quicks = readQuciks(config.quicks_path);
-                                        config.commons = readQuciks(Config.commons_path);
-                                        loadMenuItem(DIANTAO_UI.this.source);
-                                        writeStatus("配置已保存,souce:{}",DIANTAO_UI.this.source);
+                                        if(s_source==1)updateMenu(s_source);
                                 }
                         };
                         button_save.addActionListener(ctrl_s_action);
@@ -597,10 +611,7 @@ public class DIANTAO_UI {
                                         String s = FileUtil.readUtf8String(config.config_path);
                                         s = s.replaceFirst(PATTERN_VERSION_S, String.valueOf(config.version));
                                         FileUtil.writeUtf8String(s, config.config_path);
-                                        config.quicks = readQuciks(config.quicks_path);
-                                        config.commons = readQuciks(Config.commons_path);
-                                        loadMenuItem(DIANTAO_UI.this.source);
-                                        writeStatus("配置已更新,souce:{}",DIANTAO_UI.this.source);
+                                        if(s_source==1)updateMenu(s_source);
                                 }
                         };
                         update_item.addActionListener(ctrl_u_action);
@@ -615,8 +626,8 @@ public class DIANTAO_UI {
                         inputMap(ta_plan,CTRL_UP, CTRL_UP_ACTION);
                         inputMap(ta_plan,CTRL_DOWN, CTRL_DOWN_ACTION);
 
-                        loadMenuItem(1);
-                        loadMenuItem(2);
+                        updateMenu(1);
+                        updateMenu(2);
 
 
                         variable_menu.addMouseListener(new MouseAdapter() {
@@ -989,6 +1000,7 @@ public class DIANTAO_UI {
                         referencees.remove(button_forward);
                         referencees.remove(popupMenu);
                         iFrame.removeAll();
+                        intances.remove(this);
                 }
         }
 
@@ -1051,20 +1063,8 @@ public class DIANTAO_UI {
 
 
         }
-        static WatchMonitor watchMonitor = WatchMonitor.create(Config.commons_path, 1, WatchMonitor.ENTRY_MODIFY);
-        static {
-                SimpleWatcher watcher = new SimpleWatcher() {
-                        int count = 0;
+        private static WatchMonitor watchMonitor;
 
-                        @Override
-                        public void onModify(WatchEvent<?> event, Path currentPath) {
-                                StaticLog.info("file modify {}", count++);
-                        }
-                };
-                DelayWatcher delayWatcher = new DelayWatcher(watcher, 1000);
-                watchMonitor.setWatcher(delayWatcher);
-//                        watchMonitor.start();
-        }
         @SneakyThrows
         private void initConfig(String confName) {
                 this.config = JSONObject.parseObject(FileUtil.getInputStream(System.getProperty("user.dir") + "/exclude/config-" + confName + ".json"), Config.class, Feature.OrderedField);
@@ -1079,40 +1079,22 @@ public class DIANTAO_UI {
                 config.config_name = confName;
                 miniCap = new MiniCap(config);
         }
-
-        private TreeMap<String, String> readQuciks(String path){
-                List<String> list = FileUtil.readUtf8Lines(path);
-                TreeMap<String, String> map = new TreeMap<>();
-                for (int i = 0; i < list.size(); i++) {
-                        String line = list.get(i);
-                        if (line.startsWith(BSY)) {
-                                StringBuilder sb = new StringBuilder(line);
-                                sb.append(LF);
-                                int j;
-                                for (j = i + 1; j < list.size(); j++) {
-                                        if (list.get(j).startsWith(BSY))
-                                                break;
-                                        sb.append(list.get(j)).append(LF);
-                                }
-                                map.put(line.substring(BSY.length()), sb.toString().trim());
-                                i = j - 1;
-                        }
-                }
-                list.clear();
-                return map;
-        }
-        private void loadMenuItem(int type){//1 quicks menun;2 common_menun
+        public void updateMenu(int type){////1 quicks menun;2 common_menun
                 Map<String,String> map=null;
                 JMenu menu=null;
                 String path=null;
                 switch (type){
-                        case 1:map=config.quicks;
-                                menu=quick_menu;
+                        case 1:
                                 path=config.quicks_path;
+                                config.quicks = readQuciks(path);
+                                map=config.quicks;
+                                menu=quick_menu;
                                 break;
-                        case 2:map=config.commons;
-                                menu=common_menu;
+                        case 2:
                                 path= Config.commons_path;
+                                config.commons = readQuciks(path);
+                                map=config.commons;
+                                menu=common_menu;
                                 break;
                 }
                 menu.removeAll();
@@ -1144,6 +1126,28 @@ public class DIANTAO_UI {
                         });
                         menu.add(item);
                 }
+                writeStatus("menu updated,source {}",type);
+        }
+        private TreeMap<String, String> readQuciks(String path){
+                List<String> list = FileUtil.readUtf8Lines(path);
+                TreeMap<String, String> map = new TreeMap<>();
+                for (int i = 0; i < list.size(); i++) {
+                        String line = list.get(i);
+                        if (line.startsWith(BSY)) {
+                                StringBuilder sb = new StringBuilder(line);
+                                sb.append(LF);
+                                int j;
+                                for (j = i + 1; j < list.size(); j++) {
+                                        if (list.get(j).startsWith(BSY))
+                                                break;
+                                        sb.append(list.get(j)).append(LF);
+                                }
+                                map.put(line.substring(BSY.length()), sb.toString().trim());
+                                i = j - 1;
+                        }
+                }
+                list.clear();
+                return map;
         }
         @SneakyThrows
         public void begin(Slot slot, boolean notify, SlotGroup group) {
