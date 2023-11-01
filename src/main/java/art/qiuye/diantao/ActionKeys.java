@@ -1,5 +1,6 @@
 package art.qiuye.diantao;
 
+import art.qiuye.diantao.action.CtrlUpDownAction;
 import cn.hutool.core.util.StrUtil;
 import lombok.SneakyThrows;
 
@@ -151,80 +152,9 @@ public class ActionKeys {
 
     public static final KeyStroke CTRL_UP = KeyStroke.getKeyStroke(KeyEvent.VK_UP, KeyEvent.CTRL_MASK);
 
-    public static final AbstractAction CTRL_UP_ACTION=new AbstractAction() {
-        @SneakyThrows
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            JTextArea area = getTextArea(e);
-            int linenumber = area.getLineOfOffset(area.getCaretPosition());
-            int start = area.getLineStartOffset(linenumber);
-            int end = area.getLineEndOffset(linenumber);
-            String line = area.getText(start, end - start);
-            if(StrUtil.isBlank(line))return;
-            int count;
-            if(line.startsWith(IDT_CMD)){
-                String s = line.split(";")[1];
-                count = Integer.parseInt(s);
-                area.replaceRange(String.valueOf(count+1),start+IDT_CMD.length()+1,start+IDT_CMD.length()+1+s.length());
-            }else {
-                String[] split = line.split(";");
-                String s = null;
-                switch (e.getActionCommand()){
-                    case BUTTON1:s=split[0];break;//count
-                    case BUTTON2:s=split[1];start+=split[0].length()+1;break;//total time
-                    case BUTTON3:s=split[2];start+=split[0].length()+1+split[1].length()+1;break;//interval
-                    case BUTTON4:
-                        s=split[3];
-                        if(s.startsWith("$") || s.startsWith("#")){
-                            start+=split[0].length()+1+split[1].length()+1+split[2].length()+1+1;
-                            s = s.substring(1);
-                        }else return;
-                        break;//$1
-                }
-                count = Integer.parseInt(s);
-                area.replaceRange(String.valueOf(count+1),start,start+s.length());
-            }
-
-        }
-    };
+    public static final AbstractAction CTRL_UP_ACTION = new CtrlUpDownAction(1);
     public static final KeyStroke CTRL_DOWN = KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, KeyEvent.CTRL_MASK);
-    public static final AbstractAction CTRL_DOWN_ACTION=new AbstractAction() {
-
-        @SneakyThrows
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            JTextArea area=getTextArea(e);
-            int linenumber = area.getLineOfOffset(area.getCaretPosition());
-            int start = area.getLineStartOffset(linenumber);
-            int end = area.getLineEndOffset(linenumber);
-            String line = area.getText(start, end - start);
-            if(StrUtil.isBlank(line))return;
-            int count;
-            if(line.startsWith(IDT_CMD)){
-                String s = line.split(";")[1];
-                count = Integer.parseInt(s);
-                area.replaceRange(String.valueOf(count-1),start+IDT_CMD.length()+1,start+IDT_CMD.length()+1+s.length());
-            }else {
-                String[] split = line.split(";");
-                String s = null;
-                switch (e.getActionCommand()){
-                    case BUTTON1:s=split[0];break;//count
-                    case BUTTON2:s=split[1];start+=split[0].length()+1;break;//total time
-                    case BUTTON3:s=split[2];start+=split[0].length()+1+split[1].length()+1;break;//interval
-                    case BUTTON4:
-                        s=split[3];
-                        if(s.startsWith("$") || s.startsWith("#")){
-                            start+=split[0].length()+1+split[1].length()+1+split[2].length()+1+1;
-                            s = s.substring(1);
-                        }else return;
-                        break;//$1
-                }
-                count = Integer.parseInt(s);
-                area.replaceRange(String.valueOf(count-1),start,start+s.length());
-            }
-
-        }
-    };
+    public static final AbstractAction CTRL_DOWN_ACTION = new CtrlUpDownAction(-1);
     public static final AbstractAction DELETE_ITEM_ACTION=new AbstractAction() {
         @SneakyThrows
         @Override
