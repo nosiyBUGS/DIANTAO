@@ -42,9 +42,10 @@ public class CtrlUpDownAction extends AbstractAction{
             switch (command){
                 case "1":s=split[0];break;//count
                 case "2":s=split[1];start+=split[0].length()+1;break;//total time
-                case "3":s=split[2];start+=split[0].length()+1+split[1].length()+1;break;//interval
                 case "4":
                 case "5":
+                    s=split[2];start+=split[0].length()+1+split[1].length()+1;break;//interval
+                case "3":
                     s=split[3];
                     if(s.startsWith("$") || s.startsWith("#")){
                         start+=split[0].length()+1+split[1].length()+1+split[2].length()+1+1;

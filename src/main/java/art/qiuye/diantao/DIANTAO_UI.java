@@ -854,6 +854,7 @@ public class DIANTAO_UI {
                                         referencees.put(timer, ta_plan);
                                         String command = String.valueOf(e.getButton());
                                         CTRL_UP_ACTION.actionPerformed(new ActionEvent(timer,0,command));
+                                        timer.setInitialDelay(300);
                                         timer.setActionCommand(command);
                                         timer.start();
                                 }
@@ -872,6 +873,7 @@ public class DIANTAO_UI {
                                         referencees.put(timer, ta_plan);
                                         String command = String.valueOf(e.getButton());
                                         CTRL_DOWN_ACTION.actionPerformed(new ActionEvent(timer,0,command));
+                                        timer.setInitialDelay(300);
                                         timer.setActionCommand(command);
                                         timer.start();
                                 }
