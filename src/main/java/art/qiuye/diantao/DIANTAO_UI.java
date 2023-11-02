@@ -1263,7 +1263,7 @@ public class DIANTAO_UI {
                                 }
                         } else if (code.equals("s")) {
                                 double d;
-                                if(code.contains(".")) d = Double.parseDouble(code);
+                                if(cmd.contains(".")) d = Double.parseDouble(cmd.substring(code.length()));
                                 else
                                         d = parseSecond(cmd.substring(1));
                                 if (group != null)
