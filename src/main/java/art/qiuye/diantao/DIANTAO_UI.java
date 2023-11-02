@@ -83,8 +83,6 @@ public class DIANTAO_UI {
 
         String cmd_current;
 
-        private Types[] types;
-
         private Thread thread;
         private Thread monitorThread;
         private Vector<ComboLabel<Integer>> items_walk;
@@ -131,9 +129,6 @@ public class DIANTAO_UI {
                 security_swf.put("oppo","110 1260 950 1280");
                 security_swf.put("meizu","120 1380 930 1390");
         }
-
-        public static final int BUTTON4 = 4;
-        public static final int BUTTON5 = 5;
 
 
         private final static MailAccount account = new MailAccount(setting);
@@ -1061,8 +1056,7 @@ public class DIANTAO_UI {
                                 e.printStackTrace();
                         }
                 }
-                Process process = RuntimeUtil.exec(StrUtil.format("mshta vbscript:msgbox(\"{}任务完成\",64,\"消息\")(window.close)", config.config_name));
-
+                RuntimeUtil.exec(StrUtil.format("mshta vbscript:msgbox(\"任务完成\",64,\"{}\")(window.close)",LocalDateTime.now().format(DATE_TIME_FORMATTER)));
 
         }
         private static WatchMonitor watchMonitor;
@@ -1153,51 +1147,44 @@ public class DIANTAO_UI {
         }
         @SneakyThrows
         public void begin(Slot slot, boolean notify, SlotGroup group) {
-                types = new Types[]{Types.视频, Types.孵化};
-                Types type = types[0];
-                String name = type.name();
-                switch (type) {
-                        case 视频:
-                                writeStatus("c = " + slot.count);
-                                String point = slot.X + " " + slot.Y;
-                                String[] cmds = null;
-                                if (slot.cmds != null)
-                                        cmds = slot.cmds.split(";");
-                                while (slot.count-- > 0) {
-                                        int pos = getLinePos(slot.index);
-                                        boolean nom;
-                                        if (slot.type.equals(T_CMD)) {
-                                                nom = slot.cmds.contains(INS_NO_MODIFY);
-                                                execute_cmd(cmds, group);
-                                                pos += slot.params[0].length() + 1;
-                                        } else {
-                                                nom = slot.ex_cmds.contains(INS_NO_MODIFY);
-                                                tap(point);
-                                                g_slot=slot;
-                                                watchAdv(g_slot);
-                                        }
-                                        if (!nom) {
-                                                int finalPos = pos;
-                                                SwingUtilities.invokeAndWait(() -> {
-                                                        ta_plan.replaceRange(slot.count + "", finalPos, finalPos + String.valueOf(slot.count + 1).length());
-                                                });
-                                        }
-                                        writeStatus(StrUtil.format("{} c={}", name, slot.count));
-                                }
-                                writeStatus(StrUtil.format("{}任务完成", name));
-                                if (notify) {
-                                        if (slot.count > 1) {
-                                                try {
-                                                        MailUtil.send(account, "1281886693@qq.com", config.config_name + "任务完成:", JSON.toJSONString(slot), true);
+                writeStatus("c = " + slot.count);
+                String point = slot.X + " " + slot.Y;
+                String[] cmds = null;
+                if (slot.cmds != null)
+                        cmds = slot.cmds.split(";");
+                while (slot.count-- > 0) {
+                        int pos = getLinePos(slot.index);
+                        boolean nom;
+                        if (slot.type.equals(T_CMD)) {
+                                nom = slot.cmds.contains(INS_NO_MODIFY);
+                                execute_cmd(cmds, group);
+                                pos += slot.params[0].length() + 1;
+                        } else {
+                                nom = slot.ex_cmds.contains(INS_NO_MODIFY);
+                                tap(point);
+                                g_slot=slot;
+                                watchAdv(g_slot);
+                        }
+                        if (!nom) {
+                                int finalPos = pos;
+                                SwingUtilities.invokeAndWait(() -> {
+                                        ta_plan.replaceRange(slot.count + "", finalPos, finalPos + String.valueOf(slot.count + 1).length());
+                                });
+                        }
+                        writeStatus(StrUtil.format("c={}", slot.count));
+                }
+                writeStatus("任务完成");
+                if (notify) {
+                        if (slot.count > 1) {
+                                try {
+                                        MailUtil.send(account, "1281886693@qq.com", config.config_name + "任务完成:", JSON.toJSONString(slot), true);
 
-                                                } catch (RuntimeException e) {
-                                                        e.printStackTrace();
-                                                }
-
-                                        }
-                                        RuntimeUtil.exec("mshta vbscript:msgbox(\"视频任务完成\",64,\"消息\")(window.close)");
+                                } catch (RuntimeException e) {
+                                        e.printStackTrace();
                                 }
-                                break;
+
+                        }
+                        RuntimeUtil.exec(StrUtil.format("mshta vbscript:msgbox(\"任务完成\",64,\"{}\")(window.close)",LocalDateTime.now().format(DATE_TIME_FORMATTER)));
                 }
         }
 
@@ -1419,15 +1406,11 @@ public class DIANTAO_UI {
                         }
                         else if(code.equals("print")){
                                 writeStatus(cmd.split("\\s")[1]);
+                        }else if(code.equals("keyevent")){
+                                keyeven(cmd.substring(code.length()));
                         }
                         if (!sleeped) sleep(1);//操作间隔
                 }
-        }
-
-
-        enum Types {
-                孵化,
-                视频;
         }
 
         private int parseSecond(String format) {//such as 1h2m3s
