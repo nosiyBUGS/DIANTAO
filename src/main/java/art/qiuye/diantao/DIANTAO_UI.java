@@ -843,13 +843,14 @@ public class DIANTAO_UI {
                         button_count_inc = new JButton("count+");
                         referencees.put(button_count_inc, ta_plan);
                         button_count_inc.addMouseListener(new MouseAdapter() {
-                                private Timer timer= new Timer(100, CTRL_UP_ACTION);
+                                private Timer timer= new Timer(50, CTRL_UP_ACTION);
                                 @Override
                                 public void mousePressed(MouseEvent e) {
                                         referencees.put(timer, ta_plan);
                                         String command = String.valueOf(e.getButton());
                                         CTRL_UP_ACTION.actionPerformed(new ActionEvent(timer,0,command));
                                         timer.setInitialDelay(300);
+                                        if(command.equals("2"))timer.setDelay(20);
                                         timer.setActionCommand(command);
                                         timer.start();
                                 }
@@ -862,13 +863,14 @@ public class DIANTAO_UI {
                         });
                         button_count_dec = new JButton("count-");
                         button_count_dec.addMouseListener(new MouseAdapter() {
-                                private Timer timer= new Timer(100, CTRL_DOWN_ACTION);
+                                private Timer timer= new Timer(50, CTRL_DOWN_ACTION);
                                 @Override
                                 public void mousePressed(MouseEvent e) {
                                         referencees.put(timer, ta_plan);
                                         String command = String.valueOf(e.getButton());
                                         CTRL_DOWN_ACTION.actionPerformed(new ActionEvent(timer,0,command));
                                         timer.setInitialDelay(300);
+                                        if(command.equals("2"))timer.setDelay(20);
                                         timer.setActionCommand(command);
                                         timer.start();
                                 }
