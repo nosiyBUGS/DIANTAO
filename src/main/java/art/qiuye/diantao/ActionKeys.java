@@ -59,8 +59,8 @@ public class ActionKeys {
                     source.replaceRange("", start, start + CMT.length());
                 else source.insert(CMT, start);
             }
-            if (source.getCaretPosition() < source.getText().length())
-                source.setCaretPosition(end + CMT.length());
+            end = source.getLineEndOffset(linenumber);
+            source.setCaretPosition(end);
         }
     };
     public static final KeyStroke CTRL_D = KeyStroke.getKeyStroke(KeyEvent.VK_D, KeyEvent.CTRL_MASK);
