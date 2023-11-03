@@ -33,7 +33,7 @@ public class CtrlUpDownAction extends AbstractAction{
         if(line.startsWith(IDT_CMD)){
             String s = line.split(";")[1];
             count = Integer.parseInt(s);
-            area.replaceRange(String.valueOf(count-1),start+IDT_CMD.length()+1,start+IDT_CMD.length()+1+s.length());
+            area.replaceRange(String.valueOf(count+ad),start+IDT_CMD.length()+1,start+IDT_CMD.length()+1+s.length());
         }else {
             String[] split = line.split(";");
             String s = null;

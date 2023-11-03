@@ -1056,7 +1056,7 @@ public class DIANTAO_UI {
                                 e.printStackTrace();
                         }
                 }
-                RuntimeUtil.exec(StrUtil.format("mshta vbscript:msgbox(\"任务完成\",64,\"{}\")(window.close)",LocalDateTime.now().format(DATE_TIME_FORMATTER)));
+                RuntimeUtil.exec(StrUtil.format("mshta vbscript:msgbox(\"{}任务完成\",64,\"{}\")(window.close)",config.config_name,LocalDateTime.now().format(TIME_FORMATTER)));
 
         }
         private static WatchMonitor watchMonitor;
@@ -1184,7 +1184,7 @@ public class DIANTAO_UI {
                                 }
 
                         }
-                        RuntimeUtil.exec(StrUtil.format("mshta vbscript:msgbox(\"任务完成\",64,\"{}\")(window.close)",LocalDateTime.now().format(DATE_TIME_FORMATTER)));
+                        RuntimeUtil.exec(StrUtil.format("mshta vbscript:msgbox(\"{}任务完成\",64,\"{}\")(window.close)",config.config_name,LocalDateTime.now().format(TIME_FORMATTER)));
                 }
         }
 
@@ -1283,9 +1283,9 @@ public class DIANTAO_UI {
                         } else if (code.equals("b")) {
                                 back();
                         } else if (code.equals("h")) {
-                                keyeven("KEYCODE_HOME");
+                                keyevent("KEYCODE_HOME");
                         } else if (code.equals("recent")) {
-                                keyeven("KEYCODE_APP_SWITCH");
+                                keyevent("KEYCODE_APP_SWITCH");
                         } else if (code.equals("if")) {//if0 0 100 200 看直播领钻石
 //                                ### adb -s 192.168.1.20 shell LD_LIBRARY_PATH=/data/local/tmp /data/local/tmp/minicap -P 1080x1920@1080x1920/0
                                 int n = 10;
@@ -1407,7 +1407,7 @@ public class DIANTAO_UI {
                         else if(code.equals("print")){
                                 writeStatus(cmd.split("\\s")[1]);
                         }else if(code.equals("keyevent")){
-                                keyeven(cmd.substring(code.length()));
+                                keyevent(cmd.substring(code.length()));
                         }
                         if (!sleeped) sleep(1);//操作间隔
                 }
@@ -1513,11 +1513,10 @@ public class DIANTAO_UI {
         }
 
         void back() {
-                keyeven(cmd_keyevent + "KEYCODE_BACK");
+                keyevent(cmd_keyevent + "KEYCODE_BACK");
         }
 
-        void keyeven(String key){
-                sleep(1);
+        void keyevent(String key){
                 RuntimeUtil.execForStr(cmd_keyevent + key);
         }
 
