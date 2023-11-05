@@ -57,7 +57,7 @@ public class Constants {
 
     public static final Pattern PATTERN_BRACKET = Pattern.compile("(?<=\\()([\\d,]+?)(?=\\))");
 
-
+    public static final Pattern PATTERN_AROW_BEGIN = Pattern.compile("^[$#]{1,2}");
 
     public static final String LF = LineSeparator.LINUX.getValue();
     public static final String CR_LF = LineSeparator.LINUX.getValue();

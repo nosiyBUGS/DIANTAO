@@ -26,5 +26,7 @@ public class Slot {
 
      public String[] params;
 
+     public boolean arow_down;
+
 
 }

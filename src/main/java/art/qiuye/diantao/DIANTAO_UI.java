@@ -60,6 +60,7 @@ import java.util.stream.Collectors;
 import static art.qiuye.diantao.ActionKeys.*;
 import static art.qiuye.diantao.Constants.*;
 import static cn.hutool.core.util.StrUtil.isNotBlank;
+import static cn.hutool.core.util.StrUtil.str;
 
 public class DIANTAO_UI {
 
@@ -738,16 +739,23 @@ public class DIANTAO_UI {
                                                                 String group0 = ReUtil.getGroup0(PATTERN_JJ, slot.ex_cmds);
                                                                 j = Integer.parseInt(group0.substring(INS_JJ.length()));
                                                         }
-                                                        int idx = Integer.parseInt(idt.substring(1)) + offset_arow;
+                                                        String bg = ReUtil.getGroup0(PATTERN_AROW_BEGIN, idt);
+                                                        slot.arow_down=bg.length()==1;
+                                                        int idx = Integer.parseInt(idt.substring(bg.length())) + offset_arow;
                                                         slot.origin_arow = idx;
                                                         slot.arow = idx - j;
+                                                        Vector<ComboLabel<Integer>> items;
                                                         if (idt.startsWith("#")) {//T_WALK
-                                                                item = items_walk.get(idx - 1 - j);
+                                                               items=items_walk;
                                                                 slot.type = T_WALK;
                                                         } else if (idt.startsWith("$")) {
-                                                                item = items_work.get(idx - 1 - j);
+                                                                items=items_work;
                                                                 slot.type = T_WORK;
                                                         }
+                                                        if(slot.arow_down)
+                                                                item = items_work.get(idx - 1 - j);
+                                                        else
+                                                                item = items_work.get(idx - 1);//absolute
                                                         slot.X = common_x;
                                                         slot.Y = item.getValue();
                                                 } else {//point
@@ -757,7 +765,8 @@ public class DIANTAO_UI {
                                                 }
                                                 slot.ex_cmds = line.substring(params[0].length() + params[1].length() + params[2].length() + params[3].length() + 4);
                                                 if (slot.type.equals(T_WALK) || slot.type.equals(T_WORK)) {
-                                                        j++;
+                                                        if(slot.arow_down)//ignore
+                                                         j++;
                                                 }
                                         }
                                         slots.add(slot);
@@ -1004,7 +1013,6 @@ public class DIANTAO_UI {
         @SneakyThrows
         private int getLinePos(int lineunmber) {
                 int j = 0;
-//            while (!ta_plan.getText(j++, 1).equals(LF));//no need to pass first line
                 int last_length = 0;
                 while (lineunmber-- >= 0) {
                         String line=null;
@@ -1110,7 +1118,13 @@ public class DIANTAO_UI {
                                                 return;
                                         }
                                 }else if (e.getModifiers() == KeyEvent.BUTTON2_MASK) {
-                                        ta_plan.append(LF+entry.getValue());
+                                        String[] split = entry.getValue().split(LF);
+                                        StringBuilder sb = new StringBuilder();
+                                        for (int i = 1; i < split.length; i++) {
+                                                sb.append(split[i]).append(LF);
+                                        }
+                                        ta_plan.insert(sb.toString(),ta_plan.getCaretPosition());
+
                                 }
                                 else {
                                         ta_plan.setText(entry.getValue());

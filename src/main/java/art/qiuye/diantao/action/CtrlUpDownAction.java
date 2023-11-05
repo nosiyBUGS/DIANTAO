@@ -1,5 +1,7 @@
 package art.qiuye.diantao.action;
 
+import cn.hutool.core.util.NumberUtil;
+import cn.hutool.core.util.ReUtil;
 import cn.hutool.core.util.StrUtil;
 import lombok.SneakyThrows;
 
@@ -7,7 +9,9 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 
 import static art.qiuye.diantao.Constants.IDT_CMD;
+import static art.qiuye.diantao.Constants.PATTERN_AROW_BEGIN;
 import static art.qiuye.diantao.DIANTAO_UI.getTextArea;
+import static cn.hutool.core.util.StrUtil.isBlank;
 
 /**
  * @author hy
@@ -28,7 +32,7 @@ public class CtrlUpDownAction extends AbstractAction{
         int start = area.getLineStartOffset(linenumber);
         int end = area.getLineEndOffset(linenumber);
         String line = area.getText(start, end - start);
-        if(StrUtil.isBlank(line))return;
+        if(isBlank(line))return;
         int count;
         if(line.startsWith(IDT_CMD)){
             String s = line.split(";")[1];
@@ -38,7 +42,7 @@ public class CtrlUpDownAction extends AbstractAction{
             String[] split = line.split(";");
             String s = null;
             String command = e.getActionCommand();
-            if(command==null) command = "1";
+            if(!NumberUtil.isNumber(command)) command = "1";
             switch (command){
                 case "1":s=split[0];break;//count
                 case "2":s=split[1];start+=split[0].length()+1;break;//total time
@@ -47,9 +51,10 @@ public class CtrlUpDownAction extends AbstractAction{
                     s=split[2];start+=split[0].length()+1+split[1].length()+1;break;//interval
                 case "3":
                     s=split[3];
-                    if(s.startsWith("$") || s.startsWith("#")){
-                        start+=split[0].length()+1+split[1].length()+1+split[2].length()+1+1;
-                        s = s.substring(1);
+                    String bg = ReUtil.getGroup0(PATTERN_AROW_BEGIN, s);
+                    if(bg!=null){
+                        start+=split[0].length()+1+split[1].length()+1+split[2].length()+1+bg.length();
+                        s = s.substring(bg.length());
                     }else return;
                     break;//$1
             }
