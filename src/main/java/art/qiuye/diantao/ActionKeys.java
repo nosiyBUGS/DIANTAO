@@ -188,7 +188,7 @@ public class ActionKeys {
         @Override
         public void actionPerformed(ActionEvent e) {
             JTextArea area = getTextArea(e);
-            area.append("[cmd];1;");
+            area.insert("[cmd];1;",area.getCaretPosition());
         }
     };
 }

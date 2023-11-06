@@ -697,7 +697,7 @@ public class DIANTAO_UI {
                                         sb.append(LF);
                                 }
                                 text=sb.toString();
-                                ta_plan.setText(text);
+//                                ta_plan.setText(text);
                                 collect.clear();
 
                                 //begin generate slot
