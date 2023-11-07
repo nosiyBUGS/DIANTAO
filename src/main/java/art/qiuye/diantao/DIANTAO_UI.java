@@ -683,13 +683,19 @@ public class DIANTAO_UI {
 
                                 String[] lines = text.split(LF);
                                 List<String> collect = new ArrayList<>();
+                                StringBuilder sb = new StringBuilder();
                                 for (String line : lines) {
                                         collect.add(line);
                                 }
                                 collect = nestRef(collect, 0);
-                                StringBuilder sb = new StringBuilder();
-                                List<String> fluid=new ArrayList<>();
+                                for (String s : collect) {
+                                        sb.append(s);
+                                        sb.append(LF);
+                                }
+                                ta_plan.setText(sb.toString());
 
+                                List<String> fluid=new ArrayList<>();
+                                sb.setLength(0);
                                 for (String s : collect) {
                                         s = nestVariable(s);
                                         fluid.add(s);
@@ -697,7 +703,6 @@ public class DIANTAO_UI {
                                         sb.append(LF);
                                 }
                                 text=sb.toString();
-//                                ta_plan.setText(text);
                                 collect.clear();
 
                                 //begin generate slot
@@ -1120,8 +1125,10 @@ public class DIANTAO_UI {
                                 }else if (e.getModifiers() == KeyEvent.BUTTON2_MASK) {
                                         String[] split = entry.getValue().split(LF);
                                         StringBuilder sb = new StringBuilder();
-                                        for (int i = 1; i < split.length; i++) {
-                                                sb.append(split[i]).append(LF);
+                                        for (int i = 0; i < split.length; i++) {
+                                                String line = split[i];
+                                                if(line.startsWith(BSY) || line.startsWith(IDT_ACTIVITY))continue;
+                                                sb.append(line).append(LF);
                                         }
                                         ta_plan.insert(sb.toString(),ta_plan.getCaretPosition());
 

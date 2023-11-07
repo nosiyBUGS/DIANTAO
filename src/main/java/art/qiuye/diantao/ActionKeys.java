@@ -111,7 +111,7 @@ public class ActionKeys {
             int n2_end = source.getLineEndOffset(n1 + 1);
             String line2 = source.getText(n2_st, n2_end - n2_st);
             if (n1 == source.getLineCount() - 2) {//倒数第二行
-                line2 += "\n";
+                line2 += LF;
                 line1 = line1.replace(LF, "");
             }
             source.replaceRange(line2 + line1, n1_st, n2_end);
@@ -136,7 +136,7 @@ public class ActionKeys {
             int n2_st = source.getLineStartOffset(n1 - 1);
             String line2 = source.getText(n2_st, n2_end - n2_st);
             if (n1 == source.getLineCount() - 1) {//倒数第二行
-                line1 += "\n";
+                line1 += LF;
                 line2 = line2.replace(LF, "");
             }
             source.replaceRange(line1 + line2, n2_st, n1_end);
