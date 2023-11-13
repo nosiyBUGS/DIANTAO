@@ -37,6 +37,7 @@ import javax.swing.Timer;
 import javax.swing.*;
 import javax.swing.event.InternalFrameAdapter;
 import javax.swing.event.InternalFrameEvent;
+import javax.swing.text.DefaultCaret;
 import javax.swing.undo.UndoManager;
 import java.awt.*;
 import java.awt.event.*;
@@ -245,9 +246,13 @@ public class DIANTAO_UI {
                         JMenuBar menuBar = new JMenuBar();
                         quick_menu = new JMenu("快捷操作");
                         JMenu offset_menu = new JMenu("偏移");
-                        JMenu reload_menu = new JMenu("重载配置");
-                        JMenu upload_menu = new JMenu("上传配置");
-                        JMenu down_menu = new JMenu("下载配置");
+                        JMenu config_menun=new JMenu("配置");
+                                JMenuItem reload_menu = new JMenuItem("重载配置");
+                                JMenuItem upload_menu = new JMenuItem("上传配置");
+                                JMenuItem down_menu = new JMenuItem("下载配置");
+                                config_menun.add(reload_menu);
+                                config_menun.add(upload_menu);
+                                config_menun.add(down_menu);
                         common_menu = new JMenu("公共配置");
                         JMenu variable_menu = new JMenu("编辑变量");
                         JMenu source_menu = new JMenu("source");
@@ -259,7 +264,7 @@ public class DIANTAO_UI {
                         MouseAdapter mouseAdapter = new MouseAdapter() {
                                 @SneakyThrows
                                 @Override
-                                public void mouseClicked(MouseEvent e) {
+                                public void mousePressed(MouseEvent e) {
                                         if (e.getSource() instanceof JTextArea) {
                                                 iFrame = (JInternalFrame) ((JTextArea) e.getSource()).getRootPane().getParent();
                                                 ta_plan = (JTextArea) e.getSource();
@@ -365,9 +370,10 @@ public class DIANTAO_UI {
 
                         menuBar.add(quick_menu);
                         menuBar.add(offset_menu);
-                        menuBar.add(reload_menu);
-                        menuBar.add(upload_menu);
-                        menuBar.add(down_menu);
+//                        menuBar.add(reload_menu);
+//                        menuBar.add(upload_menu);
+//                        menuBar.add(down_menu);
+                        menuBar.add(config_menun);
                         menuBar.add(common_menu);
                         menuBar.add(variable_menu);
                         menuBar.add(source_menu);
@@ -536,13 +542,13 @@ public class DIANTAO_UI {
                         popupMenu.add(delete_item);
                         popupMenu.add(decrease_item);
                         popupMenu.add(increase_item);
-                        popupMenu.add(update_item);
-                        popupMenu.add(shift_up_item);
-                        popupMenu.add(shift_down_item);
-                        popupMenu.add(cut_item);
+                        popupMenu.add(header_item);
                         popupMenu.add(copy_item);
                         popupMenu.add(paste_item);
-                        popupMenu.add(header_item);
+                        popupMenu.add(cut_item);
+                        popupMenu.add(shift_up_item);
+                        popupMenu.add(shift_down_item);
+                        popupMenu.add(update_item);
 
                         ta_plan.setComponentPopupMenu(popupMenu);
 
@@ -555,6 +561,7 @@ public class DIANTAO_UI {
                         ta_plan.setText(lastConfig);
                         Font status_font = new Font("宋体", Font.TRUETYPE_FONT, 15);
                         status_area = new JTextArea(5, 50);
+                        ((DefaultCaret) status_area.getCaret()).setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
                         JScrollPane status_pane = new JScrollPane(status_area);
                         status_area.setBorder(BorderFactory.createTitledBorder("status"));
                         status_area.setLineWrap(true);
@@ -635,7 +642,7 @@ public class DIANTAO_UI {
                                         JTextArea area = new JTextArea(JSON.toJSONString(config.variables, true));
                                         area.getDocument().addUndoableEditListener(new UndoManager());
                                         area.setColumns(37);
-                                        area.setRows(23);
+                                        area.setRows(24);
 
                                         inputMap(area,ALT_SHIT_UP, ALT_SHIFT_UP_ACTION);
                                         inputMap(area,ALT_SHIT_DOWN,ALT_SHIFT_DOWN_ACTION);
@@ -645,7 +652,7 @@ public class DIANTAO_UI {
                                         inputMap(area,CTRL_Y, CTRL_Y_ACTION);
                                         JScrollPane scrollPane = new JScrollPane(area);
                                         dialog.add(scrollPane);
-                                        dialog.setSize(350,500);
+                                        dialog.setSize(350,550);
                                         dialog.setLocation(frame.getLocation());
                                         JButton save = new JButton("保存");
                                         save.addActionListener(ev->{
@@ -693,7 +700,6 @@ public class DIANTAO_UI {
                                         sb.append(LF);
                                 }
                                 ta_plan.setText(sb.toString());
-
                                 List<String> fluid=new ArrayList<>();
                                 sb.setLength(0);
                                 for (String s : collect) {
@@ -712,7 +718,7 @@ public class DIANTAO_UI {
                                 int j = 0;
                                 for (int i = 0; i < collect.size(); i++) {
                                         String line = collect.get(i);
-                                        String[] params = line.split(";", -1);
+                                        String[] params = line.split(";");
                                         Slot slot = new Slot();
                                         slot.index = i;
                                         slot.params = params;
@@ -768,7 +774,10 @@ public class DIANTAO_UI {
                                                         slot.Y = Integer.valueOf(sp[1]);
                                                         slot.type = T_OTHER;
                                                 }
-                                                slot.ex_cmds = line.substring(params[0].length() + params[1].length() + params[2].length() + params[3].length() + 4);
+                                                if(params.length>4)
+                                                        slot.ex_cmds = line.substring(params[0].length() + params[1].length() + params[2].length() + params[3].length() + 4);
+                                                else
+                                                        slot.ex_cmds = "";
                                                 if (slot.type.equals(T_WALK) || slot.type.equals(T_WORK)) {
                                                         if(slot.arow_down)//ignore
                                                          j++;
@@ -795,8 +804,9 @@ public class DIANTAO_UI {
                                                 if (current == null) current = pre;
                                                 writeBar("{}\nthread:{}\nsuspend:{}\ncurrent:{}\nactNames:{}", LocalTime.now().format(TIME_FORMATTER), thread.getState(), thread_suspend, current, activityNames);
                                                 //com.taobao.live/com.alibaba.wireless.security.open.middletier.fc.ui.ContainerActivity
+                                                //com.taobao.live/mtopsdk.extra.antiattack.CheckCodeValidateActivity
                                                 //fixme
-                                                if(current.contains("com.alibaba.wireless.security")){
+                                                if(current.contains("com.alibaba.wireless.security") || current.contains("mtopsdk.extra.antiattack.CheckCodeValidateActivity")){
                                                         compensate=0;
                                                         String cod=security_swf.get(config.config_name);
                                                         if(cod!=null){
@@ -901,7 +911,7 @@ public class DIANTAO_UI {
                         button_forward.addActionListener(CTRL_SHIFT_Z_ACTION);
                         JPanel panel_plan = new JPanel();
                         panel_plan.add(button_F3);
-                        panel_plan.add(button_batch);
+                        panel_plan.add(button_save);
                         JPanel panel_shift = new JPanel();
                         panel_shift.add(button_count_inc);
                         panel_shift.add(button_count_dec);
@@ -914,7 +924,7 @@ public class DIANTAO_UI {
                         panel_ta.add(status_pane);
                         panel_ta.add(bar_pane);
                         JPanel panel_stop = new JPanel();
-                        panel_stop.add(button_save);
+                        panel_stop.add(button_batch);
                         panel_stop.add(button_stop);
 
                         manualPane.add(panel_stop);
@@ -1057,9 +1067,9 @@ public class DIANTAO_UI {
 
         @SneakyThrows
         public void beginBatch(SlotGroup group) {
-
                 List<Slot> slots = group.slots;
-                for (Slot slot : slots){
+                for (Slot slot : slots) {
+                        ta_plan.setCaretPosition(getLinePos(slot.index));
                         begin(slot, false, group);
                 }
                 if (slots.size() > 1 || group.totalTime > 100) {
@@ -1190,6 +1200,7 @@ public class DIANTAO_UI {
                                 int finalPos = pos;
                                 SwingUtilities.invokeAndWait(() -> {
                                         ta_plan.replaceRange(slot.count + "", finalPos, finalPos + String.valueOf(slot.count + 1).length());
+                                        ta_plan.setCaretPosition(finalPos);
                                 });
                         }
                         writeStatus(StrUtil.format("c={}", slot.count));
@@ -1480,9 +1491,15 @@ public class DIANTAO_UI {
                         for (int i = 0; i < times + 1; i++) {
                                 if (direction == 0) {
                                         if (cis_direction || i % 2 == 0)
-                                                this.swipe(config.from);
+                                                if(s.interval==3)
+                                                        keyevent("KEYCODE_PAGE_DOWN");
+                                                else
+                                                        this.swipe(config.from);
                                         else
-                                                this.swipe(config.to);
+                                                if(s.interval==3)
+                                                        keyevent("KEYCODE_PAGE_UP");
+                                                else
+                                                        this.swipe(config.to);
                                 } else if (direction == 1)
                                         swipe(config.from+s.duration);
                                 else if (direction == 2)
