@@ -147,7 +147,7 @@ public class ActionKeys {
 
     public static final KeyStroke CTRL_UP = KeyStroke.getKeyStroke(KeyEvent.VK_UP, KeyEvent.CTRL_MASK);
 
-    public static final AbstractAction CTRL_UP_ACTION = new CtrlUpDownAction(1);
+    public static final CtrlUpDownAction CTRL_UP_ACTION = new CtrlUpDownAction(1);
     public static final KeyStroke CTRL_DOWN = KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, KeyEvent.CTRL_MASK);
     public static final AbstractAction CTRL_DOWN_ACTION = new CtrlUpDownAction(-1);
     public static final AbstractAction DELETE_ITEM_ACTION=new AbstractAction() {

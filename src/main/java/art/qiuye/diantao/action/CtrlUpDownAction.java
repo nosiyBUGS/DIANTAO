@@ -2,7 +2,6 @@ package art.qiuye.diantao.action;
 
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ReUtil;
-import cn.hutool.core.util.StrUtil;
 import lombok.SneakyThrows;
 
 import javax.swing.*;
@@ -21,6 +20,10 @@ public class CtrlUpDownAction extends AbstractAction{
     private int ad;
 
     public CtrlUpDownAction(int ad) {
+        this.ad = ad;
+    }
+
+    public void setAd(int ad) {
         this.ad = ad;
     }
 

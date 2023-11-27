@@ -61,7 +61,6 @@ import java.util.stream.Collectors;
 import static art.qiuye.diantao.ActionKeys.*;
 import static art.qiuye.diantao.Constants.*;
 import static cn.hutool.core.util.StrUtil.isNotBlank;
-import static cn.hutool.core.util.StrUtil.str;
 
 public class DIANTAO_UI {
 
@@ -629,6 +628,8 @@ public class DIANTAO_UI {
                         inputMap(ta_plan,CTRL_UP, CTRL_UP_ACTION);
                         inputMap(ta_plan,CTRL_DOWN, CTRL_DOWN_ACTION);
 
+
+
                         updateMenu(1);
                         updateMenu(2);
 
@@ -866,12 +867,25 @@ public class DIANTAO_UI {
                         });
                         button_count_inc = new JButton("count+");
                         referencees.put(button_count_inc, ta_plan);
-                        button_count_inc.addMouseListener(new MouseAdapter() {
-                                private Timer timer= new Timer(50, CTRL_UP_ACTION);
+                        MouseAdapter inc_adapter = new MouseAdapter() {
+                                private final Timer timer = new Timer(50, CTRL_UP_ACTION);
+
                                 @Override
                                 public void mousePressed(MouseEvent e) {
                                         referencees.put(timer, ta_plan);
                                         String command = String.valueOf(e.getButton());
+                                        if(e.getSource() instanceof JTextArea){
+                                                if(e.getButton()==4){
+                                                        CTRL_UP_ACTION.setAd(1);
+                                                        CTRL_UP_ACTION.actionPerformed(new ActionEvent(e.getSource(),0,command));
+                                                }
+                                                if(e.getButton()==5){
+                                                        CTRL_UP_ACTION.setAd(-1);
+                                                        CTRL_UP_ACTION.actionPerformed(new ActionEvent(e.getSource(),0,command));
+                                                }
+                                                CTRL_UP_ACTION.setAd(1);
+                                                return;
+                                        }
                                         CTRL_UP_ACTION.actionPerformed(new ActionEvent(timer,0,command));
                                         timer.setInitialDelay(300);
                                         timer.setActionCommand(command);
@@ -883,10 +897,13 @@ public class DIANTAO_UI {
                                         timer.stop();
                                         referencees.remove(timer);
                                 }
-                        });
+                        };
+
+                        button_count_inc.addMouseListener(inc_adapter);
+                        ta_plan.addMouseListener(inc_adapter);
                         button_count_dec = new JButton("count-");
                         button_count_dec.addMouseListener(new MouseAdapter() {
-                                private Timer timer= new Timer(50, CTRL_DOWN_ACTION);
+                                private final Timer timer= new Timer(50, CTRL_DOWN_ACTION);
                                 @Override
                                 public void mousePressed(MouseEvent e) {
                                         referencees.put(timer, ta_plan);
