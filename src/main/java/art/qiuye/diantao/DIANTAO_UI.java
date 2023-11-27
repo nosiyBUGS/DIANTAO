@@ -156,6 +156,7 @@ public class DIANTAO_UI {
         private JMenu common_menu;
 
         private static List<DIANTAO_UI> intances = new ArrayList<>();
+        private JScrollPane status_pane;
 
         public static void main(String[] args) {
                 DIANTAO_UI ui = new DIANTAO_UI();
@@ -287,7 +288,7 @@ public class DIANTAO_UI {
                         upload_menu.addMouseListener(new MouseAdapter() {
                                                              @SneakyThrows
                                                              @Override
-                                                             public void mouseClicked(MouseEvent e) {
+                                                             public void mousePressed(MouseEvent e) {
                                                                      DianConfig dianConfig = db.get(new Entity(TB_CONFIG).set(FD_VENDOR, config.config_name)).toBean(DianConfig.class);
                                                                      String quick_value = FileUtil.readUtf8String(config.quicks_path);
                                                                      if (SecureUtil.md5(dianConfig.quick).equals(SecureUtil.md5(quick_value))) {
@@ -316,7 +317,7 @@ public class DIANTAO_UI {
                         down_menu.addMouseListener(new MouseAdapter() {
                                 @SneakyThrows
                                 @Override
-                                public void mouseClicked(MouseEvent e) {
+                                public void mousePressed(MouseEvent e) {
                                         DianConfig dianConfig = null;
                                         try {
                                                 Entity entity = db.get(new Entity(TB_CONFIG).set(FD_VENDOR, config.config_name));
@@ -561,8 +562,8 @@ public class DIANTAO_UI {
                         ta_plan.setText(lastConfig);
                         Font status_font = new Font("宋体", Font.TRUETYPE_FONT, 15);
                         status_area = new JTextArea(5, 50);
-                        ((DefaultCaret) status_area.getCaret()).setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
-                        JScrollPane status_pane = new JScrollPane(status_area);
+//                        ((DefaultCaret) status_area.getCaret()).setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
+                        status_pane = new JScrollPane(status_area);
                         status_area.setBorder(BorderFactory.createTitledBorder("status"));
                         status_area.setLineWrap(true);
                         status_area.setFont(status_font);
@@ -950,9 +951,11 @@ public class DIANTAO_UI {
 
         private String msg = "";
         private String nestVariable(String s){
-                List<String> groups = ReUtil.findAllGroup0(PATTERN_VARIABLES, s);
+                List<String> groups = null;
+                if(!s.startsWith(CMT))
+                        groups=ReUtil.findAllGroup0(PATTERN_VARIABLES, s);
                 int limit=5;
-                while (!groups.isEmpty() && limit-->0){
+                while (groups!=null && !groups.isEmpty() && limit-->0){
                         for (String g : groups) {
                                 int b_index=g.indexOf('(');
                                 String value;
@@ -989,6 +992,11 @@ public class DIANTAO_UI {
                                 nest_flag = true;
                                 String[] subs = line.split(";");
                                 String v = map.get(subs[1]);
+                                if(v==null){
+                                        msg=line+": NOT FOUND";
+                                        JOptionPane.showMessageDialog(iFrame,msg);
+                                        msg = "";
+                                }
                                 String[] split = v.split(LF);
                                 for (int i = 1; i < split.length; i++)
                                         temp.add(split[i]);
@@ -1061,6 +1069,8 @@ public class DIANTAO_UI {
                         if (writeConsole)
                                 System.out.println(text);
                         status_area.append(LocalTime.now().format(TIME_FORMATTER) + ":" + text + LF);
+                        JScrollBar bar = status_pane.getVerticalScrollBar();
+                        bar.setValue(bar.getMaximum());
                 });
 
         }
@@ -1488,7 +1498,8 @@ public class DIANTAO_UI {
                 }
                 if (s.interval > 0) {
                         int times = s.total_duration / s.interval;
-                        for (int i = 0; i < times + 1; i++) {
+                        int mod = s.total_duration % s.interval;
+                        for (int i = 0; i < times; i++) {
                                 if (direction == 0) {
                                         if (cis_direction || i % 2 == 0)
                                                 if(s.interval==3)
@@ -1512,6 +1523,7 @@ public class DIANTAO_UI {
 
                                 this.sleep(s.interval);
                         }
+                        this.sleep(mod);
                 } else
                         this.sleep(s.total_duration);
                 this.back();
