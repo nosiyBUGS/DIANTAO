@@ -37,7 +37,6 @@ import javax.swing.Timer;
 import javax.swing.*;
 import javax.swing.event.InternalFrameAdapter;
 import javax.swing.event.InternalFrameEvent;
-import javax.swing.text.DefaultCaret;
 import javax.swing.undo.UndoManager;
 import java.awt.*;
 import java.awt.event.*;
@@ -184,6 +183,7 @@ public class DIANTAO_UI {
                 cmd_current = path + "shell dumpsys activity activities | grep mResumedActivity";
                 cmd_start=path + "shell am start -n ";
                 cmd_kill =path + "shell am force-stop ";
+                miniCap.device=config.current_device;
         }
 
         private void main(String confName) {

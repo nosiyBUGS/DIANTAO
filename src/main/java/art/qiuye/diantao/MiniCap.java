@@ -2,7 +2,6 @@ package art.qiuye.diantao;
 
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.lang.Assert;
-import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.RuntimeUtil;
 import cn.hutool.core.util.StrUtil;
@@ -31,7 +30,7 @@ public class MiniCap {
 
     private  String adb_path;
 
-    private String device;
+    public String device;
 
     public static final String NO_FILE = "No such file";
     public static final String NO_FOUND = "not found";
