@@ -4,7 +4,6 @@ import art.qiuye.diantao.db.DianConfig;
 import cn.hutool.core.date.StopWatch;
 import cn.hutool.core.img.ImgUtil;
 import cn.hutool.core.io.FileUtil;
-import cn.hutool.core.io.IORuntimeException;
 import cn.hutool.core.io.file.FileWriter;
 import cn.hutool.core.io.file.LineSeparator;
 import cn.hutool.core.io.watch.SimpleWatcher;
@@ -155,6 +154,10 @@ public class DIANTAO_UI {
 
         private static List<DIANTAO_UI> intances = new ArrayList<>();
         private JScrollPane status_pane;
+        private final HttpRequest ocrPost = HttpUtil.createPost("http://snap.ie.sogou.com/recognition")
+                .contentType(ContentType.MULTIPART.getValue())
+                .header("Origin", "se-extension://ext-1055834318")
+                .header("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.81 Safari/537.36 SE 2.X MetaSr 1.0");
 
         public static void main(String[] args) {
                 DIANTAO_UI ui = new DIANTAO_UI();
@@ -1353,60 +1356,36 @@ public class DIANTAO_UI {
                                 int y = Integer.parseInt(subs[1]);
                                 int width = Integer.parseInt(subs[2]);
                                 int height = Integer.parseInt(subs[3]);
-                                HttpRequest request = HttpUtil.createPost("http://snap.ie.sogou.com/recognition")
-                                        .contentType(ContentType.MULTIPART.getValue())
-                                        .header("Origin", "se-extension://ext-1055834318")
-                                        .header("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.81 Safari/537.36 SE 2.X MetaSr 1.0");
                                 while (n-- > 0) {
                                         tap(subs[7] + " " + subs[8]);
                                         sleep(0.5);
-                                        byte[] bytes = miniCap.frame();
-                                        ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
-//                                        FileUtil.writeBytes(bytes, System.getProperty("user.dir") + "/ocr.png");
-                                        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                                        ImgUtil.cut(inputStream, outputStream, new Rectangle(x, y, width, height));
-                                        request.form("file", outputStream.toByteArray(), "file");
-                                        String body;
-                                        try {
-                                                body = request.execute().body();
-                                        } catch (IORuntimeException e) {
-                                                writeStatus(e.getMessage());
-                                                body = request.execute().body();
-                                                e.printStackTrace();
-                                        }
+                                        ByteArrayOutputStream outputStream = getImage(false, x, y, width, height);
+                                        String body = doOcr(outputStream.toByteArray());
                                         writeStatus("## ocr body {} ", body);
                                         if (body.contains(subs[4])) {//包含
                                                 tap(subs[5] + " " + subs[6]);
                                                 break;
                                         }
-                                        inputStream.close();outputStream.close();
+                                        outputStream.close();
                                 }
-                        } else if(code.equals("ocrt")){//ocrt 0 0 100 200 可跳槽,name
-                                int n = 10;
-                                String[] subs = cmd.substring("ocrt".length()).trim().split("\\s");
-                                int x = Integer.parseInt(subs[0]);
-                                int y = Integer.parseInt(subs[1]);
-                                int width = Integer.parseInt(subs[2]);
-                                int height = Integer.parseInt(subs[3]);
-                                HttpRequest request = HttpUtil.createPost("http://snap.ie.sogou.com/recognition")
-                                        .contentType(ContentType.MULTIPART.getValue())
-                                        .header("Origin", "se-extension://ext-1055834318")
-                                        .header("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.81 Safari/537.36 SE 2.X MetaSr 1.0");
-//                                ByteArrayInputStream inputStream = new ByteArrayInputStream(miniCap.frame());
-                                FileInputStream inputStream = new FileInputStream(System.getProperty("user.dir") + "/ocr.png");
-                                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                                BufferedImage bufferedImage = ImageIO.read(inputStream);
-                                Image cutImage = ImgUtil.cut(bufferedImage, new Rectangle(x, y, width, height));
-                                Graphics2D graphics2D = bufferedImage.createGraphics();
-                                graphics2D.setColor(Color.WHITE);
-                                graphics2D.fillRect(0,0,bufferedImage.getWidth(),bufferedImage.getHeight());
-                                graphics2D.drawImage(cutImage, x, y, width, height, Color.WHITE, null);
-                                ImageIO.write(bufferedImage, ImgUtil.IMAGE_TYPE_PNG,outputStream);
-                                request.form("file", outputStream.toByteArray(), "file");
-                                FileUtil.writeBytes(outputStream.toByteArray(), System.getProperty("user.dir") + "/out.png");
-                                String body = request.execute().body();
-                                StaticLog.info("## ocr body {} ", body);
-                                inputStream.close();outputStream.close();
+                        } else if(code.equals("digest")){//ocrt 0 0 100 200 可跳槽,name
+                                String[] subs = cmd.substring(code.length()).trim().split("\\s");
+                                int x1 = Integer.parseInt(subs[0]);
+                                int y1 = Integer.parseInt(subs[1]);
+
+                                int x2 = Integer.parseInt(subs[2]);
+                                int y2 = Integer.parseInt(subs[3]);
+
+                                int x3 = Integer.parseInt(subs[4]);
+                                int y3 = Integer.parseInt(subs[5]);
+
+                                int x4 = Integer.parseInt(subs[6]);
+                                int y4 = Integer.parseInt(subs[7]);
+
+                              ByteArrayOutputStream outputStream = getImage(x1,y1,x2,y2,x3,y3,x4,y4,true);
+                              String body = doOcr(outputStream.toByteArray());
+
+                              writeStatus("## ocr body {} ", body);
                         }else if(code.equals("screen")){
                                 String screen_path = Config.screen_path + config.config_name+"-"  +LocalDateTime.now().format(DATE_TIME_FORMATTER)+ ".jpg";
                                 writeStatus("screenshot:{}",screen_path);
@@ -1471,7 +1450,38 @@ public class DIANTAO_UI {
                         if (!sleeped) sleep(1);//操作间隔
                 }
         }
-
+        private ByteArrayOutputStream getImage(boolean fillBg,int x1,int y1,int w,int h){
+                int x2=x1+w,y2=y1;
+                int x3=x2,y3=y1+h;
+                int x4=x1,y4=y3;
+                return getImage(x1, y1, x2, y2, x3, y3, x4, y4, fillBg);
+        }
+        @SneakyThrows
+        private ByteArrayOutputStream getImage(int x1,int y1,int x2,int y2,int x3,int y3,int x4,int y4, boolean fillBg){
+                ByteArrayInputStream inputStream = new ByteArrayInputStream(miniCap.frame());
+                int pw=x2-x1;
+                int ph=y3-y2;
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                BufferedImage bufferedImage = ImageIO.read(inputStream);
+                int w=bufferedImage.getWidth(),h=bufferedImage.getHeight();
+                Graphics2D graphics2D = bufferedImage.createGraphics();
+                if(fillBg){
+                        graphics2D.fillRect(0,0,w,y1);
+                        graphics2D.fillRect(0,y3,w,h-y3);
+                        graphics2D.fillRect(0,0,x1,h);
+                        graphics2D.fillRect(x2,0,w-x2,h);
+                }else {
+                        bufferedImage=bufferedImage.getSubimage(x1,y1,pw,ph);
+                }
+                ImageIO.write(bufferedImage, ImgUtil.IMAGE_TYPE_PNG,outputStream);
+                return outputStream;
+        }
+        private String doOcr(byte[] bytes){
+                if(ocrPost.form()!=null)ocrPost.form().clear();
+                return ocrPost.form("file", bytes,"file")
+                        .execute()
+                        .body();
+        }
         private int parseSecond(String format) {//such as 1h2m3s
                 if (format.charAt(format.length() - 1) <= '9') format += "s";//if end with number
                 int anInt = 0;

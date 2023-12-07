@@ -1,10 +1,13 @@
 package art.qiuye.diantao;
 
 import cn.hutool.core.date.StopWatch;
+import cn.hutool.core.img.ImgUtil;
 import cn.hutool.log.Log;
 import cn.hutool.log.LogFactory;
+import org.junit.Test;
 
 import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -38,6 +41,23 @@ public class DIANTAO {
     }
 
 
+    @Test
+    public void imgCut() throws IOException {
+        BufferedImage bufferedImage = ImageIO.read(new File("G:\\idea_projects\\DIANTAO\\exclude\\screen\\330822-106.jpg"));
+        Graphics2D graphics2D = bufferedImage.createGraphics();
+        int x1=200,y1=200,x2=400,y2=200,x3=400,y3=400,x4=200,y4=200;
+        int w=bufferedImage.getWidth();
+        int h=bufferedImage.getHeight();
+        graphics2D.setColor(Color.RED);
+        graphics2D.fillRect(0,0,w,y1);
+        graphics2D.fillRect(0,y3,w,h-y3);
+        graphics2D.fillRect(0,0,x1,h);
+        graphics2D.fillRect(x2,0,w-x2,h);
+//            graphics2D.fillRect(x1,y1,x2-x1,y3-y2);
+
+//        bufferedImage=bufferedImage.getSubimage(200,200,200,200);
+        ImageIO.write(bufferedImage, ImgUtil.IMAGE_TYPE_JPG, new File("G:\\idea_projects\\DIANTAO\\exclude\\screen\\out.jpg"));
+    }
 
 }
 
