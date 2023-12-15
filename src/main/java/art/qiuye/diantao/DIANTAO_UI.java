@@ -4,6 +4,7 @@ import art.qiuye.diantao.db.DianConfig;
 import cn.hutool.core.date.StopWatch;
 import cn.hutool.core.img.ImgUtil;
 import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.io.file.FileWriter;
 import cn.hutool.core.io.file.LineSeparator;
 import cn.hutool.core.io.watch.SimpleWatcher;
@@ -59,6 +60,7 @@ import java.util.stream.Collectors;
 import static art.qiuye.diantao.ActionKeys.*;
 import static art.qiuye.diantao.Constants.*;
 import static cn.hutool.core.util.StrUtil.isNotBlank;
+import static cn.hutool.core.util.StrUtil.str;
 
 public class DIANTAO_UI {
 
@@ -158,6 +160,8 @@ public class DIANTAO_UI {
                 .contentType(ContentType.MULTIPART.getValue())
                 .header("Origin", "se-extension://ext-1055834318")
                 .header("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.81 Safari/537.36 SE 2.X MetaSr 1.0");
+        private boolean debug;
+
 
         public static void main(String[] args) {
                 DIANTAO_UI ui = new DIANTAO_UI();
@@ -253,9 +257,18 @@ public class DIANTAO_UI {
                                 JMenuItem reload_menu = new JMenuItem("重载配置");
                                 JMenuItem upload_menu = new JMenuItem("上传配置");
                                 JMenuItem down_menu = new JMenuItem("下载配置");
+//                                ButtonGroup souce_buttonGroup = new ButtonGroup();
+                                JCheckBoxMenuItem debug_menu = new JCheckBoxMenuItem("debug");
+
                                 config_menun.add(reload_menu);
                                 config_menun.add(upload_menu);
                                 config_menun.add(down_menu);
+                                config_menun.add(debug_menu);
+                                debug_menu.addActionListener(e->{
+                                        debug=!debug;
+                                        debug_menu.setSelected(this.debug);
+                                        writeStatus("##debug {}",debug);
+                                });
                         common_menu = new JMenu("公共配置");
                         JMenu variable_menu = new JMenu("编辑变量");
                         JMenu source_menu = new JMenu("source");
@@ -1081,10 +1094,10 @@ public class DIANTAO_UI {
 
         private void writeStatus(Object text, Object... arguments) {
                 if(text==null) text = "null";
-                writeStatus(StrUtil.format(text.toString(), arguments), true);
+                writeStatus0(StrUtil.format(text.toString(), arguments), true);
         }
 
-        private void writeStatus(String text, boolean writeConsole) {
+        private void writeStatus0(String text, boolean writeConsole) {
                 SwingUtilities.invokeLater(() -> {
                         if (writeConsole)
                                 System.out.println(text);
@@ -1361,33 +1374,66 @@ public class DIANTAO_UI {
                                         sleep(0.5);
                                         ByteArrayOutputStream outputStream = getImage(false, x, y, width, height);
                                         String body = doOcr(outputStream.toByteArray());
-                                        writeStatus("## ocr body {} ", body);
                                         if (body.contains(subs[4])) {//包含
                                                 tap(subs[5] + " " + subs[6]);
                                                 break;
                                         }
                                         outputStream.close();
                                 }
-                        } else if(code.equals("digest")){//ocrt 0 0 100 200 可跳槽,name
+                        } else if(code.equals("digest")){
                                 String[] subs = cmd.substring(code.length()).trim().split("\\s");
                                 int x1 = Integer.parseInt(subs[0]);
                                 int y1 = Integer.parseInt(subs[1]);
 
-                                int x2 = Integer.parseInt(subs[2]);
-                                int y2 = Integer.parseInt(subs[3]);
+                                int x3 = Integer.parseInt(subs[2]);
+                                int y3 = Integer.parseInt(subs[3]);
+                                String hire_point = subs[4] + " " + subs[5];
+                                String dummy_point = subs[6] + " " + subs[7];
+                                String[] ll=StrUtil.strip(subs[8],"[","]").split(",");
+                                List<String> hire_list = Arrays.asList(ll);
 
-                                int x3 = Integer.parseInt(subs[4]);
-                                int y3 = Integer.parseInt(subs[5]);
+                                ByteArrayOutputStream outputStream = getImage(x1,y1,x3,y3,true);
+                                String body = doOcr(outputStream.toByteArray());
+                                JSONObject json = JSON.parseObject(body);
+                                if(json.getIntValue("code")==0) {//ocr list
+                                        JSONArray array = json.getJSONArray("result");
+                                        for (int i = 0; i < array.size(); i++) {
+                                                JSONObject result = (JSONObject) array.get(i);
+                                                String content = result.getString("content");
+                                                boolean match = hire_list.stream().anyMatch(e -> content.startsWith(e));
+                                                if(match){
+                                                        JSONObject dig = null;
+                                                        boolean digable=false;
+                                                        for (int j = i+1; j < array.size(); j++) {
+                                                                JSONObject object = (JSONObject) array.get(j);
 
-                                int x4 = Integer.parseInt(subs[6]);
-                                int y4 = Integer.parseInt(subs[7]);
-
-                              ByteArrayOutputStream outputStream = getImage(x1,y1,x2,y2,x3,y3,x4,y4,true);
-                              String body = doOcr(outputStream.toByteArray());
-
-                              writeStatus("## ocr body {} ", body);
+                                                                if(object.getString("content").equals("可挖走")) {
+                                                                   digable=true;
+                                                                }else
+                                                                if(object.getString("content").equals("挖走Ta")) {
+                                                                        dig = object;
+                                                                        break;
+                                                                }
+                                                        }
+                                                        if(digable && dig!=null){
+                                                                JSONArray fr = dig.getJSONArray("frame");
+                                                                int _x1=Integer.parseInt(fr.get(0).toString().split(",")[0]);
+                                                                int _x2=Integer.parseInt(fr.get(1).toString().split(",")[0]);
+                                                                int _y1=Integer.parseInt(fr.get(0).toString().split(",")[1]);
+                                                                int _y2=Integer.parseInt(fr.get(2).toString().split(",")[1]);
+                                                                String dig_point=StrUtil.format("{} {}",(_x1+_x2)/2,(_y1+_y2)/2);
+                                                                writeStatus("##dig_point {}",dig_point);
+                                                                writeStatus("##hire:{}",content);
+                                                                tap(dig_point);
+                                                                tap(hire_point);
+                                                                break;
+                                                        }
+                                                }
+                                        }
+                                        tap(dummy_point);
+                                }
                         }else if(code.equals("screen")){
-                                String screen_path = Config.screen_path + config.config_name+"-"  +LocalDateTime.now().format(DATE_TIME_FORMATTER)+ ".jpg";
+                                String screen_path = Config.screen_path + config.config_name+"-"  +LocalDateTime.now().format(DATE_TIME_FORMATTER)+ ".png";
                                 writeStatus("screenshot:{}",screen_path);
                                 StopWatch stopWatch = new StopWatch();
                                 stopWatch.start();
@@ -1451,16 +1497,14 @@ public class DIANTAO_UI {
                 }
         }
         private ByteArrayOutputStream getImage(boolean fillBg,int x1,int y1,int w,int h){
-                int x2=x1+w,y2=y1;
-                int x3=x2,y3=y1+h;
-                int x4=x1,y4=y3;
-                return getImage(x1, y1, x2, y2, x3, y3, x4, y4, fillBg);
+                int x3=x1+w,y3=y1+h;
+                return getImage(x1, y1, x3, y3, fillBg);
         }
         @SneakyThrows
-        private ByteArrayOutputStream getImage(int x1,int y1,int x2,int y2,int x3,int y3,int x4,int y4, boolean fillBg){
+        private ByteArrayOutputStream getImage(int x1,int y1,int x3,int y3, boolean fillBg){
                 ByteArrayInputStream inputStream = new ByteArrayInputStream(miniCap.frame());
-                int pw=x2-x1;
-                int ph=y3-y2;
+                int pw=x3-x1;
+                int ph=y3-y1;
                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                 BufferedImage bufferedImage = ImageIO.read(inputStream);
                 int w=bufferedImage.getWidth(),h=bufferedImage.getHeight();
@@ -1469,18 +1513,24 @@ public class DIANTAO_UI {
                         graphics2D.fillRect(0,0,w,y1);
                         graphics2D.fillRect(0,y3,w,h-y3);
                         graphics2D.fillRect(0,0,x1,h);
-                        graphics2D.fillRect(x2,0,w-x2,h);
+                        graphics2D.fillRect(x3,0,w-x3,h);
                 }else {
                         bufferedImage=bufferedImage.getSubimage(x1,y1,pw,ph);
                 }
                 ImageIO.write(bufferedImage, ImgUtil.IMAGE_TYPE_PNG,outputStream);
+                if(debug){
+                        String screen_path = Config.screen_path + config.config_name+"-"  +LocalDateTime.now().format(DATE_TIME_FORMATTER)+ ".png";
+                        FileUtil.writeBytes(outputStream.toByteArray(), screen_path);
+                }
                 return outputStream;
         }
         private String doOcr(byte[] bytes){
                 if(ocrPost.form()!=null)ocrPost.form().clear();
-                return ocrPost.form("file", bytes,"file")
+                String body = ocrPost.form("file", bytes, "file")
                         .execute()
                         .body();
+                writeStatus("## ocr body {} ", body);
+                return body;
         }
         private int parseSecond(String format) {//such as 1h2m3s
                 if (format.charAt(format.length() - 1) <= '9') format += "s";//if end with number

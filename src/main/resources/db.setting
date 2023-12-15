@@ -1,4 +1,4 @@
-url = jdbc:mysql://remote.qiuye.art:3306/diantao
+url = jdbc:mysql://remote.ggbond.info:3306/diantao
 user = diantao
 pass = JwDDpXCYSFP47KDj
 
