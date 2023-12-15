@@ -4,7 +4,6 @@ import art.qiuye.diantao.db.DianConfig;
 import cn.hutool.core.date.StopWatch;
 import cn.hutool.core.img.ImgUtil;
 import cn.hutool.core.io.FileUtil;
-import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.io.file.FileWriter;
 import cn.hutool.core.io.file.LineSeparator;
 import cn.hutool.core.io.watch.SimpleWatcher;
@@ -25,6 +24,8 @@ import cn.hutool.json.JSONUtil;
 import cn.hutool.log.Log;
 import cn.hutool.log.LogFactory;
 import cn.hutool.setting.Setting;
+import cn.hutool.setting.dialect.Props;
+import cn.hutool.setting.dialect.PropsUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -60,7 +61,6 @@ import java.util.stream.Collectors;
 import static art.qiuye.diantao.ActionKeys.*;
 import static art.qiuye.diantao.Constants.*;
 import static cn.hutool.core.util.StrUtil.isNotBlank;
-import static cn.hutool.core.util.StrUtil.str;
 
 public class DIANTAO_UI {
 
@@ -210,6 +210,22 @@ public class DIANTAO_UI {
                 watchMonitor.setWatcher(delayWatcher);
                 watchMonitor.start();
                 writeStatus("watchMonitor started");
+
+                communicationMonitor=WatchMonitor.create(Config.communication_path,WatchMonitor.ENTRY_MODIFY);
+                communicationMonitor.setWatcher(new SimpleWatcher(){
+                        @Override
+                        public void onModify(WatchEvent<?> event, Path currentPath) {
+                                Props props = PropsUtil.get(Config.communication_path);
+                                String name= props.getStr("name");
+                                String opt= props.getStr("opt");
+                                JInternalFrame jfr = intances.stream().findFirst().filter(e -> e.iFrame.name.equals(name)).get().iFrame;
+                                switch (opt){
+                                        case "stop":
+                                }
+                        }
+                });
+                communicationMonitor.start();
+                writeStatus("communicationMonitor started");
         }
 
         @SneakyThrows
@@ -239,6 +255,8 @@ public class DIANTAO_UI {
                 SwingUtilities.invokeLater(() -> {
                         manualPane = new JPanel();
                         iFrame = new JInternalFrame(this.toString(), true, true, true);
+                        iFrame.name=String.valueOf(iFrame.hashCode());
+                        iFrame.setTitle(iFrame.name);
                         iFrame.setSize(540, 750);
                         iFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
                         iFrame.addInternalFrameListener(new InternalFrameAdapter() {
@@ -726,7 +744,6 @@ public class DIANTAO_UI {
                                         sb.append(s);
                                         sb.append(LF);
                                 }
-                                text=sb.toString();
                                 collect.clear();
 
                                 //begin generate slot
@@ -1127,6 +1144,8 @@ public class DIANTAO_UI {
         }
         private static WatchMonitor watchMonitor;
 
+        private static WatchMonitor communicationMonitor;
+
         @SneakyThrows
         private void initConfig(String confName) {
                 this.config = JSONObject.parseObject(FileUtil.getInputStream(System.getProperty("user.dir") + "/exclude/config-" + confName + ".json"), Config.class, Feature.OrderedField);
@@ -1188,10 +1207,14 @@ public class DIANTAO_UI {
                                 }
                                 else {
                                         ta_plan.setText(entry.getValue());
+                                        String[] split = entry.getKey().split(";");
+                                        if(split.length==2) {//named instance
+                                                iFrame.name = split[1];
+                                                iFrame.setTitle(iFrame.name);
+                                        }else iFrame.setTitle(String.valueOf(iFrame.hashCode()));
                                 }
                                 current_quick_item=entry.getValue();
                                 activityNames = null;
-                                offset_arow = 0;
                                 source=type;
                         });
                         menu.add(item);

@@ -5,8 +5,6 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.annotation.JSONField;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.TreeMap;
 import java.util.Vector;
 
@@ -44,6 +42,7 @@ public class Config {
     public String version_path;
 
     public static final String commons_path=System.getProperty("user.dir") + "/exclude/commons.txt";
+    public static final String communication_path=System.getProperty("user.dir") + "/exclude/communication.properties";
     public static final String exclude_path=System.getProperty("user.dir") + "/exclude/";
     public static final String screen_path=exclude_path + "screen/";
 
