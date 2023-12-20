@@ -25,7 +25,6 @@ import cn.hutool.log.Log;
 import cn.hutool.log.LogFactory;
 import cn.hutool.setting.Setting;
 import cn.hutool.setting.dialect.Props;
-import cn.hutool.setting.dialect.PropsUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -162,6 +161,9 @@ public class DIANTAO_UI {
                 .header("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.81 Safari/537.36 SE 2.X MetaSr 1.0");
         private boolean debug;
 
+        public String name;
+
+
 
         public static void main(String[] args) {
                 DIANTAO_UI ui = new DIANTAO_UI();
@@ -212,18 +214,31 @@ public class DIANTAO_UI {
                 writeStatus("watchMonitor started");
 
                 communicationMonitor=WatchMonitor.create(Config.communication_path,WatchMonitor.ENTRY_MODIFY);
-                communicationMonitor.setWatcher(new SimpleWatcher(){
+                SimpleWatcher watcher1 = new SimpleWatcher() {
                         @Override
                         public void onModify(WatchEvent<?> event, Path currentPath) {
-                                Props props = PropsUtil.get(Config.communication_path);
-                                String name= props.getStr("name");
-                                String opt= props.getStr("opt");
-                                JInternalFrame jfr = intances.stream().findFirst().filter(e -> e.iFrame.name.equals(name)).get().iFrame;
-                                switch (opt){
-                                        case "stop":
+                                Props props = new Props(Config.communication_path);
+                                String name = props.getStr("name");
+                                String opt = props.getStr("opt");
+                                DIANTAO_UI ui = intances.stream().filter(e ->
+                                        e.name.equals(name)
+                                ).findFirst().get();
+                                switch (opt) {
+                                        case "suspend":
+                                                ui.thread.suspend();
+                                                ui.monitorThread.suspend();
+                                                ui.writeStatus("communication suspend:{}", ui.name);
+                                                break;
+                                        case "resume":
+                                                ui.thread.resume();
+                                                ui.monitorThread.resume();
+                                                ui.writeStatus("communication resume:{}", ui.name);
+                                                break;
                                 }
                         }
-                });
+
+                };
+                communicationMonitor.setWatcher(new DelayWatcher(watcher1,500));
                 communicationMonitor.start();
                 writeStatus("communicationMonitor started");
         }
@@ -255,8 +270,8 @@ public class DIANTAO_UI {
                 SwingUtilities.invokeLater(() -> {
                         manualPane = new JPanel();
                         iFrame = new JInternalFrame(this.toString(), true, true, true);
-                        iFrame.name=String.valueOf(iFrame.hashCode());
-                        iFrame.setTitle(iFrame.name);
+                        name=String.valueOf(iFrame.hashCode());
+                        iFrame.setTitle(name);
                         iFrame.setSize(540, 750);
                         iFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
                         iFrame.addInternalFrameListener(new InternalFrameAdapter() {
@@ -1209,8 +1224,8 @@ public class DIANTAO_UI {
                                         ta_plan.setText(entry.getValue());
                                         String[] split = entry.getKey().split(";");
                                         if(split.length==2) {//named instance
-                                                iFrame.name = split[1];
-                                                iFrame.setTitle(iFrame.name);
+                                                name = split[1];
+                                                iFrame.setTitle(name);
                                         }else iFrame.setTitle(String.valueOf(iFrame.hashCode()));
                                 }
                                 current_quick_item=entry.getValue();
@@ -1291,6 +1306,7 @@ public class DIANTAO_UI {
                 for (String cmd : cmds) {
                         boolean sleeped = false;
                         String code=ReUtil.getGroup0(PATTERN_OP_CODE,cmd);
+                        String[] subs = cmd.substring(code.length()).trim().split("\\s");
                         if(code==null)continue;
                         else if (code.startsWith("sw")) {
                                 if (cmd.equals(INS_SW_FROM)) {
@@ -1304,7 +1320,6 @@ public class DIANTAO_UI {
                                         swipe(config.to);
                                         continue;
                                 }//swt
-                                String[] subs = cmd.substring(code.length()).split("\\s");
                                 String p = null;
                                 boolean reverse_flag = false;
                                 if (cmd.startsWith(INS_SW_FROM))
@@ -1387,7 +1402,6 @@ public class DIANTAO_UI {
                         } else if (code.equals("if")) {//if0 0 100 200 看直播领钻石
 //                                ### adb -s 192.168.1.20 shell LD_LIBRARY_PATH=/data/local/tmp /data/local/tmp/minicap -P 1080x1920@1080x1920/0
                                 int n = 10;
-                                String[] subs = cmd.substring(2).split("\\s");
                                 int x = Integer.parseInt(subs[0]);
                                 int y = Integer.parseInt(subs[1]);
                                 int width = Integer.parseInt(subs[2]);
@@ -1404,7 +1418,6 @@ public class DIANTAO_UI {
                                         outputStream.close();
                                 }
                         } else if(code.equals("digest")){
-                                String[] subs = cmd.substring(code.length()).trim().split("\\s");
                                 int x1 = Integer.parseInt(subs[0]);
                                 int y1 = Integer.parseInt(subs[1]);
 
@@ -1515,6 +1528,13 @@ public class DIANTAO_UI {
                                 writeStatus(cmd.split("\\s")[1]);
                         }else if(code.equals("keyevent")){
                                 keyevent(cmd.substring(code.length()));
+                        }else if(code.equals("suspend") || code.equals("resume")){
+                                Props props = new Props();
+                                props.put("name",subs[0]);
+                                props.put("opt", code);
+                                props.store(Config.communication_path);
+//                                String prop = StrUtil.format("name={}\nopt={}", subs[0], code);
+//                                FileUtil.writeUtf8String(prop, Config.communication_path);
                         }
                         if (!sleeped) sleep(1);//操作间隔
                 }

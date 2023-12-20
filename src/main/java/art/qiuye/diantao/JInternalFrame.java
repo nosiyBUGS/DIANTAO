@@ -5,8 +5,6 @@ package art.qiuye.diantao;
  * @create 2023/12/15 0015
  */
 public class JInternalFrame extends javax.swing.JInternalFrame {
-    public String name;
-
     public JInternalFrame() {
     }
 
