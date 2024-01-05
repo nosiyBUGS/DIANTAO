@@ -54,6 +54,7 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -100,8 +101,6 @@ public class DIANTAO_UI {
         private JButton button_batch;
         private JTextArea status_area;
         private MiniCap miniCap;
-        private String[] activityNames;
-
         private boolean thread_suspend = false;
         private JTextArea status_bar;
         private static JFrame frame;
@@ -126,7 +125,7 @@ public class DIANTAO_UI {
                 setting.set("from", "1281886693@qq.com");
                 setting.set("pass", "tqblyhamaeqxijaj");
                 security_swf.put("11st","140 1314 950 1340");
-                security_swf.put("oppo","110 1260 950 1280");
+//                security_swf.put("oppo","110 1260 950 1280");
                 security_swf.put("meizu","120 1380 930 1390");
         }
 
@@ -162,7 +161,7 @@ public class DIANTAO_UI {
         private boolean debug;
 
         public String name;
-
+        private SlotGroup group;
 
 
         public static void main(String[] args) {
@@ -271,7 +270,6 @@ public class DIANTAO_UI {
                         manualPane = new JPanel();
                         iFrame = new JInternalFrame(this.toString(), true, true, true);
                         name=String.valueOf(iFrame.hashCode());
-                        iFrame.setTitle(name);
                         iFrame.setSize(540, 750);
                         iFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
                         iFrame.addInternalFrameListener(new InternalFrameAdapter() {
@@ -283,6 +281,7 @@ public class DIANTAO_UI {
                         desktopPane.add(iFrame);
                         iFrame.add(manualPane);
                         iFrame.setVisible(true);
+                        iFrame.setIconifiable(true);
                         JMenuBar menuBar = new JMenuBar();
                         quick_menu = new JMenu("快捷操作");
                         JMenu offset_menu = new JMenu("偏移");
@@ -546,7 +545,7 @@ public class DIANTAO_UI {
                                         thread_suspend = false;
                                         onClose(false);
                                         writeStatus("threads stopped");
-                                        activityNames = null;
+                                        group=null;
                                 }
 
                         });
@@ -728,15 +727,19 @@ public class DIANTAO_UI {
                         button_batch = new JButton("执行计划(F1)");
                         button_batch.addActionListener(e -> {
                                 String text = ta_plan.getText();
-                                SlotGroup group = new SlotGroup();
+                                group = new SlotGroup();
 
                                 String act = ReUtil.getGroup0(PATTENR_ACTIVITY_STR, text);
                                 if(act!=null){
                                         String[] split = act.split(";");
                                         group.activityNames = split[0].split(",");//[act];name1,name2
-                                        activityNames = group.activityNames;
-                                        if (split.length == 2 && split[1].equals(C_SLEEP))
-                                                group.c_sleep = true;
+                                        if(split.length>1){
+                                                if(isNotBlank(split[1]))
+                                                        group.exceptionCmds = split[1].split(",");
+                                                if (split.length == 3 && split[2].equals(C_SLEEP)){
+                                                        group.c_sleep = true;
+                                                }
+                                        }
                                 }
 
                                 String[] lines = text.split(LF);
@@ -852,7 +855,7 @@ public class DIANTAO_UI {
                                                 String pre = RuntimeUtil.execForStr(cmd_current);
                                                 String current = ReUtil.getGroup0(current_pattern, pre);
                                                 if (current == null) current = pre;
-                                                writeBar("{}\nthread:{}\nsuspend:{}\ncurrent:{}\nactNames:{}", LocalTime.now().format(TIME_FORMATTER), thread.getState(), thread_suspend, current, activityNames);
+                                                writeBar("{}\nthread:{}\nsuspend:{}\ncurrent:{}\nactNames:{}", LocalTime.now().format(TIME_FORMATTER), thread.getState(), thread_suspend, current, group.activityNames);
                                                 //com.taobao.live/com.alibaba.wireless.security.open.middletier.fc.ui.ContainerActivity
                                                 //com.taobao.live/mtopsdk.extra.antiattack.CheckCodeValidateActivity
                                                 //fixme
@@ -877,9 +880,9 @@ public class DIANTAO_UI {
 
                                                 }
 
-                                                if (activityNames != null) {
+                                                if (group.activityNames != null) {
                                                         boolean contain = false;
-                                                        for (String activityName : activityNames) {
+                                                        for (String activityName : group.activityNames) {
                                                                 if (current.contains(activityName)) {
                                                                         contain = true;
                                                                         break;
@@ -897,8 +900,65 @@ public class DIANTAO_UI {
                                                                                 thread.suspend();
                                                                         }
                                                                         thread_suspend = true;
-                                                                        writeStatus(StrUtil.format("current:{},require:{}", current, activityNames));
+                                                                        writeStatus(StrUtil.format("current:{},require:{}", current, group.activityNames));
                                                                 }
+                                                                        if(!current.equals(""))
+                                                                                if(group.exceptionCmds!=null){
+                                                                                        String alert_temp="即将结束({}s)";
+                                                                                        JOptionPane op=new JOptionPane("即将结束(3s)",JOptionPane.WARNING_MESSAGE,JOptionPane.DEFAULT_OPTION);
+                                                                                        String text_pause="暂停";
+                                                                                        JButton[] options = {new JButton(text_pause)};
+
+                                                                                        op.setOptions(options);
+                                                                                        JDialog dialog = op.createDialog(null);
+                                                                                        AtomicReference<Integer> value=new AtomicReference<>();
+                                                                                        SwingUtilities.invokeLater(()->{
+                                                                                                dialog.setVisible(true);
+                                                                                                Object v = op.getValue();
+                                                                                                if(v instanceof Integer){
+                                                                                                        value.set((Integer) v);
+                                                                                                        dialog.setVisible(true);
+                                                                                                }
+                                                                                        });
+                                                                                        Timer timer=
+                                                                                                new Timer(1000, new ActionListener() {
+                                                                                                private int total=3;
+                                                                                                @Override
+                                                                                                public void actionPerformed(ActionEvent e) {
+                                                                                                        op.setMessage(StrUtil.format(alert_temp, total--));
+                                                                                                        if(total<0){
+                                                                                                                total=3;
+                                                                                                                ((Timer) e.getSource()).stop();
+                                                                                                        }
+                                                                                                }
+                                                                                        });
+                                                                                        options[0].addActionListener(e1->{
+                                                                                                JButton button = (JButton) e1.getSource();
+                                                                                                JOptionPane parent = (JOptionPane) button.getParent().getParent();
+                                                                                                if(button.getText().equals(text_pause)){
+                                                                                                        parent.setValue(1);
+                                                                                                        button.setText("恢复");
+                                                                                                        timer.stop();
+                                                                                                }
+                                                                                                else parent.setValue(2);
+                                                                                        });
+                                                                                        timer.setInitialDelay(0);
+                                                                                        timer.start();
+                                                                                        sleep(3);
+                                                                                        if(value.get()!=null && value.get()==1){
+                                                                                                writeStatus("waiting...");
+                                                                                                thread.suspend();
+                                                                                                while (op.getValue() instanceof String);
+                                                                                                writeStatus("resumed");
+                                                                                                thread.resume();
+                                                                                        }else {
+                                                                                                dialog.dispose();
+                                                                                                writeStatus("dialog dispose");
+                                                                                                writeStatus("execute exceptionCmds:{},exit",group.exceptionCmds);
+                                                                                                execute_cmd(group.exceptionCmds,null);
+                                                                                                onClose(false);
+                                                                                        }
+                                                                                }
                                                         } else {
                                                                 if (thread_suspend) {
                                                                         writeStatus("active thread resume");
@@ -1225,11 +1285,10 @@ public class DIANTAO_UI {
                                         String[] split = entry.getKey().split(";");
                                         if(split.length==2) {//named instance
                                                 name = split[1];
-                                                iFrame.setTitle(name);
-                                        }else iFrame.setTitle(String.valueOf(iFrame.hashCode()));
+                                        }
+                                        iFrame.setTitle(entry.getKey());
                                 }
                                 current_quick_item=entry.getValue();
-                                activityNames = null;
                                 source=type;
                         });
                         menu.add(item);
