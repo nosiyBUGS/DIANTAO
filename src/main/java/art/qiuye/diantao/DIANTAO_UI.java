@@ -910,7 +910,7 @@ public class DIANTAO_UI {
                                                                                         JButton[] options = {new JButton(text_pause)};
 
                                                                                         op.setOptions(options);
-                                                                                        JDialog dialog = op.createDialog(null);
+                                                                                        JDialog dialog = op.createDialog(iFrame,null);
                                                                                         AtomicReference<Integer> value=new AtomicReference<>();
                                                                                         SwingUtilities.invokeLater(()->{
                                                                                                 dialog.setVisible(true);
@@ -920,14 +920,15 @@ public class DIANTAO_UI {
                                                                                                         dialog.setVisible(true);
                                                                                                 }
                                                                                         });
+                                                                                        int limit=10;
                                                                                         Timer timer=
                                                                                                 new Timer(1000, new ActionListener() {
-                                                                                                private int total=3;
+                                                                                                private int total=limit;
                                                                                                 @Override
                                                                                                 public void actionPerformed(ActionEvent e) {
                                                                                                         op.setMessage(StrUtil.format(alert_temp, total--));
                                                                                                         if(total<0){
-                                                                                                                total=3;
+                                                                                                                total=limit;
                                                                                                                 ((Timer) e.getSource()).stop();
                                                                                                         }
                                                                                                 }
@@ -939,18 +940,23 @@ public class DIANTAO_UI {
                                                                                                         parent.setValue(1);
                                                                                                         button.setText("恢复");
                                                                                                         timer.stop();
+
                                                                                                 }
-                                                                                                else parent.setValue(2);
+                                                                                                else {
+//                                                                                                        parent.setValue(2);
+                                                                                                        monitorThread.resume();
+                                                                                                }
                                                                                         });
                                                                                         timer.setInitialDelay(0);
                                                                                         timer.start();
-                                                                                        sleep(3);
+                                                                                        sleep(limit);
                                                                                         if(value.get()!=null && value.get()==1){
                                                                                                 writeStatus("waiting...");
                                                                                                 thread.suspend();
-                                                                                                while (op.getValue() instanceof String);
+                                                                                                monitorThread.suspend();
                                                                                                 writeStatus("resumed");
                                                                                                 thread.resume();
+                                                                                                dialog.dispose();
                                                                                         }else {
                                                                                                 dialog.dispose();
                                                                                                 writeStatus("dialog dispose");
