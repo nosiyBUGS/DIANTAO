@@ -31,6 +31,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.parser.Feature;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import lombok.SneakyThrows;
+import org.junit.Test;
 
 import javax.imageio.ImageIO;
 import javax.swing.Timer;
@@ -66,7 +67,7 @@ public class DIANTAO_UI {
 
         private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");
 
-        private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd-hh-mm-ss");
+        private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd-hhmmss");
 
         static Log StaticLog = LogFactory.get();
         private static Config config;
@@ -910,7 +911,7 @@ public class DIANTAO_UI {
                                                                                         JButton[] options = {new JButton(text_pause)};
 
                                                                                         op.setOptions(options);
-                                                                                        JDialog dialog = op.createDialog(iFrame,null);
+                                                                                        JDialog dialog = op.createDialog(null,config.config_name);
                                                                                         AtomicReference<Integer> value=new AtomicReference<>();
                                                                                         SwingUtilities.invokeLater(()->{
                                                                                                 dialog.setVisible(true);
@@ -961,8 +962,12 @@ public class DIANTAO_UI {
                                                                                                 dialog.dispose();
                                                                                                 writeStatus("dialog dispose");
                                                                                                 writeStatus("execute exceptionCmds:{},exit",group.exceptionCmds);
+                                                                                                Map<String, InputStream> map = new HashMap<>();
+                                                                                                map.put("image.png", new ByteArrayInputStream(getImage(false,0,0,-1,-1).toByteArray()));
                                                                                                 execute_cmd(group.exceptionCmds,null);
                                                                                                 onClose(false);
+                                                                                                MailUtil.send(account, "1281886693@qq.com", config.config_name+" dialog dispose:" + LocalDateTime.now().format(DATE_TIME_FORMATTER), "image", map, true);
+
                                                                                         }
                                                                                 }
                                                         } else {
@@ -1623,7 +1628,8 @@ public class DIANTAO_UI {
                         graphics2D.fillRect(0,0,x1,h);
                         graphics2D.fillRect(x3,0,w-x3,h);
                 }else {
-                        bufferedImage=bufferedImage.getSubimage(x1,y1,pw,ph);
+                        if(pw>0 && ph>0)
+                                bufferedImage=bufferedImage.getSubimage(x1,y1,pw,ph);
                 }
                 ImageIO.write(bufferedImage, ImgUtil.IMAGE_TYPE_PNG,outputStream);
                 if(debug){
@@ -1869,5 +1875,15 @@ public class DIANTAO_UI {
                         xys[i] = k;
                 }
                 return ArrayUtil.join(xys, " ");
+        }
+
+        @Test
+        public void test() throws FileNotFoundException {
+                Map<String, InputStream> map = new HashMap<>();
+                map.put("image.png", new FileInputStream("C:\\Users\\tassel\\IdeaProjects\\DIANTAO\\exclude\\screen\\meizu-2024-01-09-02-36-23.png"));
+
+                MailUtil.send(account, "1281886693@qq.com","dialog dispose","image",map,true);
+
+
         }
 }
