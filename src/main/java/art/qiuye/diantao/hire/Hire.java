@@ -20,7 +20,7 @@ public class Hire {
 
     public boolean end;
 
-//    public int price;
+    public int price=0;
 
     public static List<Hire> generateList(String ocrText){
         JSONObject json = JSON.parseObject(ocrText);

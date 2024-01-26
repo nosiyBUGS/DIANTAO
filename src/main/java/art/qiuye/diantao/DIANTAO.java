@@ -4,8 +4,10 @@ import art.qiuye.diantao.hire.Hire;
 import cn.hutool.core.date.StopWatch;
 import cn.hutool.core.img.ImgUtil;
 import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.util.HashUtil;
 import cn.hutool.core.util.HexUtil;
 import cn.hutool.core.util.NumberUtil;
+import cn.hutool.crypto.digest.DigestUtil;
 import cn.hutool.log.Log;
 import cn.hutool.log.LogFactory;
 import cn.hutool.log.StaticLog;
@@ -48,7 +50,7 @@ public class DIANTAO {
 
     @Test
     public void img() throws IOException {
-        BufferedImage bufferedImage = ImageIO.read(new File(Config.screen_path+"3.png"));
+        BufferedImage bufferedImage = ImageIO.read(new File(Config.screen_path+"4.png"));
         int width = bufferedImage.getWidth();
         int height = bufferedImage.getHeight();
         int capacity = width * height * 4;
@@ -58,6 +60,7 @@ public class DIANTAO {
                 buffer.putInt(bufferedImage.getRGB(i,j));
             }
         }
+        StaticLog.info("##buffer hash1{} ", DigestUtil.md5Hex(buffer.array()));
         boolean contain_red=false;
         boolean contain_green=false;
         for (int i = 0; i < capacity; i+=4) {
@@ -72,6 +75,7 @@ public class DIANTAO {
                 break;
             }
         }
+        StaticLog.info("##buffer hash2{} ", DigestUtil.md5Hex(buffer.array()));
         StaticLog.info("contain_red {}",contain_red);
         StaticLog.info("contain_green {}",contain_green);
         new Color(0, 255, 0, 255);

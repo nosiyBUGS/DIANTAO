@@ -14,6 +14,7 @@ import cn.hutool.core.lang.Pair;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.*;
 import cn.hutool.crypto.SecureUtil;
+import cn.hutool.crypto.digest.DigestUtil;
 import cn.hutool.db.Db;
 import cn.hutool.db.Entity;
 import cn.hutool.extra.mail.MailAccount;
@@ -1151,6 +1152,7 @@ public class DIANTAO_UI {
 
         private void onClose(boolean closed) {
                 manualPane.setBackground(Color.CYAN);
+                noHireHashes.clear();
                 if (closed) {
                         referencees.remove(button_save);
                         referencees.remove(button_F3);
@@ -1369,6 +1371,8 @@ public class DIANTAO_UI {
                 }
         }
 
+
+        private Set<String> noHireHashes = new HashSet<>();
         @SneakyThrows
         private void execute_cmd(String cmds[], SlotGroup group) {
                 for (String cmd : cmds) {
@@ -1523,15 +1527,17 @@ public class DIANTAO_UI {
                                         }
                                         String body=null;
                                         List<Hire> hires = null;
-                                        boolean[] judgeColor = judgeColor(subImage);
-                                        if(judgeColor[0]){
+                                        Object[] judgeColor = judgeColor(subImage);
+                                        if(noHireHashes.contains(judgeColor[2])){//match no hire hash
+                                                hires = Collections.emptyList();
+                                        }else if((Boolean) judgeColor[0]){
                                                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                                                 ImageIO.write(imageBuffer,ImgUtil.IMAGE_TYPE_PNG,outputStream);
                                                 body = doOcr(outputStream.toByteArray());
                                                 outputStream.close();
                                                 hires = Hire.generateList(body);
 
-                                        } else  if (judgeColor[1])break;
+                                        } else  if ((Boolean) judgeColor[1])break;//wont add to no_hire_hashes
                                         else {
                                                 hires=Collections.emptyList();
                                         }
@@ -1554,6 +1560,8 @@ public class DIANTAO_UI {
                                                 end=hire.end;
                                         }
                                         if(!hired) {
+                                                noHireHashes.add((String) judgeColor[2]);//will add end red_green
+                                                if((Boolean) judgeColor[1])break;//no hire but green
                                                 keyevent("KEYCODE_PAGE_DOWN");
                                                 limit--;//max 40 pages
                                         }
@@ -1638,7 +1646,7 @@ public class DIANTAO_UI {
                         if (!sleeped) sleep(1);//操作间隔
                 }
         }
-        private boolean[] judgeColor(BufferedImage image){// red green
+        private Object[] judgeColor(BufferedImage image){// red green
                 int width = image.getWidth();
                 int height = image.getHeight();
                 int capacity = width * height * 4;
@@ -1651,18 +1659,16 @@ public class DIANTAO_UI {
                 boolean contain_red=false;
                 boolean contain_green=false;
                 for (int i = 0; i < capacity; i+=4) {
-                        if(buffer.get(i+1)==(byte) 0xFF && (buffer.get(i+2) & 0xFF) < 0X10){
+                        if(!contain_red && buffer.get(i+1)==(byte) 0xFF && (buffer.get(i+2) & 0xFF) < 0X10){
                                 contain_red=true;
-                                break;
                         }
-                        if(buffer.get(i+1)==(byte) 0x00 && buffer.get(i+1)==(byte)0x00 && (buffer.get(i+2) & 0xFF) > 0XD0){
+                        if(!contain_red && buffer.get(i+1)==(byte) 0x00 && buffer.get(i+1)==(byte)0x00 && (buffer.get(i+2) & 0xFF) > 0XD0){
                                 contain_green=true;
-                                System.out.println("green:"+HexUtil.toHex(buffer.getInt(i)));
-                                break;
                         }
+                        if(contain_green && contain_red)break;
                 }
                 buffer.clear();
-                return new boolean[]{contain_red, contain_green};
+                return new Object[]{contain_red, contain_green, DigestUtil.md5Hex(buffer.array())};
         }
         private ByteArrayOutputStream getImageOutStream(boolean fillBg, int x1, int y1, int w, int h){
                 int x3=x1+w,y3=y1+h;
