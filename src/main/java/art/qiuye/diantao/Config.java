@@ -45,6 +45,7 @@ public class Config {
     public static final String communication_path=System.getProperty("user.dir") + "/exclude/communication.properties";
     public static final String exclude_path=System.getProperty("user.dir") + "/exclude/";
     public static final String screen_path=exclude_path + "screen/";
+    public static final String log_path=exclude_path + "log/";
 
 
     public String from;
@@ -54,6 +55,8 @@ public class Config {
     public int version;
 
     public TreeMap<String,String> variables;
+
+    public String wm_size;//1080x1920@1080x1920
     @Override
     public String toString() {
         return JSON.toJSONString(this, SerializerFeature.PrettyFormat);

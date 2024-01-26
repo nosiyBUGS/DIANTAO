@@ -32,14 +32,17 @@ public class MiniCap {
 
     public String device;
 
+    public String wm_size;
+
     public static final String NO_FILE = "No such file";
     public static final String NO_FOUND = "not found";
 
 //    private int read=0;
 
     public MiniCap(Config config) {
-        device = config.devices.get(0);
-        adb_path = config.adb_path;
+        this.device = config.devices.get(0);
+        this.adb_path = config.adb_path;
+        this.wm_size = config.wm_size;
         String[] split = device.split("\\.");
         String[] split1 = split[3].split(":");
         String s = split[0] + split[1] + split[2] + split1[0];
@@ -86,7 +89,7 @@ public class MiniCap {
 
     public byte[] frame(){
         if(!initial){initial=init();}
-        String caps = StrUtil.format(adb_path + "{}exec-out LD_LIBRARY_PATH=/data/local/tmp /data/local/tmp/minicap -P 1080x1920@1080x1920/0 -s", device);
+        String caps = StrUtil.format(adb_path + "{}exec-out LD_LIBRARY_PATH=/data/local/tmp /data/local/tmp/minicap -P {}/0 -s", device,wm_size);
 //        StaticLog.info("##caps {}",caps);
         Process exec = RuntimeUtil.exec(caps);
         byte[] bytes = IoUtil.readBytes(exec.getInputStream(), true);

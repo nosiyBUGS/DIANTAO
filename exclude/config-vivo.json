@@ -1,16 +1,19 @@
 {
-  "adb_path": "C:\\program_files_arch\\QtScrcpy-win-x64-v2.1.2\\adb",
-  "devices": [" -s 192.168.1.3:5555 "," -s 192.168.1.80:5555 "," -s 192.168.1.17:5555 "],
-  "items_time": [25,30,35,65,70,95,130,190,305,1200,7200],
-  "items_interval": [0,3,5,7,10,25,30,45],
-  "items_count": [1,2,3,4,5,6,7,8,9,10],
-  "walk_base":870,
-  "walk_step":200,
-  "work_base":1250,
-  "work_step":200,
-  "random_point": false,
-  "from": "800 1377 800 200 1000",
-  "to": "800 300 800 1377",
-  "quicks":{
-  }
+	"adb_path":"C:\\program_files_arch\\QtScrcpy-win-x64-v2.1.2\\adb",
+	"config_name":"vivo",
+	"config_path":"G:\\idea_projects\\DIANTAO/exclude/config-vivo.json",
+	"devices":[
+		" -s 192.168.2.190:5555 "
+	],
+	"from":"800 1377 800 200 1000",
+	"quicks_path":"G:\\idea_projects\\DIANTAO/exclude/quicks-vivo.txt",
+	"random_point":false,
+	"to":"800 300 800 1377",
+	"version":18,
+	"version_path":"G:\\idea_projects\\DIANTAO/exclude/versions/",
+	"walk_base":870,
+	"walk_step":200,
+	"work_base":1250,
+	"work_step":200,
+	"wm_size": "1080x1920@1080x1920"
 }

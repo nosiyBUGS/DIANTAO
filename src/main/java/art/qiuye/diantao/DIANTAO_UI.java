@@ -1,6 +1,7 @@
 package art.qiuye.diantao;
 
 import art.qiuye.diantao.db.DianConfig;
+import art.qiuye.diantao.hire.Hire;
 import cn.hutool.core.date.StopWatch;
 import cn.hutool.core.img.ImgUtil;
 import cn.hutool.core.io.FileUtil;
@@ -43,6 +44,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.WatchEvent;
@@ -163,6 +165,7 @@ public class DIANTAO_UI {
 
         public String name;
         private SlotGroup group;
+        private ThreadGroup threadGroup=new ThreadGroup("thread-group");
 
 
         public static void main(String[] args) {
@@ -841,7 +844,7 @@ public class DIANTAO_UI {
                                 }
 
                                 onClose(false);
-                                thread = new Thread(() -> {
+                                thread = new Thread(threadGroup,() -> {
                                         manualPane.setBackground(Color.GREEN);
                                         beginBatch(group);
                                         monitorThread.stop();
@@ -850,7 +853,7 @@ public class DIANTAO_UI {
                                 thread.setUncaughtExceptionHandler(exceptionHandler);
                                 thread.start();
                                 final Pattern current_pattern = Pattern.compile("[\\w\\.]*/[\\w\\.]*");
-                                monitorThread = new Thread(() -> {
+                                monitorThread = new Thread(threadGroup,() -> {
                                         int swipe_count=3;
                                         while (true) {
                                                 String pre = RuntimeUtil.execForStr(cmd_current);
@@ -963,7 +966,7 @@ public class DIANTAO_UI {
                                                                                                 writeStatus("dialog dispose");
                                                                                                 writeStatus("execute exceptionCmds:{},exit",group.exceptionCmds);
                                                                                                 Map<String, InputStream> map = new HashMap<>();
-                                                                                                map.put("image.png", new ByteArrayInputStream(getImage(false,0,0,-1,-1).toByteArray()));
+                                                                                                map.put("image.png", new ByteArrayInputStream(getImageOutStream(false,0,0,-1,-1).toByteArray()));
                                                                                                 execute_cmd(group.exceptionCmds,null);
                                                                                                 onClose(false);
                                                                                                 MailUtil.send(account, "1281886693@qq.com", config.config_name+" dialog dispose:" + LocalDateTime.now().format(DATE_TIME_FORMATTER), "image", map, true);
@@ -1147,13 +1150,7 @@ public class DIANTAO_UI {
         }
 
         private void onClose(boolean closed) {
-                if (thread != null) {
-                        thread.stop();
-                        manualPane.setBackground(Color.CYAN);
-                }
-                if (monitorThread != null) {
-                        monitorThread.stop();
-                }
+                manualPane.setBackground(Color.CYAN);
                 if (closed) {
                         referencees.remove(button_save);
                         referencees.remove(button_F3);
@@ -1167,6 +1164,7 @@ public class DIANTAO_UI {
                         iFrame.removeAll();
                         intances.remove(this);
                 }
+                threadGroup.stop();
         }
 
         @SneakyThrows
@@ -1479,7 +1477,7 @@ public class DIANTAO_UI {
                                 while (n-- > 0) {
                                         tap(subs[7] + " " + subs[8]);
                                         sleep(0.5);
-                                        ByteArrayOutputStream outputStream = getImage(false, x, y, width, height);
+                                        ByteArrayOutputStream outputStream = getImageOutStream(false, x, y, width, height);
                                         String body = doOcr(outputStream.toByteArray());
                                         if (body.contains(subs[4])) {//包含
                                                 tap(subs[5] + " " + subs[6]);
@@ -1487,57 +1485,84 @@ public class DIANTAO_UI {
                                         }
                                         outputStream.close();
                                 }
-                        } else if(code.equals("digest")){
-                                int x1 = Integer.parseInt(subs[0]);
-                                int y1 = Integer.parseInt(subs[1]);
+                        } else if(code.equals("digest")){//[cmd];20;t100 1830;t600 1250;c8,keyevent KEYCODE_MOVE_END,s0;digest 187 1091 1048 1860 @确认雇佣 @dummy [b1,闲,高,中介,快递];
+                                String query=String.join(" ", subs);
 
-                                int x3 = Integer.parseInt(subs[2]);
-                                int y3 = Integer.parseInt(subs[3]);
-                                String hire_point = subs[4] + " " + subs[5];
-                                String dummy_point = subs[6] + " " + subs[7];
-                                String[] ll=StrUtil.strip(subs[8],"[","]").split(",");
-                                List<String> hire_list = Arrays.asList(ll);
 
-                                ByteArrayOutputStream outputStream = getImage(x1,y1,x3,y3,true);
-                                String body = doOcr(outputStream.toByteArray());
-                                JSONObject json = JSON.parseObject(body);
-                                if(json.getIntValue("code")==0) {//ocr list
-                                        JSONArray array = json.getJSONArray("result");
-                                        for (int i = 0; i < array.size(); i++) {
-                                                JSONObject result = (JSONObject) array.get(i);
-                                                String content = result.getString("content");
-                                                boolean match = hire_list.stream().anyMatch(e -> content.startsWith(e));
-                                                if(match){
-                                                        JSONObject dig = null;
-                                                        boolean digable=false;
-                                                        for (int j = i+1; j < array.size(); j++) {
-                                                                JSONObject object = (JSONObject) array.get(j);
+                                //example:x1=187&x2=860&x3=1048&y3=2142&hp=@确认雇佣&dp=@dummy&target=b4,180&tp=@打工多赚&fp=@focus_point
+                                String[] split = query.split("&");
+                                Map<String, String> map = new HashMap<>();
+                                for (String s : split) {
+                                        String[] ss = s.split("=");
+                                        map.put(ss[0], ss[1]);
+                                }
 
-                                                                if(object.getString("content").equals("可挖走")) {
-                                                                   digable=true;
-                                                                }else
-                                                                if(object.getString("content").equals("挖走Ta")) {
-                                                                        dig = object;
-                                                                        break;
-                                                                }
-                                                        }
-                                                        if(digable && dig!=null){
-                                                                JSONArray fr = dig.getJSONArray("frame");
-                                                                int _x1=Integer.parseInt(fr.get(0).toString().split(",")[0]);
-                                                                int _x2=Integer.parseInt(fr.get(1).toString().split(",")[0]);
-                                                                int _y1=Integer.parseInt(fr.get(0).toString().split(",")[1]);
-                                                                int _y2=Integer.parseInt(fr.get(2).toString().split(",")[1]);
-                                                                String dig_point=StrUtil.format("{} {}",(_x1+_x2)/2,(_y1+_y2)/2);
-                                                                writeStatus("##dig_point {}",dig_point);
-                                                                writeStatus("##hire:{}",content);
-                                                                tap(dig_point);
+                                int x1 = Integer.parseInt(map.get("x1"));
+                                int y1 = Integer.parseInt(map.get("y1"));
+
+                                int x3 = Integer.parseInt(map.get("x3"));
+                                int y3 = Integer.parseInt(map.get("y3"));
+                                String hire_point = map.get("hp");
+                                String dummy_point = map.get("dp");
+                                String toggle_point = map.get("tp");
+                                String focus_point = map.get("fp");
+                                String[] ll = map.get("target").split(",");
+
+                                List<String> targets = Arrays.asList(ll);
+
+                                boolean end=false;
+                                List<Hire> hiredList = new ArrayList<>();
+                                int limit=40;
+                                tap(toggle_point);tap(focus_point);
+                                while (!end && limit>0) {
+                                        BufferedImage imageBuffer = getImageBuffer(x1, y1, x3, y3, true);
+                                        BufferedImage subImage = imageBuffer.getSubimage(740, y1, x3 - 740, y3 - y1);
+                                        if(debug){
+                                                String sub_path=  Config.screen_path + config.config_name+"-"  +LocalDateTime.now().format(DATE_TIME_FORMATTER)+ ".sub.png";
+                                                ImageIO.write(subImage, ImgUtil.IMAGE_TYPE_PNG, new File(sub_path));
+                                        }
+                                        String body=null;
+                                        List<Hire> hires = null;
+                                        boolean[] judgeColor = judgeColor(subImage);
+                                        if(judgeColor[0]){
+                                                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                                                ImageIO.write(imageBuffer,ImgUtil.IMAGE_TYPE_PNG,outputStream);
+                                                body = doOcr(outputStream.toByteArray());
+                                                outputStream.close();
+                                                hires = Hire.generateList(body);
+
+                                        } else  if (judgeColor[1])break;
+                                        else {
+                                                hires=Collections.emptyList();
+                                        }
+                                        //one page
+                                        boolean hired=false;
+                                        label:
+                                        for (Hire hire : hires) {
+                                                for (String target : targets) {
+                                                        if (hire.id!=null && hire.id.startsWith(target) && !hiredList.contains(hire)) {
+                                                                writeStatus("##hire:{}", hire.id);
+                                                                writeStatus("##dig_point {}", hire.digPoint);
+                                                                tap(hire.digPoint);
                                                                 tap(hire_point);
-                                                                break;
+//                                                                tap(dummy_point);//test
+                                                                hired=true;
+                                                                hiredList.add(hire);
+                                                                break label;
                                                         }
                                                 }
+                                                end=hire.end;
                                         }
-                                        tap(dummy_point);
+                                        if(!hired) {
+                                                keyevent("KEYCODE_PAGE_DOWN");
+                                                limit--;//max 40 pages
+                                        }
+                                        else {
+                                                tap(toggle_point);tap(focus_point);
+                                                limit=40;
+                                        }
                                 }
+                                tap(dummy_point);
                         }else if(code.equals("screen")){
                                 String screen_path = Config.screen_path + config.config_name+"-"  +LocalDateTime.now().format(DATE_TIME_FORMATTER)+ ".png";
                                 writeStatus("screenshot:{}",screen_path);
@@ -1603,22 +1628,59 @@ public class DIANTAO_UI {
                                 props.put("name",subs[0]);
                                 props.put("opt", code);
                                 props.store(Config.communication_path);
-//                                String prop = StrUtil.format("name={}\nopt={}", subs[0], code);
-//                                FileUtil.writeUtf8String(prop, Config.communication_path);
+                        } else if (code.equals("async")) {
+                                String join = String.join(" ", subs);
+                                Thread t=new Thread(threadGroup,()->{
+                                     execute_cmd(new String[]{join},null);
+                                },join);
+                                t.start();
                         }
                         if (!sleeped) sleep(1);//操作间隔
                 }
         }
-        private ByteArrayOutputStream getImage(boolean fillBg,int x1,int y1,int w,int h){
-                int x3=x1+w,y3=y1+h;
-                return getImage(x1, y1, x3, y3, fillBg);
+        private boolean[] judgeColor(BufferedImage image){// red green
+                int width = image.getWidth();
+                int height = image.getHeight();
+                int capacity = width * height * 4;
+                ByteBuffer buffer=ByteBuffer.allocate(capacity);
+                for (int i = 0; i < width; i++) {
+                        for (int j = 0; j < height; j++) {
+                                buffer.putInt(image.getRGB(i,j));
+                        }
+                }
+                boolean contain_red=false;
+                boolean contain_green=false;
+                for (int i = 0; i < capacity; i+=4) {
+                        if(buffer.get(i+1)==(byte) 0xFF && (buffer.get(i+2) & 0xFF) < 0X10){
+                                contain_red=true;
+                                break;
+                        }
+                        if(buffer.get(i+1)==(byte) 0x00 && buffer.get(i+1)==(byte)0x00 && (buffer.get(i+2) & 0xFF) > 0XD0){
+                                contain_green=true;
+                                System.out.println("green:"+HexUtil.toHex(buffer.getInt(i)));
+                                break;
+                        }
+                }
+                buffer.clear();
+                return new boolean[]{contain_red, contain_green};
         }
+        private ByteArrayOutputStream getImageOutStream(boolean fillBg, int x1, int y1, int w, int h){
+                int x3=x1+w,y3=y1+h;
+                return getImageOutStream(x1, y1, x3, y3, fillBg);
+        }
+
         @SneakyThrows
-        private ByteArrayOutputStream getImage(int x1,int y1,int x3,int y3, boolean fillBg){
+        private ByteArrayOutputStream getImageOutStream(int x1, int y1, int x3, int y3, boolean fillBg){
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                ImageIO.write(getImageBuffer(x1, y1, x3, y3, fillBg), ImgUtil.IMAGE_TYPE_PNG,outputStream);
+                return outputStream;
+        }
+
+        @SneakyThrows
+        private BufferedImage getImageBuffer(int x1, int y1, int x3, int y3, boolean fillBg){
                 ByteArrayInputStream inputStream = new ByteArrayInputStream(miniCap.frame());
                 int pw=x3-x1;
                 int ph=y3-y1;
-                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                 BufferedImage bufferedImage = ImageIO.read(inputStream);
                 int w=bufferedImage.getWidth(),h=bufferedImage.getHeight();
                 Graphics2D graphics2D = bufferedImage.createGraphics();
@@ -1631,19 +1693,21 @@ public class DIANTAO_UI {
                         if(pw>0 && ph>0)
                                 bufferedImage=bufferedImage.getSubimage(x1,y1,pw,ph);
                 }
-                ImageIO.write(bufferedImage, ImgUtil.IMAGE_TYPE_PNG,outputStream);
                 if(debug){
                         String screen_path = Config.screen_path + config.config_name+"-"  +LocalDateTime.now().format(DATE_TIME_FORMATTER)+ ".png";
-                        FileUtil.writeBytes(outputStream.toByteArray(), screen_path);
+                        ImageIO.write(bufferedImage, ImgUtil.IMAGE_TYPE_PNG, new File(screen_path));
                 }
-                return outputStream;
+                return bufferedImage;
         }
+
         private String doOcr(byte[] bytes){
                 if(ocrPost.form()!=null)ocrPost.form().clear();
                 String body = ocrPost.form("file", bytes, "file")
                         .execute()
                         .body();
                 writeStatus("## ocr body {} ", body);
+                if(debug)
+                        FileUtil.writeUtf8String(JSONUtil.formatJsonStr(body),Config.log_path + config.config_name+"-"  +LocalDateTime.now().format(DATE_TIME_FORMATTER)+ ".json");
                 return body;
         }
         private int parseSecond(String format) {//such as 1h2m3s
@@ -1878,12 +1942,15 @@ public class DIANTAO_UI {
         }
 
         @Test
-        public void test() throws FileNotFoundException {
-                Map<String, InputStream> map = new HashMap<>();
-                map.put("image.png", new FileInputStream("C:\\Users\\tassel\\IdeaProjects\\DIANTAO\\exclude\\screen\\meizu-2024-01-09-02-36-23.png"));
-
-                MailUtil.send(account, "1281886693@qq.com","dialog dispose","image",map,true);
-
+        public void test() {
+                String query = "x1=187&x2=860&x3=1048&y3=2142&hp=@110 222&hd=113 444&target=b4,180";
+                String[] split = query.split("&");
+                Map<String, String> map = new HashMap<>();
+                for (String s : split) {
+                        String[] ss = s.split("=");
+                        map.put(ss[0], ss[1]);
+                }
+                System.out.println(map);
 
         }
 }

@@ -2,6 +2,8 @@ package art.qiuye.diantao;
 
 import cn.hutool.core.io.file.LineSeparator;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Pattern;
 
 /**
@@ -61,4 +63,15 @@ public class Constants {
 
     public static final String LF = LineSeparator.LINUX.getValue();
     public static final String CR_LF = LineSeparator.LINUX.getValue();
+
+    public static final List<String> HIRE_EXCLUDE_LIST = new ArrayList<>();
+
+    static {
+        HIRE_EXCLUDE_LIST.add("今日已打卡，雇佣后可明日唤回");
+        HIRE_EXCLUDE_LIST.add("首次唤回最高可得");
+        HIRE_EXCLUDE_LIST.add("+128");
+    }
+    public static final String HIRE_DIGABLE="可挖走";
+    public static final String HIRE_NO_DIGABLE="被雇佣中";
+    public static final String HIRE_END = "邀请更多帮手";
 }

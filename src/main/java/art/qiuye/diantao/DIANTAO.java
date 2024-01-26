@@ -1,16 +1,26 @@
 package art.qiuye.diantao;
 
+import art.qiuye.diantao.hire.Hire;
 import cn.hutool.core.date.StopWatch;
 import cn.hutool.core.img.ImgUtil;
+import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.util.HexUtil;
+import cn.hutool.core.util.NumberUtil;
 import cn.hutool.log.Log;
 import cn.hutool.log.LogFactory;
+import cn.hutool.log.StaticLog;
 import org.junit.Test;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferByte;
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.*;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class DIANTAO {
     public static final Log log= LogFactory.get();
@@ -30,33 +40,41 @@ public class DIANTAO {
         frame.setVisible(true);
         internalFrame.setVisible(true);
         internalFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);*/
-        StopWatch stopWatch = new StopWatch();
-        stopWatch.start();
-        BufferedImage image = ImageIO.read(new File(Config.screen_path + "TTT-2023-10-20-12-38-28.png"));
-        System.out.println(image);
-
-        stopWatch.stop();
-        System.out.println(stopWatch.getTotalTimeMillis());
+        List<Hire> hires = Hire.generateList(FileUtil.readUtf8String(Config.log_path+"3.json"));
+        System.out.println(hires);
 
     }
 
 
     @Test
-    public void imgCut() throws IOException {
-        BufferedImage bufferedImage = ImageIO.read(new File("G:\\idea_projects\\DIANTAO\\exclude\\screen\\330822-106.jpg"));
-        Graphics2D graphics2D = bufferedImage.createGraphics();
-        int x1=200,y1=200,x2=400,y2=200,x3=400,y3=400,x4=200,y4=200;
-        int w=bufferedImage.getWidth();
-        int h=bufferedImage.getHeight();
-        graphics2D.setColor(Color.RED);
-        graphics2D.fillRect(0,0,w,y1);
-        graphics2D.fillRect(0,y3,w,h-y3);
-        graphics2D.fillRect(0,0,x1,h);
-        graphics2D.fillRect(x2,0,w-x2,h);
-//            graphics2D.fillRect(x1,y1,x2-x1,y3-y2);
-
-//        bufferedImage=bufferedImage.getSubimage(200,200,200,200);
-        ImageIO.write(bufferedImage, ImgUtil.IMAGE_TYPE_JPG, new File("G:\\idea_projects\\DIANTAO\\exclude\\screen\\out.jpg"));
+    public void img() throws IOException {
+        BufferedImage bufferedImage = ImageIO.read(new File(Config.screen_path+"3.png"));
+        int width = bufferedImage.getWidth();
+        int height = bufferedImage.getHeight();
+        int capacity = width * height * 4;
+        ByteBuffer buffer=ByteBuffer.allocate(capacity);
+        for (int i = 0; i < width; i++) {
+            for (int j = 0; j < height; j++) {
+                buffer.putInt(bufferedImage.getRGB(i,j));
+            }
+        }
+        boolean contain_red=false;
+        boolean contain_green=false;
+        for (int i = 0; i < capacity; i+=4) {
+            if(buffer.get(i+1)==(byte) 0xFF && (buffer.get(i+2) & 0xFF) < 0X10){
+                contain_red=true;
+                System.out.println("red:"+HexUtil.toHex(buffer.getInt(i)));
+                break;
+            }
+            if(buffer.get(i+1)==(byte) 0x00 && buffer.get(i+1)==(byte)0x00 && (buffer.get(i+2) & 0xFF) > 0XD0){
+                contain_green=true;
+                System.out.println("green:"+HexUtil.toHex(buffer.getInt(i)));
+                break;
+            }
+        }
+        StaticLog.info("contain_red {}",contain_red);
+        StaticLog.info("contain_green {}",contain_green);
+        new Color(0, 255, 0, 255);
     }
 
 }
