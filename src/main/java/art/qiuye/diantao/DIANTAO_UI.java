@@ -64,7 +64,8 @@ import java.util.stream.Collectors;
 
 import static art.qiuye.diantao.ActionKeys.*;
 import static art.qiuye.diantao.Constants.*;
-import static cn.hutool.core.util.StrUtil.isNotBlank;
+import static art.qiuye.diantao.Constants.LF;
+import static cn.hutool.core.util.StrUtil.*;
 
 public class DIANTAO_UI {
 
@@ -147,6 +148,7 @@ public class DIANTAO_UI {
                 if(e instanceof ThreadDeath)return;
                 e.printStackTrace();
                 JOptionPane.showMessageDialog(null, e, "ERROR-" + config.config_name, JOptionPane.ERROR_MESSAGE);
+                t.getThreadGroup().stop();
         };
         private JPopupMenu popupMenu;
         private AbstractAction ctrl_u_action;
@@ -243,8 +245,8 @@ public class DIANTAO_UI {
 
                 };
                 communicationMonitor.setWatcher(new DelayWatcher(watcher1,500));
-                communicationMonitor.start();
-                writeStatus("communicationMonitor started");
+//                communicationMonitor.start();
+//                writeStatus("communicationMonitor started");
         }
 
         @SneakyThrows
@@ -910,9 +912,11 @@ public class DIANTAO_UI {
                                                                         if(!current.equals(""))
                                                                                 if(group.exceptionCmds!=null){
                                                                                         String alert_temp="即将结束({}s)";
-                                                                                        JOptionPane op=new JOptionPane("即将结束(3s)",JOptionPane.WARNING_MESSAGE,JOptionPane.DEFAULT_OPTION);
+                                                                                        JOptionPane op=new JOptionPane(alert_temp,JOptionPane.WARNING_MESSAGE,JOptionPane.DEFAULT_OPTION);
                                                                                         String text_pause="暂停";
-                                                                                        JButton[] options = {new JButton(text_pause)};
+                                                                                        JButton button = new JButton(text_pause);
+                                                                                        button.setPreferredSize(new Dimension(160,80));
+                                                                                        JButton[] options = {button};
 
                                                                                         op.setOptions(options);
                                                                                         JDialog dialog = op.createDialog(null,config.config_name);
@@ -939,11 +943,11 @@ public class DIANTAO_UI {
                                                                                                 }
                                                                                         });
                                                                                         options[0].addActionListener(e1->{
-                                                                                                JButton button = (JButton) e1.getSource();
-                                                                                                JOptionPane parent = (JOptionPane) button.getParent().getParent();
-                                                                                                if(button.getText().equals(text_pause)){
+                                                                                                JButton b = (JButton) e1.getSource();
+                                                                                                JOptionPane parent = (JOptionPane) b.getParent().getParent();
+                                                                                                if(b.getText().equals(text_pause)){
                                                                                                         parent.setValue(1);
-                                                                                                        button.setText("恢复");
+                                                                                                        b.setText("恢复");
                                                                                                         timer.stop();
 
                                                                                                 }
@@ -969,8 +973,8 @@ public class DIANTAO_UI {
                                                                                                 Map<String, InputStream> map = new HashMap<>();
                                                                                                 map.put("image.png", new ByteArrayInputStream(getImageOutStream(false,0,0,-1,-1).toByteArray()));
                                                                                                 execute_cmd(group.exceptionCmds,null);
-                                                                                                onClose(false);
                                                                                                 MailUtil.send(account, "1281886693@qq.com", config.config_name+" dialog dispose:" + LocalDateTime.now().format(DATE_TIME_FORMATTER), "image", map, true);
+                                                                                                onClose(false);
 
                                                                                         }
                                                                                 }
@@ -1506,6 +1510,7 @@ public class DIANTAO_UI {
 
                                 int x3 = Integer.parseInt(map.get("x3"));
                                 int y3 = Integer.parseInt(map.get("y3"));
+                                String pfr = map.get("pfr");//price frame
                                 String hire_point = map.get("hp");
                                 String dummy_point = map.get("dp");
                                 String toggle_point = map.get("tp");
@@ -1513,11 +1518,16 @@ public class DIANTAO_UI {
                                 String[] ll = map.get("target").split(",");
 
                                 List<String> targets = Arrays.asList(ll);
+                                if(debug)writeStatus(targets);
 
                                 boolean end=false;
                                 List<Hire> hiredList = new ArrayList<>();
-                                int limit=40;
+                                int limit=60;
                                 tap(toggle_point);tap(focus_point);
+                                ByteArrayOutputStream imageOutStream = getImageOutStream(pfr, false);
+                                JSONObject object = JSON.parseObject(doOcr(imageOutStream.toByteArray()));
+                                int price = object.getJSONArray("result").getJSONObject(1).getIntValue("content");
+                                if(debug)writeStatus("##price {}",price);
                                 while (!end && limit>0) {
                                         BufferedImage imageBuffer = getImageBuffer(x1, y1, x3, y3, true);
                                         BufferedImage subImage = imageBuffer.getSubimage(740, y1, x3 - 740, y3 - y1);
@@ -1543,16 +1553,20 @@ public class DIANTAO_UI {
                                         }
                                         //one page
                                         boolean hired=false;
+                                        boolean expensive=false;
                                         label:
                                         for (Hire hire : hires) {
                                                 for (String target : targets) {
                                                         if (hire.id!=null && hire.id.startsWith(target) && !hiredList.contains(hire)) {
                                                                 writeStatus("##hire:{}", hire.id);
                                                                 writeStatus("##dig_point {}", hire.digPoint);
-                                                                tap(hire.digPoint);
-                                                                tap(hire_point);
+                                                                if(price>hire.price){
+                                                                        tap(hire.digPoint);
+                                                                        tap(hire_point);
+                                                                        hired=true;
+                                                                        price-=hire.price;
+                                                                }else expensive=true;
 //                                                                tap(dummy_point);//test
-                                                                hired=true;
                                                                 hiredList.add(hire);
                                                                 break label;
                                                         }
@@ -1560,14 +1574,15 @@ public class DIANTAO_UI {
                                                 end=hire.end;
                                         }
                                         if(!hired) {
-                                                noHireHashes.add((String) judgeColor[2]);//will add end red_green
+                                                if(!expensive)
+                                                        noHireHashes.add((String) judgeColor[2]);//will add end red_green
                                                 if((Boolean) judgeColor[1])break;//no hire but green
                                                 keyevent("KEYCODE_PAGE_DOWN");
                                                 limit--;//max 40 pages
                                         }
                                         else {
                                                 tap(toggle_point);tap(focus_point);
-                                                limit=40;
+                                                limit=60;
                                         }
                                 }
                                 tap(dummy_point);
@@ -1641,6 +1656,7 @@ public class DIANTAO_UI {
                                 Thread t=new Thread(threadGroup,()->{
                                      execute_cmd(new String[]{join},null);
                                 },join);
+                                t.setUncaughtExceptionHandler(exceptionHandler);
                                 t.start();
                         }
                         if (!sleeped) sleep(1);//操作间隔
@@ -1659,7 +1675,7 @@ public class DIANTAO_UI {
                 boolean contain_red=false;
                 boolean contain_green=false;
                 for (int i = 0; i < capacity; i+=4) {
-                        if(!contain_red && buffer.get(i+1)==(byte) 0xFF && (buffer.get(i+2) & 0xFF) < 0X10){
+                        if(!contain_red && buffer.get(i+1)==(byte) 0xFF && (buffer.get(i+2) & 0xFF) < 0X20){
                                 contain_red=true;
                         }
                         if(!contain_red && buffer.get(i+1)==(byte) 0x00 && buffer.get(i+1)==(byte)0x00 && (buffer.get(i+2) & 0xFF) > 0XD0){
@@ -1675,6 +1691,15 @@ public class DIANTAO_UI {
                 return getImageOutStream(x1, y1, x3, y3, fillBg);
         }
 
+
+        private ByteArrayOutputStream getImageOutStream(String points, boolean fillBg) {
+                String[] ss = points.split(" ");
+                int x1= Integer.parseInt(ss[0]);
+                int y1= Integer.parseInt(ss[1]);
+                int x3= Integer.parseInt(ss[2]);
+                int y3= Integer.parseInt(ss[3]);
+                return getImageOutStream(x1, y1, x3, y3, fillBg);
+        }
         @SneakyThrows
         private ByteArrayOutputStream getImageOutStream(int x1, int y1, int x3, int y3, boolean fillBg){
                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -1748,6 +1773,7 @@ public class DIANTAO_UI {
                 if (s.ex_cmds != null) {
                         if (s.ex_cmds.contains(INS_SW_FROM)) {
                                 s.ex_cmds = s.ex_cmds.replace(INS_SW_FROM, "");
+
                                 direction = 1;
                         } else if (s.ex_cmds.contains(INS_SW_TO)) {
                                 s.ex_cmds = s.ex_cmds.replace(INS_SW_TO, "");
@@ -1756,6 +1782,7 @@ public class DIANTAO_UI {
                                 s.ex_cmds = s.ex_cmds.replace(INS_SW_REVERSE, "");
                                 direction = 3;
                         }
+                        s.ex_cmds= strip(s.ex_cmds, ";");//bugfix
                 }
                 if (s.interval > 0) {
                         int times = s.total_duration / s.interval;
@@ -1949,14 +1976,6 @@ public class DIANTAO_UI {
 
         @Test
         public void test() {
-                String query = "x1=187&x2=860&x3=1048&y3=2142&hp=@110 222&hd=113 444&target=b4,180";
-                String[] split = query.split("&");
-                Map<String, String> map = new HashMap<>();
-                for (String s : split) {
-                        String[] ss = s.split("=");
-                        map.put(ss[0], ss[1]);
-                }
-                System.out.println(map);
-
+                MailUtil.send(account, "1281886693@qq.com", " dialog dispose:" + LocalDateTime.now().format(DATE_TIME_FORMATTER), "image", true);
         }
 }

@@ -20,6 +20,7 @@ import java.awt.image.DataBufferByte;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -50,21 +51,20 @@ public class DIANTAO {
 
     @Test
     public void img() throws IOException {
-        BufferedImage bufferedImage = ImageIO.read(new File(Config.screen_path+"4.png"));
+        BufferedImage bufferedImage = ImageIO.read(new File(Config.screen_path+"1.jpg"));
         int width = bufferedImage.getWidth();
         int height = bufferedImage.getHeight();
         int capacity = width * height * 4;
-        ByteBuffer buffer=ByteBuffer.allocate(capacity);
+        ByteBuffer buffer=ByteBuffer.allocateDirect(capacity);
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
                 buffer.putInt(bufferedImage.getRGB(i,j));
             }
         }
-        StaticLog.info("##buffer hash1{} ", DigestUtil.md5Hex(buffer.array()));
         boolean contain_red=false;
         boolean contain_green=false;
         for (int i = 0; i < capacity; i+=4) {
-            if(buffer.get(i+1)==(byte) 0xFF && (buffer.get(i+2) & 0xFF) < 0X10){
+            if(buffer.get(i+1)==(byte) 0xFF && (buffer.get(i+2) & 0xFF) < 0X20){
                 contain_red=true;
                 System.out.println("red:"+HexUtil.toHex(buffer.getInt(i)));
                 break;
@@ -75,10 +75,9 @@ public class DIANTAO {
                 break;
             }
         }
-        StaticLog.info("##buffer hash2{} ", DigestUtil.md5Hex(buffer.array()));
         StaticLog.info("contain_red {}",contain_red);
         StaticLog.info("contain_green {}",contain_green);
-        new Color(0, 255, 0, 255);
+//        new Color(0, 255, 0, 255);
     }
 
 }

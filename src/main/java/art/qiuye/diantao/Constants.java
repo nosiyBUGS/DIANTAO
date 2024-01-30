@@ -51,7 +51,7 @@ public class Constants {
     public static final String IDT_REF = "[ref]";
     public static final String IDT_REF_COMMON = "[reg]";
     public static final Pattern PATTERN_JJ = Pattern.compile("jj\\d+");
-    public static final Pattern PATTERN_VARIABLES = Pattern.compile("@[\\u4E00-\\u9FA5a-z\\d_]+(\\(([\\d,]+?)\\))?");
+    public static final Pattern PATTERN_VARIABLES = Pattern.compile("@[\\u4E00-\\u9FA5a-z\\d_\\.]+(\\(([\\d,]+?)\\))?");
     public static final Pattern PATTERN_VARIABLES_SAVE = Pattern.compile("(?<=variables\\\":)\\s?\\{.+?\\}",Pattern.DOTALL);
     public static final Pattern PATTERN_OP_CODE = Pattern.compile("^[a-z]+");
     public static final String PATTERN_VERSION_S = ("(?<=\"version\":)\\d+");
@@ -64,14 +64,7 @@ public class Constants {
     public static final String LF = LineSeparator.LINUX.getValue();
     public static final String CR_LF = LineSeparator.LINUX.getValue();
 
-    public static final List<String> HIRE_EXCLUDE_LIST = new ArrayList<>();
-
-    static {
-        HIRE_EXCLUDE_LIST.add("今日已打卡，雇佣后可明日唤回");
-        HIRE_EXCLUDE_LIST.add("首次唤回最高可得");
-        HIRE_EXCLUDE_LIST.add("+128");
-    }
-    public static final String HIRE_DIGABLE="可挖走";
+    public static final String HIRE_DIGABLE="可挖走|可雇";
     public static final String HIRE_NO_DIGABLE="被雇佣中";
     public static final String HIRE_END = "邀请更多帮手";
 }

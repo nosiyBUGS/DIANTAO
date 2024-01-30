@@ -1,6 +1,7 @@
 package art.qiuye.diantao.hire;
 
 import art.qiuye.diantao.Constants;
+import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
@@ -27,15 +28,29 @@ public class Hire {
         if(json.getIntValue("code")!=0)return Collections.emptyList();
         JSONArray results = json.getJSONArray("result");
         List<Hire> hires = new ArrayList<>();
-
+        /*
+ 0 id
+1 被雇佣中 | 可挖走
+2 挖走TA
+3 打工多赚XX次
+4 身价XX元宝
+5 今日已打卡，雇佣后可明日唤回 | 首次唤回最高可得
+6 +128
+        * */
         for (int i = 0; i < results.size(); i++) {
             Hire h = new Hire();
             JSONObject r = results.getJSONObject(i);
-            if(r.getString("content").equals(HIRE_DIGABLE)) {
+            String content = r.getString("content");
+            if(HIRE_DIGABLE.contains(content)) {
                 if(i>0)
                     h.id = results.getJSONObject(i-1).getString("content");
-                h.status = r.getString("content");
-                if(i+1==results.size())continue;
+                h.status = content;
+                if(i+3>=results.size()  || i+1>=results.size())continue;
+                String c = results.getJSONObject(i + 3).getString("content");
+                String substring = c.substring(2, c.length() - 2);
+                if(NumberUtil.isInteger(substring)){
+                    h.price= Integer.parseInt(substring);
+                }
                 JSONObject dig = results.getJSONObject(i + 1);
                 h.digable = true;
                 JSONArray fr = dig.getJSONArray("frame");
@@ -64,6 +79,7 @@ public class Hire {
                 ", status='" + status + '\'' +
                 ", digPoint='" + digPoint + '\'' +
                 ", end=" + end +
+                ", price=" + price +
                 '}';
     }
 
