@@ -10,7 +10,7 @@
 	"quicks_path":"C:\\Users\\tassel\\IdeaProjects\\DIANTAO/exclude/quicks-meizu.txt",
 	"random_point":true,
 	"to":"750 300 750 1377 1000",
-	"version":305,
+	"version":347,
 	"version_path":"C:\\Users\\tassel\\IdeaProjects\\DIANTAO/exclude/versions/",
 	"walk_base":1000,
 	"walk_step":200,
@@ -20,7 +20,7 @@
 	"variables":{
 	"@app":"150 800",
 	"@close_dmd":"1000 730",
-	"@w.1":"536 1500",
+	"@w.1":"536 1350",
 	"@w.2":"110 1820",
 	"@w.3":"500 1980",
 	"@w.dummy":"340 430",

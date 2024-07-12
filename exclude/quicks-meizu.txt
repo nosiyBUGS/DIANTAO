@@ -18,13 +18,15 @@ $$$快手-浏览:
 [act];HomeActivity,hotoDetailActivity;c_sleep
 1;33300;60;#10;swr;nom
 $$$快手-逛街:
-[act];AdKwaiRnActivity
-1;2233;3;#10;nom
+###[act];AdKwaiRnActivity
+1;2233;3;#10;swr;nom
 $$$快手-领福利
 [cmd];44;t900 260;s30;b;t550 1260;s30;b;
 $$$快手-饭补
 [act];com.kuaishou.nebula
 10;30;0;260 1860;
+$$$抖音-看小说
+[cmd];9999;t740 1980;s4;nom;
 $$$点淘-凌晨
 ###[act];TaoLiveHomeActivity;c_sleep
 [cmd];1;atc 2:05;t@app;s8
@@ -61,12 +63,13 @@ $$$点淘-看直播赚钻石
 [cmd];10;if337 965 300 100 看直播 450 1000 480 1200;s65;b;c5,t480 1200;
 [cmd];1;if337 965 300 100 看短视频 450 1000 480 1200;swf65 7;b
 $$$点淘-群工
-[act];h5.BrowserActivity,launcher;h;c_sleep
+[act];pha.PHAContainerActivity,launcher;h;c_sleep
 [cmd];0;s1m30;c2,recent;t@w.1;t@w.3;t@w.1;t@w.dummy
-###[cmd];4637;async digest pfr=135 123 490 194&x1=187&y1=860&x3=1048&y3=2142&hp=@w.1&dp=@w.dummy&tp=@w.2&fp=@w.focus_point&target=b215,b3,b4;s603;
+###[cmd];4542;async digest pfr=135 123 490 194&x1=187&y1=860&x3=1048&y3=2142&hp=@w.1&dp=@w.dummy&tp=@w.2&fp=@w.focus_point&target=b215,b3,b4,133;s603;
 
 
-[cmd];4680;t@w.1;t@w.3;t@w.1;async digest pfr=135 123 490 194&x1=187&y1=860&x3=1048&y3=2142&hp=@w.1&dp=@w.dummy&tp=@w.2&fp=@w.focus_point&target=b215,b3,b4;s603;c2,recent;c2,t@w.1,t@w.dummy
+[cmd];5;t@w.1;t@w.3;t@w.1;s603;c2,recent;c2,t@w.1,t@w.dummy
+[cmd];1;async keyevent KEYCODE_POWER
 
 ###[cmd];4680;t@w.1;t@w.3;t@w.1;async digest pfr=135 123 490 194&x1=187&y1=860&x3=1048&y3=2142&hp=@w.1&dp=@w.dummy&tp=@w.2&fp=@w.focus_point&target=13,15,18,19,周十四,LGQ,高山,典故,黄者,阿西八球,云卷云舒,一骑,环环,浮华若尘,莲姐,香香,每天,幺姨妹,打工,区块链,双子星,繁星点点,星月,玫瑰雨,LGQ02,b215,b3,b4,tbNick_79;s603;c2,recent;c2,t@w.1,t@w.dummy
 $$$点淘-起床
@@ -80,14 +83,14 @@ $$$点淘-雇佣
 ###[cmd];0;swt
 $$$点淘-领体力
 [act];com.taobao.live;;c_sleep
-[cmd];1;t150 1500;t950 1500;t900 550;s35
-[cmd];1;t150 1500;t950 1500;t900 550;s65
-[cmd];1;t150 1500;t950 1500;t900 550;s95
-[cmd];1;t150 1500;t950 1500;t900 550;s185
-[cmd];1;t150 1500;t950 1500;t900 550;s305
-[cmd];1;t150 1500;t950 1500;t900 550;s610
-[cmd];1;t150 1500;t950 1500;t900 550;s1900
-[cmd];1;t150 1500;t@dummy
+[cmd];1;t150 1300;t950 1300;t900 550;s35
+[cmd];1;t150 1300;t950 1300;t900 550;s65
+[cmd];1;t150 1300;t950 1300;t900 550;s95
+[cmd];1;t150 1300;t950 1300;t900 550;s185
+[cmd];1;t150 1300;t950 1300;t900 550;s305
+[cmd];1;t150 1300;t950 1300;t900 550;s610
+[cmd];1;t150 1300;t950 1300;t900 550;s1900
+[cmd];1;t150 1300;t@dummy
 $$$点淘-领取走路
 [cmd];1;t550 1380;s2
 [cmd];1;t110 450;t550 1300;s65;b;

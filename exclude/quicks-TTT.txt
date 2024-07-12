@@ -24,8 +24,7 @@ $$$点淘-孵蛋+签到:
 [cmd];1;swf@滑动签到;s3;t940 1800;t550 1430;s75;b;swf;swf
 3;33;0;#2;
 $$$点淘-挖人
-###[cmd];1;s730
-[cmd];100;digest x1=182&y1=820&x3=1080&y3=1920&hp=@确认雇佣&dp=@dummy&tp=@打工多赚&fp=@focus_point&target=13,15.18,19,周十四,典故,b417,b3;s605
+[cmd];1;digest pfr=135 90 492 194&x1=182&y1=820&x3=1080&y3=1920&hp=@w.1&dp=@w.dummy&tp=@w.2&fp=@w.focus_point&target=b215,b3,b4,133&exclude=b417;nom
 $$$点淘-晚间
 [cmd];1;atc 20:02;t950 1300
 [cmd];20;t@晚间一排;b;@直播防夹(130);b;s3;t@我知道了;t350 1200;s3
@@ -35,14 +34,11 @@ $$$点淘-看直播赚钻石
 [cmd];10;if341 800 250 100 看直播 480 860 480 1100;s65;b;c4,t480 1100;
 [cmd];1;if341 800 250 100 看短视频 480 860 480 1100;swf65 15;b;
 $$$点淘-群工
-[act];h5.BrowserActivity,.RecentsActivity;h;c_sleep
-[cmd];0;s0m30;c2,recent;t@w.1;t@w.3;t@w.1
+[act];pha.PHAContainerActivity,RecentsActivity;h;c_sleep
+[cmd];0;s1m30;c2,recent;t@w.1;t@w.3;t@w.1
 
-
-[cmd];862;async digest pfr=135 90 492 194&x1=182&y1=820&x3=1080&y3=1920&hp=@w.1&dp=@w.dummy&tp=@w.2&fp=@w.focus_point&target=b215,b417,b3,b4;s603
-
-
-###[cmd];862;t@w.1;t@w.3;t@w.1;async digest pfr=135 90 492 194&x1=182&y1=820&x3=1080&y3=1920&hp=@w.1&dp=@w.dummy&tp=@w.2&fp=@w.focus_point&target=b215,b417,b3,b4;s603;c2,recent;c2,t@w.1,t@w.dummy
+[cmd];7;t@w.1;t@w.3;t@w.1;s603;c2,recent;c2,t@w.1,t@w.dummy
+[cmd];1;async keyevent KEYCODE_POWER;
 
 
 ###[cmd];864;t@w.1;t@w.3;t@w.1;async digest pfr=135 90 492 194&x1=182&y1=820&x3=1080&y3=1920&hp=@w.1&dp=@w.dummy&tp=@w.2&fp=@w.focus_point&target=13,15,18,19,周十四,典故,凝二,地图,阿西八球,阿**,青**信,茉莉,tbNick_zihhv,tbNick_af,tbNick_jc,tbNick_276,tbNick_nz,tbNick_1f,t**e,b215,b417,b3,b4;s603;c2,recent;c2,t@w.1,t@w.dummy

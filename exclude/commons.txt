@@ -7,16 +7,35 @@ $$$65-0
 $$$65-7
 10;65;7;$4;
 $$$8000swr
-1;8000;10;#10;swr;h
+1;8000;7;#10;swr;h
 $$$95-0
 5;95;0;$3;
 $$$95-7
 5;95;7;$4;
-$$$快手-逛街:
-[act];AdKwaiRnActivity
-1;1233;3;#10;nom
+$$$快手-看直播领金币
+###[cmd];15;t250 1000;s65;b;swf;t500 1350;t500 1200;swf;nom;
+###[cmd];15;t250 1000;s65;b;s3;t500 1350;s3;swf;swf;nom;
+[cmd];50;t250 1000;s65;b;s3;t500 1350;s3;swf;swf;nom;
+$$$抖音-浏览:
+###[act];HomeActivity,PhotoDetailActivity;c_sleep
+1;3330;17;#10;swr;nom
+$$$抖音-看小说
+###[cmd];1;async s4h,keyevent KEYCODE_POWER;nom
+[cmd];3000;t740 1980;s4;nom;
+###[cmd];3000;t730 1666;s4;nom;
+[cmd];1;keyevent KEYCODE_POWER
+$$$抖音-看广告
+[cmd];0;s4m20
+[cmd];23;t950 320;s33;b;t550 1080;s33;b;t550 1380;s300
+###[cmd];10;t950 380;s33;b;t550 1280;s33;b;t550 1480;s600;mz
+###[cmd];10;t950 900;s33;b;t550 1380;s300
 $$$浏览
-1;33;3;#10;nom
+###1;12333;3;#10;swr;nom
+###[cmd];10;c10,swr,s3;t550 1400;s600;nom
+[cmd];10;c10,swr,s3;t550 1480;s600;nom;mz
+###1;12333;13;#10;swt;nom
+###1;1233;3;#10;swr;nom
+[cmd];0;async keyevent KEYCODE_POWER;
 $$$点淘-凌晨
 ###[act];TaoLiveHomeActivity;c_sleep
 ###use for 11st,oppo

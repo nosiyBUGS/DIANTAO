@@ -14,7 +14,7 @@ import java.util.List;
 import static art.qiuye.diantao.Constants.*;
 
 public class Hire {
-    public String id;
+    public String id="";
     public String status;//被雇佣中 | 可挖走
     public boolean digable;
     public String digPoint;
@@ -42,14 +42,16 @@ public class Hire {
             JSONObject r = results.getJSONObject(i);
             String content = r.getString("content");
             if(HIRE_DIGABLE.contains(content)) {
-                if(i>0)
+                if(i>0){
                     h.id = results.getJSONObject(i-1).getString("content");
+                    if(h.id==null)h.id = "";
+                }
                 h.status = content;
                 if(i+3>=results.size()  || i+1>=results.size())continue;
                 String c = results.getJSONObject(i + 3).getString("content");
-                String substring = c.substring(2, c.length() - 2);
-                if(NumberUtil.isInteger(substring)){
-                    h.price= Integer.parseInt(substring);
+                String price_s = c.substring(2);
+                if(NumberUtil.isInteger(price_s)){
+                    h.price= Integer.parseInt(price_s);
                 }
                 JSONObject dig = results.getJSONObject(i + 1);
                 h.digable = true;

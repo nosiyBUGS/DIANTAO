@@ -6,15 +6,16 @@ $$$快手-浏览:
 1;33300;60;#10;swr;nom
 $$$快手-看直播领金币
 [cmd];15;t250 1000;s65;b;swf;t500 1350;t500 1200;swf;nom;
+###[cmd];15;t250 1000;s65;b;s3;t500 1350;s3;swf;swf;nom;
 $$$快手-逛街:
 [act];BulletContainerActivity,AdKwaiRnActivity
-1;1233;3;#10;nom
+1;1000;3;#10;swr;nom
 $$$快手-领福利
-###[cmd];40;t900 260;s30;b;t550 1220;s30;b;s3
-[cmd];15;t900 260;s30;b;t550 1220;s30;b;
-[cmd];1;s65
-[cmd];5;t900 260;s30;b;t550 1220;s30;b;s65
-[cmd];30;t900 260;s30;b;t550 1220;s30;b;
+###[cmd];40;t900 260;s30;b;t550 1150;s30;b;s3
+[cmd];127;t900 260;s60;b;t550 1150;s60;b;nom
+###[cmd];1;s65
+###[cmd];5;t900 260;s30;b;t550 1220;s30;b;s65
+###[cmd];15;t900 260;s30;b;t550 1220;s30;b;
 $$$浏览(115-3):
 1;115;3;#10;swf;nom
 $$$浏览(65-1):
@@ -41,11 +42,11 @@ $$$点淘-孵蛋+签到:
 [cmd];1;t980 240;t550 1270;s95;b;
 [cmd];1;t980 240;t550 1270;s185;b;
 [cmd];1;t980 240;t550 1270;s185;b;
-[cmd];1;t980 240;;t930 340
+[cmd];1;t980 240;t930 340
 [cmd];1;swf@滑动签到;t940 1860;s3;t550 1430;s65;b;swf;swf;
 3;33;0;#2;
 $$$点淘-挖人
-[cmd];1000;digest x1=182&y1=820&x3=1080&y3=1920&hp=@确认雇佣&dp=@dummy&tp=@打工多赚&fp=@focus_point&target=b4;s1800;
+[cmd];1;digest x1=182&pfr=120 80 450 170&y1=820&x3=1080&y3=1920&hp=@w.1&dp=@w.dummy&tp=@w.2&fp=@w.focus_point&target=b215,b3,b4,133&exclude=b417;nom
 $$$点淘-晚间
 [act];com.taobao.live
 [cmd];1;atc 20:02;t@赚体力
@@ -56,11 +57,10 @@ $$$点淘-看直播赚钻石
 [cmd];10;if341 800 250 100 看直播 480 860 480 1100;s75;b;c4,t480 1100;
 [cmd];1;if341 800 250 100 看短视频 480 860 480 1100;swr65 7;b
 $$$点淘-群工
-[act];h5.BrowserActivity,.RecentsActivity;h;c_sleep
+[act];pha.PHAContainerActivity,.RecentsActivity;h;c_sleep
 [cmd];0;s1m10;c2,recent;t@w.1;t@w.3;t@w.1
-[cmd];538;async digest x1=182&pfr=120 80 450 170&y1=820&x3=1080&y3=1920&hp=@w.1&dp=@w.dummy&tp=@w.2&fp=@w.focus_point&target=b215,b3,b4;s603
-
-###[cmd];538;c1,t@w.1,t@w.3,t@w.1,s0;async digest x1=182&pfr=120 80 450 170&y1=820&x3=1080&y3=1920&hp=@w.1&dp=@w.dummy&tp=@w.2&fp=@w.focus_point&target=b215,b3,b4;s603;c2,recent;t@w.1;t@w.dummy;c2,t@w.1,t@w.dummy
+[cmd];14;c1,t@w.1,t@w.3,t@w.1,s0;s603;c2,recent;c2,t@w.1,t@w.dummy
+[cmd];1;async keyevent KEYCODE_POWER
 
 
 ###[cmd];538;c1,t@w.1,t@w.3,t@w.1,s0;async digest x1=182&pfr=120 80 450 170&y1=820&x3=1080&y3=1920&hp=@w.1&dp=@w.dummy&tp=@w.2&fp=@w.focus_point&target=13,15,18,19,周十四,阿西八球,典故,茉莉,凝二,地图,阿**,青**信,环环,tbNick_zihhv,tb_Nick_af,tbNick_jc,tbNick_276,tbNick_6ss,tbNick_1f,t**e,b215,b3,b4;s603;c2,recent;t@w.1;t@w.dummy;c2,t@w.1,t@w.dummy
