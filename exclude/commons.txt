@@ -16,9 +16,12 @@ $$$快手-看直播领金币
 ###[cmd];15;t250 1000;s65;b;swf;t500 1350;t500 1200;swf;nom;
 ###[cmd];15;t250 1000;s65;b;s3;t500 1350;s3;swf;swf;nom;
 [cmd];50;t250 1000;s65;b;s3;t500 1350;s3;swf;swf;nom;
+$$$快手-逛街:
+[act];BulletContainerActivity,AdKwaiRnActivity
+1;1000;3;#10;swr;nom
 $$$抖音-浏览:
 ###[act];HomeActivity,PhotoDetailActivity;c_sleep
-1;3330;17;#10;swr;nom
+1;3330;10;#10;swf;nom
 $$$抖音-看小说
 ###[cmd];1;async s4h,keyevent KEYCODE_POWER;nom
 [cmd];3000;t740 1980;s4;nom;

@@ -1,5 +1,5 @@
 {
-	"adb_path":"C:\\program_files_arch\\QtScrcpy-win-x64-v2.1.2\\adb",
+	"adb_path":"C:\\program_files_arch\\QtScrcpy-win-x86-v2.2.1\\adb",
 	"config_name":"meizu",
 	"config_path":"C:\\Users\\tassel\\IdeaProjects\\DIANTAO/exclude/config-meizu.json",
 	"current_device":" -s 192.168.2.20:5555 ",
@@ -10,7 +10,7 @@
 	"quicks_path":"C:\\Users\\tassel\\IdeaProjects\\DIANTAO/exclude/quicks-meizu.txt",
 	"random_point":true,
 	"to":"750 300 750 1377 1000",
-	"version":347,
+	"version":349,
 	"version_path":"C:\\Users\\tassel\\IdeaProjects\\DIANTAO/exclude/versions/",
 	"walk_base":1000,
 	"walk_step":200,

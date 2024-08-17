@@ -1,8 +1,5 @@
 $$$快手-看直播领金币
 [cmd];15;t250 1000;s65;b;swf;t500 1350;t500 1200;swf;
-$$$快手-逛街:
-[act];BulletContainerActivity,AdKwaiRnActivity
-1;1000;3;#10;swr;nom
 $$$快手-领福利
 [act];KwaiYodaWebViewActivity,VideoDetailActivity,AwardVideoPlayActivity
 [cmd];15;t900 260;s30;b;t550 1260;s30;b;

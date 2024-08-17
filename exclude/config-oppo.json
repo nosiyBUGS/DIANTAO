@@ -1,5 +1,5 @@
 {
-	"adb_path":"C:\\program_files_arch\\QtScrcpy-win-x64-v2.1.2\\adb",
+	"adb_path":"C:\\program_files_arch\\QtScrcpy-win-x86-v2.2.1\\adb",
 	"config_name":"oppo",
 	"config_path":"C:\\Users\\tassel\\IdeaProjects\\DIANTAO/exclude/config-oppo.json",
 	"current_device":" -s 192.168.2.19:5555 ",
